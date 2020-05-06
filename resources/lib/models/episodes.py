@@ -226,7 +226,7 @@ class Episode(model.Model):
             DATEAIRED TEXT, \
             YEAR TEXT, \
             PARENTALADVISORY TEXT, \
-            TYPE TEXT \
+            TYPE TEXT, \
             DURATION INTEGER NOT NULL DEFAULT 0, \
             VIEWS INTEGER NOT NULL DEFAULT 0, \
             RATING INTEGER NOT NULL DEFAULT 0, \

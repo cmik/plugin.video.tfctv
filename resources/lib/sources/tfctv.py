@@ -55,7 +55,8 @@ def playEpisode(url, name, thumbnail, bandwidth=False):
                 control.infoDialog(control.lang(57025), control.lang(50002), time=5000)
             elif 'StatusMessage' in episodeDetails and episodeDetails['StatusMessage'] != '':
                 control.showNotification(episodeDetails['StatusMessage'], control.lang(50009))
-            url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(episodeDetails['data']['uri'])) if not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
+            
+            url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(episodeDetails['data']['uri'])) if not episodeDetails.get('disableProxy', False) and not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
             liz = control.item(name, path=url+'|User-Agent=%s' % (config.userAgents['default']), thumbnailImage=thumbnail, iconImage="DefaultVideo.png")
             liz.setInfo(type='video', infoLabels={
                 'title': name, 
@@ -265,6 +266,8 @@ def getMediaInfoFromWebsite(episodeId, bandwidth=False):
                     if control.setting('streamServerModification') == 'true' and control.setting('streamServer') != '':
                         episodeDetails['media']['uri'] = episodeDetails['media']['uri'].replace('https://o2-i.', control.setting('streamServer'))                
                     
+                    liveStream = True if ('mediainfo' in episodeDetails and 'live' in episodeDetails['mediainfo'] and episodeDetails['mediainfo']['live'] == True) else False 
+
                     # check if amssabscbn.akamaized.net to use inputstream.adaptive
                     if 'amssabscbn.akamaized.net' in episodeDetails['media']['uri']:
                         # mediaInfo['StatusMessage'] = control.lang(57038)
@@ -326,7 +329,7 @@ def getMediaInfoFromWebsite(episodeId, bandwidth=False):
                                 if i >= len(lines):
                                     break
 
-                            if control.setting('chooseBestStream') == 'true' or bandwidth != False: 
+                            if (control.setting('chooseBestStream') == 'true' or bandwidth != False) and liveStream == False: 
                                 logger.logInfo(choosedStream)
                                 episodeDetails['media']['uri'] = choosedStream
                         else:
@@ -339,6 +342,7 @@ def getMediaInfoFromWebsite(episodeId, bandwidth=False):
                     res = episodeDB.get(int(episodeId))
                     episode = res[0] if len(res) == 1 else {}
                     
+                    mediaInfo['disableProxy'] = True if liveStream == True else False
                     mediaInfo['data'].update(episodeDetails['media'])
                     mediaInfo['data']['preview'] = episodeDetails['mediainfo']['preview']
                     mediaInfo['data']['show'] = show.get('name', episodeData.get('name'))
