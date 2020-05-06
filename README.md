@@ -1,3 +1,5 @@
+[![Kodi version](https://img.shields.io/badge/kodi%20versions-18--19-blue)](https://kodi.tv/)
+
 ## TFC.tv add-on
 Watch your favorite online Pinoy shows, movies, news and live channels directly from your TV with the TFC.tv add-on for Kodi! This is not an official TFC.tv add-on but it works with your TFC.tv account as if you were connected to TFC.tv website.
 
