@@ -1578,7 +1578,36 @@ def isLoggedIn():
         Logged = False if 'TfcTvId' not in html else True
     return Logged
     
-def loginToWebsite(quiet=False, login=False, password=False): 
+def loginToWebsite(quiet=False, login=False, password=False):
+    logged = False
+
+    if control.setting('loginWithSSO') == "true":
+        logged = loginWithSSO(quiet, login, password)
+    else:
+        loginPage = callServiceApi(config.uri.get('login'), useCache=False)
+        loginForm = common.parseDOM(loginPage, "form", attrs = {'id' : 'form1'})
+        if len(loginForm) > 0:
+            request_verification_token = common.parseDOM(loginForm[0], "input", attrs = {'name' : '__RequestVerificationToken'}, ret = 'value')
+            emailAddress = control.setting('emailAddress')
+            password = control.setting('password')
+            params = { "Username" : emailAddress, "Password": password, '__RequestVerificationToken' : request_verification_token[0] }
+            control.setSetting('requestVerificationToken', request_verification_token[0])
+            html = callServiceApi("/user/login", 
+                params, 
+                headers = [('Referer', config.websiteSecuredUrl+'/user/login')], 
+                base_url = config.websiteSecuredUrl, 
+                useCache = False
+                )
+            if emailAddress not in html and quiet == False:
+                message = lang(50205)
+                showNotification(message, lang(50204))
+            else:
+                logged = True
+                if control.setting('generateNewFingerprintID') == 'true':
+                    generateNewFingerprintID()
+    return logged
+
+def loginWithSSO(quiet=False, login=False, password=False): 
     logger.logInfo('called function')
     from random import randint
     import time

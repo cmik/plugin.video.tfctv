@@ -4,6 +4,7 @@
         <setting type="lsep" label="50138"/>
         <setting id="emailAddress" type="text" label="50139" default=""/>
         <setting id="password" type="text" label="50140" option="hidden" enable="!eq(-1,)" default=""/>
+        <setting id="loginWithSSO" type="bool" label="50159" default="false" visible="true"/>
         <setting id="loginRetries" type="labelenum" label="50141" default="1" values="1|2|3" visible="false"/>
         <setting id="accountJSON" type="text" label="50142" default="" visible="false"/>
         <setting type="sep"/>

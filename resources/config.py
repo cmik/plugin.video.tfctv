@@ -34,7 +34,7 @@ uri = {
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
     'ssoLogin' : '/sso/api/sso.login?include=profile,loginIDs,data,password',
-    'login' : '/api/spa/login',
+    'login' : '/user/login',
     'callback' : '/callback',
     'authSSO' : '/sso/authenticate',
     'checkSSO' : '/sso/checksession',
