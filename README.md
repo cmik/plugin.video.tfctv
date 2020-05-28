@@ -3,7 +3,7 @@
 
 ## TFC.tv add-on
 Watch your favorite online Pinoy shows, movies, news and live channels directly from your TV with the TFC.tv add-on for Kodi! This add-on works with your TFC.tv account and TFC.tv website. Media contents are all properties of TFC Online and is for personal private and domestic use only. 
-**This is not an official TFC.tv add-on nor release by TFC / ABS-CBN.**
+**This is not an official TFC.tv add-on nor released by TFC / ABS-CBN.**
 
 
 **REPO:**
@@ -82,7 +82,7 @@ See also:
 
 
 ### You've found a bug. How can I report it?
-If you encounter anything that you think is a bug, please report it to the add-on github repo (https://github.com/cmik/cmik.xbmc/issues). 
+If you encounter anything that you think is a bug, please report it to the add-on github repo (https://github.com/cmik/plugin.video.tfctv/issues). 
 Do not hesitate to give more details about your issue: 
 >- your device & plateform version
 >- your add-on version
