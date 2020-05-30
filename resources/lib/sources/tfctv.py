@@ -1599,8 +1599,8 @@ def loginToWebsite(quiet=False, login=False, password=False):
                 useCache = False
                 )
             if emailAddress not in html and quiet == False:
-                message = lang(50205)
-                showNotification(message, lang(50204))
+                message = control.lang(50205)
+                control.showNotification(message, control.lang(50204))
             else:
                 logged = True
                 if control.setting('generateNewFingerprintID') == 'true':
