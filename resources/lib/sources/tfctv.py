@@ -56,7 +56,7 @@ def playEpisode(url, name, thumbnail, bandwidth=False):
             elif 'StatusMessage' in episodeDetails and episodeDetails['StatusMessage'] != '':
                 control.showNotification(episodeDetails['StatusMessage'], control.lang(50009))
             
-            url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(episodeDetails['data']['uri'])) if not episodeDetails.get('disableProxy', False) and not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
+            url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(episodeDetails['data']['uri']), '') if not episodeDetails.get('disableProxy', False) and not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
             liz = control.item(name, path=url+'|User-Agent=%s' % (config.userAgents['default']), thumbnailImage=thumbnail, iconImage="DefaultVideo.png")
             liz.setInfo(type='video', infoLabels={
                 'title': name, 
@@ -342,7 +342,7 @@ def getMediaInfoFromWebsite(episodeId, bandwidth=False):
                     res = episodeDB.get(int(episodeId))
                     episode = res[0] if len(res) == 1 else {}
                     
-                    mediaInfo['disableProxy'] = True if liveStream == True else False
+                    # mediaInfo['disableProxy'] = True if liveStream == True else False
                     mediaInfo['data'].update(episodeDetails['media'])
                     mediaInfo['data']['preview'] = episodeDetails['mediainfo']['preview']
                     mediaInfo['data']['show'] = show.get('name', episodeData.get('name'))
@@ -675,7 +675,7 @@ def getWebsiteHomeHtml(forceUpdate=False):
         cache.shortCache.delete(key)
     if cache.shortCache.get(key) == '':
         html = callServiceApi(config.uri.get('home'), base_url = config.websiteUrl, useCache=False)
-        cache.shortCache.set(key, repr(html))
+        cache.shortCache.set(key, html)
     else:
         html = cache.shortCache.get(key).replace('\\\'', '\'')
     return html

@@ -30,16 +30,24 @@ class ProxyHandler(SimpleHTTPRequestHandler):
             
                 requestHeaders = []
                 requestHeaders.append(('User-Agent', self._user_agent))
-                requestHeaders.append(('Accept', '*/*,akamai/media-acceleration-sdk;b=1702200;v=1.2.2;p=javascript'))
                 requestHeaders.append(('Origin', self._websiteUrl))
                 requestHeaders.append(('Referer', self._websiteUrl+'/'))
                 requestHeaders.append(('Sec-Fetch-Mode', 'cors'))
+                if ('tfcmsl.akamaized.net' in query.get('url')): 
+                    requestHeaders.append(('Sec-Fetch-Dest', 'empty'))
+                    requestHeaders.append(('Sec-Fetch-Site', 'cross-site'))
+                else:
+                    requestHeaders.append(('Accept', '*/*,akamai/media-acceleration-sdk;b=1702200;v=1.2.2;p=javascript'))
                 res = self.urlopen(query.get('url'), headers=requestHeaders)
                 
                 if (res.get('status')):
+                    sublevel = int(query.get('sublevel', 0)) + 1
                     proxyUrlFormat = control.setting('proxyStreamingUrl')
-                    content = re.sub(r'(http[^\s"]+)', lambda x: proxyUrlFormat % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(x.group(0))), res.get('body')) if ('amssabscbn.akamaized.net' not in query.get('url')) else res.get('body')
-                    
+                    if 'http' in res.get('body') or 'force' in query or sublevel == 3: 
+                        content = re.sub(r'(http[^\s"]+)', lambda x: proxyUrlFormat % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(x.group(0)), '&force=1&sublevel=%s' % sublevel), res.get('body'))
+                    else:
+                        streamingServerURL = re.compile('(http.?://[^\?]+/)', re.IGNORECASE).search(query.get('url')).group(1)
+                        content = re.sub(r'^([^#].+)', lambda x: proxyUrlFormat % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(streamingServerURL+x.group(0)), '&sublevel=%s' % sublevel), res.get('body'), flags=re.MULTILINE)
                     self.send_response(res.get('status'))
                     for header, value in res.get('headers').items():
                         if (header.lower() == 'content-length'):

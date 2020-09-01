@@ -22,7 +22,6 @@ def upgradeDB():
         # Check if installation is complete
         logger.logNotice('Checking installation')
         tools.checkInstallDB(True)
-
     tools.checkInstallDB()
     episodeDB = episodes.Episode(control.episodesFile)
     showDB = shows.Show(control.showsFile)
@@ -33,3 +32,8 @@ def upgradeDB():
             updateQueries.append('UPDATE SHOW SET VIEWS = %d WHERE ID = %d' % (int(data[1]), int(data[0])))
         showDB.executeUpdate(logger.logInfo(updateQueries))
         
+
+def upgradeSettings():
+    if control.addonInfo('version') == '1.5.0': 
+        control.setSetting('proxyStreamingUrl', 'http://%s:%s/?url=%s%s')
+        control.showMessage(control.lang(57047), control.lang(50002))

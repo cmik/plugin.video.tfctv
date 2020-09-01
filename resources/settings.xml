@@ -60,7 +60,7 @@
         <setting id="useProxy" type="bool" label="50133" default="true" visible="true"/>
         <setting id="proxyHost" type="text" label="50134" default="127.0.0.1" enable="eq(-1,true)" visible="true"/>
         <setting id="proxyPort" type="number" label="50135" default="6531" enable="eq(-2,true)" visible="true"/>
-        <setting id="proxyStreamingUrl" label="50143" type="text" default="http://%s:%s/?url=%s" enable="eq(-3,true)" visible="true"/>
+        <setting id="proxyStreamingUrl" label="50143" type="text" default="http://%s:%s/?url=%s%s" enable="eq(-3,true)" visible="true"/>
         <setting id="proxyCheckUrl" label="50144" type="text" default="http://%s:%s/healthcheck" enable="eq(-4,true)" visible="true"/>
         <setting type="sep"/>
         <setting type="lsep" label="50124"/>

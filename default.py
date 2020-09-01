@@ -59,6 +59,7 @@ if caller == 'addon' and control.setting('lastVersion') != control.addonInfo('ve
     from resources import upgrade
     control.showMessage(control.lang(57023) % control.addonInfo('version'), control.lang(50002))
     upgrade.upgradeDB()
+    upgrade.upgradeSettings()
     control.setSetting('lastVersion', control.addonInfo('version'))
 
 if mode == None:

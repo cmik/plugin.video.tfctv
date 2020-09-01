@@ -146,19 +146,14 @@ Watch your favorite online Pinoy shows, movies, news and live channels directly 
 This add-on uses your TFC.tv account to access and display TFC.tv website contents:
  - Easily access the different categories and shows
  - Manage your favorite shows and episodes through your watchlist.
- - Have an overview of your TFC.tv account
- 
-With the TFC.tv add-on v1.X:
- - Have a better experience with new icons and fanarts
- - Add into/remove from your TFC.tv watchlist
  - Search your shows, movies, episodes by category, title, cast, date, year
  - Export your favorite show's expisodes to your Kodi library (still needs TFC.tv add-on for playback)
 
-For better experience, a subscription to TFC.tv website (http://tfc.tv) is required to enjoy TFC.tv website catalog.
+For better experience, a subscription to TFC.tv website (http://tfc.tv) is required to enjoy TFC.tv's catalog.
  
 Enjoy!
 
-PS: This add-on is not officially released or supported by TFC.tv. Please report directly to KODI forum or cmik.xbmc Github repository if you have any issues.
+PS: This add-on is not officially released nor supported by TFC.tv. Please report directly to KODI forum or plugin.video.tfctv Github repository if you have any issues.
     </string>
     <string id="57017">You're actually not connected. You are only able to watch previews.</string>
     <string id="57018">Welcome Kapamilya!</string>
@@ -169,7 +164,7 @@ PS: This add-on is not officially released or supported by TFC.tv. Please report
     <string id="57023">Your TFC.tv addon has been updated to version %s.
     
 Please see the changelog for further informations.
-If you encounter anything that you think is a bug, please report it to the TFC.tv Kodi Forum thread (https://forum.kodi.tv/showthread.php?tid=317008) or to the addon repo website (https://github.com/cmik/cmik.xbmc/issues).
+Please report bugs/issues to the TFC.tv Kodi Forum thread (https://forum.kodi.tv/showthread.php?tid=317008) or to the add-on repository (https://github.com/cmik/plugin.video.tfctv/issues).
 
 Enjoy!
     </string>
@@ -198,4 +193,5 @@ Please reboot your Kodi system.
     <string id="57044">Can't remove from library - an error occured</string>
     <string id="57045">Nothing to do</string>
     <string id="57046">Please type at least 3 charaters for search</string>
+    <string id="57047">You need to restart KODI or reboot your system</string>
 </strings>
