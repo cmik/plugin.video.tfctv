@@ -794,8 +794,8 @@ def extractWebsiteSectionEpisodeData(url, html):
             year = episodeName.split(', ')[1]
 
         try:
-            datePublished = datetime.datetime.strptime(episodeName, '%b %d, %Y')
-        except TypeError:
+            datePublished = datetime.datetime.strptime(episodeName, '%B %d, %Y')
+        except:
             datePublished = datetime.datetime(*(time.strptime(episodeName, '%b %d, %Y')[0:6]))
             
         return {
