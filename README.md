@@ -1,4 +1,4 @@
-[![Kodi version](https://img.shields.io/badge/kodi%20versions-18--19-blue)](https://kodi.tv/)
+[![Kodi version](https://img.shields.io/badge/kodi%20versions-16--18.9-blue)](https://kodi.tv/)
 [![GitHub release](https://img.shields.io/github/v/release/cmik/plugin.video.tfctv.svg)](https://github.com/cmik/plugin.video.tfctv/releases)
 
 ## TFC.tv add-on
