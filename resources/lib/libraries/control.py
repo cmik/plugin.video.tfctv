@@ -135,6 +135,14 @@ showsLibPath = os.path.join(libraryPath, 'shows')
 moviesLibPath = os.path.join(libraryPath, 'movies')
 
 
+def getIcon(fileName):
+    appearance = setting('appearance').lower()
+    if appearance in ['-', '']: return addonInfo('icon')
+    else: return os.path.join(addonPath, 'resources', 'media', appearance, fileName)
+
+def facebookIcon():
+    return getIcon('facebook.jpg')
+
 def addonFolderIcon(text):
     appearance = setting('appearance').lower()
     if appearance in ['-', '']: return addonInfo('icon')

@@ -134,6 +134,12 @@ elif mode == config.EXECUTESEARCH:
 elif mode == config.ENTERCREDENTIALS:
     from resources.lib.indexers import navigator
     navigator.navigator().enterCredentials()
+elif mode == config.LOGINWITHTFC:
+    from resources.lib.indexers import navigator
+    navigator.navigator().loginWithTFC()
+elif mode == config.LOGINWITHFB:
+    from resources.lib.indexers import navigator
+    navigator.navigator().loginWithFB()
 elif mode == config.PERSONALIZESETTINGS:
     from resources.lib.indexers import navigator
     navigator.navigator().personalizeSettings()

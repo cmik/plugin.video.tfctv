@@ -703,6 +703,7 @@ def getWebsiteSectionContent(sectionId, page=1, itemsPerPage=8):
     logger.logInfo('called function')
     page -= 1
     data = []
+    section = ''
     
     html = getWebsiteHomeHtml()
     sections = common.parseDOM(html, "div", attrs = { 'class' : 'main-container-xl main-container-xl-mobile' })
@@ -1513,6 +1514,17 @@ def enterSearch(category, type):
         control.showNotification(control.lang(57046), control.lang(50001))
     return data
 
+def getUserName(html=False):
+    logger.logInfo('called function')
+    userName = ''
+    if html == False:
+        html = callServiceApi(config.uri.get('profile'), headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
+    avatar = common.parseDOM(html, "div", attrs = { 'class' : 'avatar' })[0]
+    if len(avatar) > 0:
+        userName = common.parseDOM(avatar, "img", ret = 'alt')[0]
+        logger.logInfo(userName)
+    return userName
+
 def enterCredentials():
     logger.logInfo('called function')
     email = control.inputText(control.lang(50400), control.setting('emailAddress'))
@@ -1570,41 +1582,110 @@ def login(quiet=False, login=False, password=False):
     signedIntoWebsite = loginToWebsite(quiet, login, password)
     return signedIntoWebsite
     
-def isLoggedIn():
+def isLoggedIn(html=False):
     logger.logInfo('called function')
     global Logged
     if Logged == False:
-        html = callServiceApi(config.uri.get('profile'), headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
+        if html == False:
+            html = callServiceApi(config.uri.get('profile'), headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
         Logged = False if 'TfcTvId' not in html else True
     return Logged
     
 def loginToWebsite(quiet=False, login=False, password=False):
+    logger.logInfo('called function')
     logged = False
 
-    if control.setting('loginWithSSO') == "true":
-        logged = loginWithSSO(quiet, login, password)
+    if control.setting('loginType') == "Facebook":
+        token = control.setting('FBAccessToken')
+        if token != None and token != '' and checkFacebookToken(token) == False:
+            token = ''
+            control.setSetting('FBAccessToken', '')
+        logged = loginWithFacebook(quiet, token)
     else:
-        loginPage = callServiceApi(config.uri.get('login'), useCache=False)
-        loginForm = common.parseDOM(loginPage, "form", attrs = {'id' : 'form1'})
-        if len(loginForm) > 0:
-            request_verification_token = common.parseDOM(loginForm[0], "input", attrs = {'name' : '__RequestVerificationToken'}, ret = 'value')
-            emailAddress = control.setting('emailAddress')
-            password = control.setting('password')
-            params = { "Username" : emailAddress, "Password": password, '__RequestVerificationToken' : request_verification_token[0] }
-            control.setSetting('requestVerificationToken', request_verification_token[0])
-            html = callServiceApi("/user/login", 
-                params, 
-                headers = [('Referer', config.websiteSecuredUrl+'/user/login')], 
-                base_url = config.websiteSecuredUrl, 
-                useCache = False
-                )
-            if emailAddress not in html and quiet == False:
-                message = control.lang(50205)
-                control.showNotification(message, control.lang(50204))
+        if control.setting('emailAddress') != '':
+            if control.setting('loginWithSSO') == "true":
+                logged = loginWithSSO(quiet, login, password)
             else:
-                logged = True
-                if control.setting('generateNewFingerprintID') == 'true':
-                    generateNewFingerprintID()
+                loginPage = callServiceApi(config.uri.get('login'), useCache=False)
+                loginForm = common.parseDOM(loginPage, "form", attrs = {'id' : 'form1'})
+                if len(loginForm) > 0:
+                    request_verification_token = common.parseDOM(loginForm[0], "input", attrs = {'name' : '__RequestVerificationToken'}, ret = 'value')
+                    emailAddress = control.setting('emailAddress')
+                    password = control.setting('password')
+                    params = { "Username" : emailAddress, "Password": password, '__RequestVerificationToken' : request_verification_token[0] }
+                    control.setSetting('requestVerificationToken', request_verification_token[0])
+                    html = callServiceApi("/user/login", 
+                        params, 
+                        headers = [('Referer', config.websiteSecuredUrl+'/user/login')], 
+                        base_url = config.websiteSecuredUrl, 
+                        useCache = False
+                        )
+                    if not isLoggedIn(html) and quiet == False:
+                        logger.logError('Authentification failed')
+                        control.showNotification(control.lang(57024), control.lang(50006))
+                    else:
+                        logged = True
+                        logger.logNotice('You are now logged in')
+                        control.showNotification(control.lang(57009) % getUserName(html), control.lang(50007))
+                        if control.setting('generateNewFingerprintID') == 'true':
+                            generateNewFingerprintID()
+        else:
+            control.showNotification(control.lang(50205), control.lang(50204))
+    return logged
+
+def checkFacebookToken(accessToken=''):
+    logger.logInfo('called function')
+    info = callJsonApi(config.Facebook.get('info'), params = {'fields' : 'name,first_name,last_name,email', 'access_token' : accessToken}, headers=[], base_url='', useCache=False)
+    if 'name' in info:
+        return True
+    return False
+
+def loginWithFacebook(quiet=False, accessToken=''):
+    logger.logInfo('called function')
+    logged = False
+    token = None
+    accountJSON = json.loads(control.setting('accountJSON')) if control.setting('accountJSON') else {}
+
+    if control.setting('FBAppID') != '' or control.setting('FBClientToken') != '':
+
+        appIdentifier = '%s|%s' % (control.setting('FBAppID'), control.setting('FBClientToken'))
+        control.showNotification(control.lang(56024), control.lang(50005))
+        if accessToken == '':
+            login = callJsonApi(config.Facebook.get('login'), params = {'access_token' : appIdentifier}, headers=[], base_url='', useCache=False)
+            if 'code' in login and 'user_code' in login:
+                control.alert(control.lang(57048) % login.get('verification_uri'), line1='[B]%s[/B]' % login.get('user_code'), line2=control.lang(57049), title=control.lang(56024))
+                i = 1
+                expired = False
+                while i < 5 and token == None and expired == False:
+                    time.sleep(login.get('interval', 5))
+                    status = callJsonApi(config.Facebook.get('status'), params = {'access_token' : appIdentifier, 'code' : login.get('code')}, headers=[], base_url='', useCache=False)
+                    if 'access_token' in status:
+                        info = callJsonApi(config.Facebook.get('info'), params = {'fields' : 'name,first_name,last_name,email', 'access_token' : status.get('access_token')}, headers=[], base_url='', useCache=False)
+                        if 'name' in info:
+                            accountJSON = {'name' : info.get('name', ''), 'firstName' : info.get('first_name', ''), 'lastName': info.get('last_name', ''), 'email': info.get('email', '')}
+                            control.setSetting('accountJSON', json.dumps(accountJSON))
+                            token = status.get('access_token')
+                    elif 'error' in status and status.get('error').get('error_subcode', 0) == 1349152:
+                        expired = True
+                    i+=1
+        else: 
+            token = accessToken
+
+        if token != None:
+            html = callServiceApi(config.uri.get('socialLogin') % token, headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
+            logged = isLoggedIn(html)
+
+        if quiet == False:
+            if logged == True:
+                logger.logNotice('You are now logged in')
+                control.setSetting('FBAccessToken', token)
+                control.showNotification(control.lang(57009) % accountJSON.get('name'), control.lang(50007))
+            else:
+                logger.logError('Authentification failed')
+                control.showNotification(control.lang(57024), control.lang(50006))
+    else:
+        control.showMessage(control.lang(57052), control.lang(50006))
+
     return logged
 
 def loginWithSSO(quiet=False, login=False, password=False): 
@@ -1985,6 +2066,7 @@ def logout(quiet=True):
     if quiet == False and isLoggedIn() == False:
         control.showNotification(control.lang(57000), control.lang(50005))
     callServiceApi(config.uri.get('logout'), headers = [('Referer', config.websiteUrl + config.uri.get('base'))], base_url = config.websiteUrl, useCache = False)
+    control.setSetting('FBAccessToken', '')
     cookieJar.clear()
     if quiet == False and isLoggedIn() == False:
         control.showNotification(control.lang(57010))

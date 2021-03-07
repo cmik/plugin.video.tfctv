@@ -53,13 +53,16 @@ class navigator:
         self.addDirectoryItem(control.lang(50204), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(50204)), isFolder=True, **self.formatMenu())
 
         # if not logged in, ask to log in
-        if control.setting('emailAddress') != '':
-            tfctv.checkAccountChange()
-            if tfctv.isLoggedIn() == False:
+        if tfctv.isLoggedIn() == False:
+            if control.setting('loginType') == 'TFC.tv' and control.setting('emailAddress') != '':
                 if (control.confirm(control.lang(57007), line1=control.lang(57008) % control.setting('emailAddress'))):
-                    (account, logged) = tfctv.checkAccountChange(True)            
-            elif control.setting('displayMyList') == 'true':
-                self.addDirectoryItem(control.lang(50200), config.uri.get('base'), config.MYLIST, control.addonFolderIcon(control.lang(50200)), isFolder=True, **self.formatMenu())
+                    (account, logged) = tfctv.checkAccountChange(True)
+            else:
+                if (control.confirm(control.lang(57007), line1=control.lang(57051))):
+                    tfctv.login()
+        
+        if tfctv.isLoggedIn() == True and control.setting('displayMyList') == 'true':
+            self.addDirectoryItem(control.lang(50200), config.uri.get('base'), config.MYLIST, control.addonFolderIcon(control.lang(50200)), isFolder=True, **self.formatMenu())
         
         if control.setting('displayWebsiteSections') == 'true':
             self.addDirectoryItem(control.lang(50201), config.uri.get('base'), config.CATEGORIES, control.addonFolderIcon(control.lang(50201)), isFolder=True, **self.formatMenu())
@@ -275,6 +278,13 @@ class navigator:
         if control.setting('showWelcomeMessage') == 'true':
             control.showMessage(control.lang(57016), control.lang(57018))
             control.setSetting('showWelcomeMessage', 'false')
+        
+        self.addDirectoryItem(control.lang(56025), config.uri.get('base'), config.LOGINWITHTFC, control.addonIcon())
+        self.addDirectoryItem(control.lang(56024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon())
+        self.endDirectory()
+
+    def loginWithTFC(self):
+        control.setSetting('loginType', 'TFC.tv')
         if control.setting('emailAddress') == '':
             if control.setting('showEnterCredentials') == 'true':
                 self.addDirectoryItem(control.lang(56011), config.uri.get('base'), config.ENTERCREDENTIALS, control.addonFolderIcon(control.lang(56011)))
@@ -289,6 +299,10 @@ class navigator:
         if tfctv.enterCredentials() == True:
             control.setSetting('showEnterCredentials', 'false')
             self.endSetup()
+
+    def loginWithFB(self):
+        control.setSetting('loginType', 'Facebook')
+        self.endSetup()
         
     def optimizeLibrary(self):
         tfctv.reloadCatalogCache()

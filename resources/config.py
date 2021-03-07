@@ -26,6 +26,12 @@ apiAzureUrl = 'https://oneottprodapi.azure-api.net'
 gigyaCDNUrl = 'https://cdns.us1.gigya.com'
 gigyaAccountUrl = 'https://accounts.us1.gigya.com'
 gigyaSocializeUrl = 'https://socialize.us1.gigya.com'
+Facebook = {
+#    'appIdentifier' : '1393656554318534|c48cd90c2848791fa2b04c735fbe7ca9',
+    'login' : 'https://graph.facebook.com/v2.6/device/login',
+    'status' : 'https://graph.facebook.com/v2.6/device/login_status',
+    'info' : 'https://graph.facebook.com/v2.3/me'
+}
 uri = {
     'base' : '/',
     'home' : '/home',
@@ -35,6 +41,7 @@ uri = {
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
     'ssoLogin' : '/sso/api/sso.login?include=profile,loginIDs,data,password',
     'login' : '/user/login',
+    'socialLogin' : '/user/sociallogin?accesstoken=%s',
     'callback' : '/callback',
     'authSSO' : '/sso/authenticate',
     'checkSSO' : '/sso/checksession',
@@ -102,6 +109,8 @@ RESETCATALOG = 57
 IMPORTSHOWDB = 58
 IMPORTEPISODEDB = 59
 IMPORTALLDB = 60
+LOGINWITHTFC = 61
+LOGINWITHFB = 62
 FIRSTINSTALL = 98
 ENDSETUP = 99
 

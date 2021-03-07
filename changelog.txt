@@ -1,3 +1,6 @@
+1.6.0
+    Fixed login detection issue
+    First implementation of Facebook Login
 1.5.0
     Repo has been removed from addon.xml to avoid multiple repo for the same add-ons
     To keep your add-on up to date, install Cmik Repo from https://repo.cmik.me/repository/

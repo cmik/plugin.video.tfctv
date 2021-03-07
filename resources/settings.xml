@@ -1,10 +1,13 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
     <category label="50100">
         <setting type="lsep" label="50138"/>
-        <setting id="emailAddress" type="text" label="50139" default=""/>
-        <setting id="password" type="text" label="50140" option="hidden" enable="!eq(-1,)" default=""/>
-        <setting id="loginWithSSO" type="bool" label="50159" default="false" visible="true"/>
+        <setting id="loginType" type="labelenum" label="50160" default="TFC.tv" values="TFC.tv|Facebook" visible="true"/>
+        <setting id="emailAddress" type="text" label="50139" enable="eq(-1,TFC.tv)" default=""/>
+        <setting id="password" type="text" label="50140" option="hidden" enable="eq(-2,TFC.tv) + !eq(-1,)" default=""/>
+        <setting id="loginWithSSO" type="bool" label="50159" default="false" visible="false"/>
         <setting id="loginRetries" type="labelenum" label="50141" default="1" values="1|2|3" visible="false"/>
         <setting id="accountJSON" type="text" label="50142" default="" visible="false"/>
         <setting type="sep"/>
@@ -39,10 +42,11 @@
         <setting id="lastVersion" type="text" label="50106" default="" visible="false"/>
         <setting id="UID" type="text" label="50127" default="" visible="false"/>
         <setting id="UIDSignature" type="text" label="50128" default="" visible="false"/>
-        <setting id="UIDSignature" type="text" label="50129" default="" visible="false"/>
+        <setting id="signatureTimestamp" type="text" label="50129" default="" visible="false"/>
         <setting id="defaultBG" type="text" label="50131" default="https://img.tfc.tv/assets/img/bg2.jpg" visible="false"/>
         <setting id="appearance" type="labelenum" label="50155" default="DEFAULT" values="-|DEFAULT" visible="false"/>
         <setting id="databaseImportURL" type="text" label="50156" default="https://repo.cmik.me/tfc.tv/databases/" visible="false"/>
+        <setting id="FBAccessToken" type="text" label="50161" default="" visible="false"/>
     </category>
     <category label="50101">
         <setting type="lsep" label="50103"/>
@@ -62,6 +66,10 @@
         <setting id="proxyPort" type="number" label="50135" default="6531" enable="eq(-2,true)" visible="true"/>
         <setting id="proxyStreamingUrl" label="50143" type="text" default="http://%s:%s/?url=%s%s" enable="eq(-3,true)" visible="true"/>
         <setting id="proxyCheckUrl" label="50144" type="text" default="http://%s:%s/healthcheck" enable="eq(-4,true)" visible="true"/>
+        <setting type="sep"/>
+        <setting type="lsep" label="50162"/>
+        <setting id="FBAppID" type="text" label="50163" default="" visible="true"/>
+        <setting id="FBClientToken" type="text" label="50164" default="" visible="true"/>
         <setting type="sep"/>
         <setting type="lsep" label="50124"/>
         <setting id="generateNewFingerprintID" type="bool" label="50125" default="false" visible="true"/>

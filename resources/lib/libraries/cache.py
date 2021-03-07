@@ -39,7 +39,7 @@ if cacheActive:
     try:
        import StorageServer
     except:
-       from ressources.lib.dummy import storageserverdummy as StorageServer
+       from resources.lib.dummy import storageserverdummy as StorageServer
     # Short TTL cache
     shortCache = StorageServer.StorageServer(config.shortCache['name'], config.shortCache['ttl']) 
     sCacheFunction = shortCache.cacheFunction
