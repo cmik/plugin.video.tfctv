@@ -51,7 +51,7 @@
     <string id="50135">Port</string>
     <string id="50136">Enable parental control</string>
     <string id="50137">Parental code</string>
-    <string id="50138">Credentials</string>
+    <string id="50138">Authentication / Credentials</string>
     <string id="50139">Email Address</string>
     <string id="50140">Password</string>
     <string id="50141">Login Retries</string>
@@ -72,7 +72,12 @@
     <string id="50156">Databases import URL</string>
     <string id="50157">Export path</string>
     <string id="50158">Cache timeout (in minutes)</string>
-    <string id="50159">Login with SSO</string>
+    <string id="50159">Login with Kapamilya SSO</string>
+    <string id="50160">Login with</string>
+    <string id="50161">Facebook access token</string>
+    <string id="50162">Facebook Login</string>
+    <string id="50163">FB App ID</string>
+    <string id="50164">FB Client Token</string>
     <string id="50199">Other settings</string>
     <!-- Home menu -->
     <string id="50200">My List</string>
@@ -122,6 +127,8 @@
     <string id="56021">Import automatically all database files</string>
     <string id="56022">Quick setup</string>
     <string id="56023">My exported items</string>
+    <string id="56024">Continue with Facebook</string>
+    <string id="56025">Login with TFC.tv</string>
     <!-- notifications / messages -->
     <string id="57000">Logging out in progress...</string>
     <string id="57001">Subscription is already expired or the item is not part of your subscription</string>
@@ -168,7 +175,7 @@ Please report bugs/issues to the TFC.tv Kodi Forum thread (https://forum.kodi.tv
 
 Enjoy!
     </string>
-    <string id="57024">Can't login to TFC website</string>
+    <string id="57024">Can't login to TFC.tv</string>
     <string id="57025">You are only allowed to watch a preview</string>
     <string id="57026">This feature is coming soon :)</string>
     <string id="57027">Can't refresh catalog cache - an error occured</string>
@@ -194,4 +201,9 @@ Please reboot your Kodi system.
     <string id="57045">Nothing to do</string>
     <string id="57046">Please type at least 3 charaters for search</string>
     <string id="57047">You need to restart KODI or reboot your system</string>
+    <string id="57048">visit %s on your smartphone or computer and enter this code:</string>
+    <string id="57049">Then press OK</string>
+    <string id="57050">Credentials are not configured in settings</string>
+    <string id="57051">Do you want to log in with Facebook?</string>
+    <string id="57052">To use Facebook Login, create your app at FACEBOOK for Developers (https://developers.facebook.com/) and fill your Application ID and Client Token in the TFC.tv add-on advanced setings.</string>
 </strings>
