@@ -57,7 +57,7 @@ def log(mixed, level=defaultLogLevel, subFonc=False):
         
         stack = inspect.stack()
         try:
-            xbmc.log((u"[%s] %s(%s)::%s : '%s'" % (plugin, os.path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], mixed)).decode("utf-8"), xbmcLogLevel)
+            xbmc.log((u"[%s] %s :%s @%s : '%s'" % (plugin, os.path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], mixed)).decode("utf-8"), xbmcLogLevel)
         except:
             xbmc.log(u"[%s] %s : '%s'" % (plugin, os.path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], repr(mixed)), xbmcLogLevel)
     return mixed

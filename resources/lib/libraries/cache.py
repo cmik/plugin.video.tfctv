@@ -54,7 +54,18 @@ else:
     sCacheFunction = shortCache.cacheFunction
     longCache = shortCache
     lCacheFunction = longCache.cacheFunction
-    
+
+def getCached(cacheType, key, func, refresh=False):
+    logger.logDebug('called function with parameter (%s, %s)' % (key, refresh))
+    cached = None
+    if refresh is True:
+        cacheType.delete(key)
+    if cacheType.get(key) == '':
+        cached = func()
+        cacheType.set(key, cached)
+    else:
+        cached = cacheType.get(key)
+    return logger.logDebug(cached)
     
 def generateHashKey(string):
     return hashlib.md5(string).hexdigest()

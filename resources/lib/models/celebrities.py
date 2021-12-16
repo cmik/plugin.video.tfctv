@@ -17,7 +17,7 @@ class Actor(model.Model):
         logger.logDebug(data)
         if len(data) == 13:
             return {
-                'id' : int(data[0]),
+                'id' : data[0],
                 'name' : data[1],
                 'thumbnail' : data[2],
                 'fanart' : data[3],
@@ -55,7 +55,7 @@ class Actor(model.Model):
             BIRTHDAY, \
             BIRTHPLACE \
             FROM ACTOR \
-            WHERE %s IN (%s)" % (key, ','.join(str(v) for v in mixed))))
+            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
         return logger.logDebug(dbcur.fetchall())
         
     def _save(self, mixed):
@@ -75,7 +75,7 @@ class Actor(model.Model):
                     query += "DESCRIPTION = '%s', " % data.get('description') if data.get('description', False) else "DESCRIPTION = DESCRIPTION, "
                     query += "BIRTHDAY = '%s', " % data.get('birthday') if data.get('birthday', False) else "BIRTHDAY = BIRTHDAY, "
                     query += "BIRTHPLACE = '%s', " % data.get('birthplace') if data.get('birthplace', False) else "BIRTHPLACE = BIRTHPLACE "
-                    query += "WHERE ID = %d" % data.get('id')
+                    query += "WHERE ID = '%s'" % data.get('id')
                     dbcur.execute(logger.logDebug(query))
         self._dbcon.commit()
         return True
@@ -87,9 +87,9 @@ class Actor(model.Model):
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM ACTOR WHERE ID in (%s)" % ','.join(ids)))
+            dbcur.execute(logger.logDebug("DELETE FROM ACTOR WHERE ID in ('%s')" % "','".join(ids)))
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO ACTOR VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
+                dbcur.execute(logger.logDebug("INSERT INTO ACTOR VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
                     data.get('id'), 
                     data.get('name').replace('\'', '\'\''), 
                     data.get('thumbnail').replace('&#39;', '\'\''), 
@@ -109,7 +109,7 @@ class Actor(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM ACTOR WHERE ID in (%s)" % ','.join(ids)))
+                dbcur.execute(logger.logDebug("DELETE FROM ACTOR WHERE ID in ('%s')" % "','".join(ids)))
                 self._dbcon.commit()
                 return True
             except: pass
@@ -127,7 +127,7 @@ class Actor(model.Model):
     def checkIfTableExists(self):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("CREATE TABLE IF NOT EXISTS ACTOR (\
-            ID INTEGER PRIMARY KEY, \
+            ID TEXT PRIMARY KEY, \
             NAME TEXT, \
             THUMBNAIL TEXT, \
             FANART TEXT, \

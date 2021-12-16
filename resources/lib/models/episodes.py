@@ -18,14 +18,14 @@ class Episode(model.Model):
         logger.logDebug(len(data))
         logger.logDebug(data)
         if len(data) == 18:
-            try:
+            """try:
                 dateaired = datetime.strptime(data[10], '%Y-%m-%d')
             except TypeError:
-                dateaired = datetime(*(time.strptime(data[10], '%Y-%m-%d')[0:6]))
+                dateaired = datetime(*(time.strptime(data[10], '%Y-%m-%d')[0:6]))"""
             return {
-                'id' : int(data[0]), 
+                'id' : data[0], 
                 'title' : data[1], 
-                'parentid' : int(data[2]),
+                'parentid' : data[2],
                 'parentname' : data[3],
                 'show' : data[3], 
                 'image' : data[4], 
@@ -34,7 +34,7 @@ class Episode(model.Model):
                 'url' : data[7], 
                 'description' : data[8],
                 'shortdescription' : data[9],
-                'dateaired' : dateaired.strftime('%b %d, %Y'),
+                'dateaired' : '',# dateaired.strftime('%b %d, %Y'),
                 'date' : data[10],
                 'year' : data[11],
                 'parentalAdvisory' : data[12],
@@ -117,7 +117,7 @@ class Episode(model.Model):
             RATING, \
             VOTES \
             FROM EPISODE \
-            WHERE %s IN (%s)" % (key, ','.join(str(v) for v in mixed))))
+            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
         return logger.logDebug(dbcur.fetchall())
 
         
@@ -147,7 +147,7 @@ class Episode(model.Model):
                     query += "VIEWS = %d, " % data.get('views') if data.get('views', False) else "VIEWS = VIEWS, "
                     query += "RATING = %d, " % data.get('rating') if data.get('rating', False) else "RATING = RATING, "
                     query += "VOTES = %d " % data.get('votes') if data.get('votes', False) else "VOTES = VOTES "
-                    query += "WHERE ID = %d" % data.get('id')
+                    query += "WHERE ID = '%s'" % data.get('id')
                     dbcur.execute(logger.logDebug(query))
         self._dbcon.commit()
         return True
@@ -158,9 +158,9 @@ class Episode(model.Model):
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM EPISODE WHERE ID in (%s)" % ','.join(ids)))
+            dbcur.execute(logger.logDebug("DELETE FROM EPISODE WHERE ID in ('%s')" % "','".join(ids)))
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO EPISODE VALUES (%d, '%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d)" % (
+                dbcur.execute(logger.logDebug("INSERT INTO EPISODE VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d)" % (
                     data.get('id'), 
                     data.get('title').replace('\'', '\'\''), 
                     data.get('parentid'), 
@@ -189,7 +189,7 @@ class Episode(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM EPISODE WHERE ID in (%s)" % ','.join(ids)))
+                dbcur.execute(logger.logDebug("DELETE FROM EPISODE WHERE ID in ('%s')" % "','".join(ids)))
                 self._dbcon.commit()
                 return True
             except: pass
@@ -213,9 +213,9 @@ class Episode(model.Model):
     def checkIfTableExists(self):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("CREATE TABLE IF NOT EXISTS EPISODE (\
-            ID INTEGER PRIMARY KEY, \
+            ID TEXT PRIMARY KEY, \
             TITLE TEXT, \
-            SHOWID INTEGER, \
+            SHOWID TEXT, \
             SHOWNAME TEXT, \
             THUMBNAIL TEXT, \
             FANART TEXT, \

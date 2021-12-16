@@ -11,21 +11,16 @@
 cookieFileName = 'tfctv.cookie'
 
 # Cache
+settingsRefreshRate = 10 * 60                       # catalog updates every 10 minutes
 shortCache = {'name' : 'tfctv', 'ttl': 1}
 longCache = {'name' : 'tfctv_db', 'ttl': 24*7}
 urlCachePrefix = 'urlcache_'
 
 # HOSTS / URI
-webserviceUrl = 'https://tfc.tv'
-websiteUrl = 'https://tfc.tv'
-websiteSecuredUrl = 'https://tfc.tv'
+webserviceUrl = 'https://www.iwanttfc.com'
+websiteUrl = 'https://www.iwanttfc.com'
+websiteSecuredUrl = 'https://www.iwanttfc.com'
 websiteCDNUrl = 'https://img.tfc.tv'
-kapamilyaAccountsSSOUrl = 'https://kapamilya-accounts.abs-cbn.com'
-apiSSOUrl = 'https://sso-api.abs-cbn.com'
-apiAzureUrl = 'https://oneottprodapi.azure-api.net'
-gigyaCDNUrl = 'https://cdns.us1.gigya.com'
-gigyaAccountUrl = 'https://accounts.us1.gigya.com'
-gigyaSocializeUrl = 'https://socialize.us1.gigya.com'
 Facebook = {
 #    'appIdentifier' : '1393656554318534|c48cd90c2848791fa2b04c735fbe7ca9',
     'login' : 'https://graph.facebook.com/v2.6/device/login',
@@ -34,13 +29,16 @@ Facebook = {
 }
 uri = {
     'base' : '/',
-    'home' : '/home',
-    'profile' : '/profile',
+    'home' : '/#!/',
+    'loginStatus' : '/api/1.0/user/login',
+    'profile' : 'https://purchase.iwanttfc.com/proxy',
+    'licence' : '/api/1.0/license?itemID=%s',
+    'livestream' : '/api/1.0/stream?streamID=%s',
     'profileDetails' : '/profile/details',
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
     'ssoLogin' : '/sso/api/sso.login?include=profile,loginIDs,data,password',
-    'login' : '/user/login',
+    'login' : '/api/1.0/user/auth',
     'socialLogin' : '/user/sociallogin?accesstoken=%s',
     'callback' : '/callback',
     'authSSO' : '/sso/authenticate',
@@ -75,7 +73,7 @@ userAgents = {
     }
 
 # MODES
-SUBCATEGORIES = 1
+CHECKFORUPDATES = 1
 SUBCATEGORYSHOWS = 2
 SHOWEPISODES = 3
 PLAY = 4

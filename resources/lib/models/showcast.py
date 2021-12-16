@@ -12,7 +12,7 @@ logger = control.logger
 
 class ShowCast(model.Model):
     
-    idFormat = '%d-%d'
+    idFormat = '%s-%s'
 
     def _getStructure(self, data):
         logger.logDebug(len(data))
@@ -20,8 +20,8 @@ class ShowCast(model.Model):
         if len(data) == 8:
             return {
                 'id' : data[0],
-                'showid' : int(data[1]),
-                'actorid' : int(data[2]),
+                'showid' : data[1],
+                'actorid' : data[2],
                 'name' : data[3],
                 'role' : data[4],
                 'thumbnail' : data[5],
@@ -70,7 +70,7 @@ class ShowCast(model.Model):
             ORDR, \
             URL \
             FROM SHOW_CAST \
-            WHERE %s IN (%s)" % (key, ','.join(str(v) for v in mixed))))
+            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
         return logger.logDebug(dbcur.fetchall())
 
     def _save(self, mixed):
@@ -82,8 +82,8 @@ class ShowCast(model.Model):
                 dbcur.execute('PRAGMA encoding="UTF-8";')
                 for k, e in data.iteritems():
                     query = "UPDATE SHOW_CAST SET "
-                    query += "SHOWID = %d, " % data.get('showid') if data.get('showid', False) else "SHOWID = SHOWID, "
-                    query += "ACTORID = %d, " % data.get('castid') if data.get('castid', False) else "ACTORID = ACTORID, "
+                    query += "SHOWID = '%s', " % data.get('showid') if data.get('showid', False) else "SHOWID = SHOWID, "
+                    query += "ACTORID = '%s', " % data.get('castid') if data.get('castid', False) else "ACTORID = ACTORID, "
                     query += "NAME = '%s', " % data.get('name') if data.get('name', False) else "NAME = NAME, "
                     query += "ROLE = '%s', " % data.get('role') if data.get('role', False) else "ROLE = ROLE, "
                     query += "THUMBNAIL = '%s', " % data.get('thumbnail') if data.get('thumbnail', False) else "THUMBNAIL = THUMBNAIL, "
@@ -103,7 +103,7 @@ class ShowCast(model.Model):
             dbcur.execute('PRAGMA encoding="UTF-8";')
             dbcur.execute(logger.logDebug("DELETE FROM SHOW_CAST WHERE ID in ('%s')" % "','".join(ids)))
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO SHOW_CAST VALUES ('%s', %d, %d, '%s', '%s', '%s', %d, '%s')" % (
+                dbcur.execute(logger.logDebug("INSERT INTO SHOW_CAST VALUES ('%s', '%s', '%s', '%s', '%s', '%s', %d, '%s')" % (
                     data.get('id', self.idFormat % (data.get('showid'), data.get('castid'))), 
                     data.get('showid'), 
                     data.get('castid'), 
@@ -147,8 +147,8 @@ class ShowCast(model.Model):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("CREATE TABLE IF NOT EXISTS SHOW_CAST (\
             ID TEXT PRIMARY KEY, \
-            SHOWID INTEGER, \
-            ACTORID INTEGER, \
+            SHOWID TEXT, \
+            ACTORID TEXT, \
             NAME TEXT, \
             ROLE TEXT, \
             THUMBNAIL TEXT, \

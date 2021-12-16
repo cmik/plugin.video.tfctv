@@ -19,7 +19,7 @@
 '''
 
 
-import os,sys,urlparse,urllib,xbmc,time
+import os,sys,urlparse,urllib,xbmc,time,re
 from resources import config
 from resources.lib.libraries import control
 from resources.lib.libraries import cache
@@ -50,6 +50,7 @@ class navigator:
             self.showMainMenu()
     
     def showMainMenu(self):
+        logger.logInfo('called function')
         self.addDirectoryItem(control.lang(50204), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(50204)), isFolder=True, **self.formatMenu())
 
         # if not logged in, ask to log in
@@ -75,8 +76,8 @@ class navigator:
             for s in sections:
                 self.addDirectoryItem(s['name'].title(), str(s['id']), config.SECTIONCONTENT, control.addonFolderIcon(s['name'].title()), isFolder=True, **self.formatMenu())
             
-        if control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != '':
-            self.addDirectoryItem(control.lang(50202), config.uri.get('base'), config.MYACCOUNT, control.addonFolderIcon(control.lang(50202)), isFolder=True, **self.formatMenu())
+        # if control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != '':
+        #     self.addDirectoryItem(control.lang(50202), config.uri.get('base'), config.MYACCOUNT, control.addonFolderIcon(control.lang(50202)), isFolder=True, **self.formatMenu())
 
         if control.setting('exportToLibrary') == 'true':
             self.addDirectoryItem(control.lang(56023), config.uri.get('base'), config.EXPORTEDSHOWS, control.addonFolderIcon(control.lang(56023)), isFolder=True, **self.formatMenu())
@@ -89,46 +90,42 @@ class navigator:
         if tfctv.isLoggedIn() == False:
             control.infoDialog(control.lang(57017), control.lang(50002), time=8000)
             
-    def showMyList(self):   
+    def showMyList(self):
+        logger.logInfo('called function')
         self.addDirectoryItem(control.lang(50213), '/', config.MYLISTSHOWLASTEPISODES, control.addonFolderIcon(control.lang(50213)), isFolder=True, **self.formatMenu())
-        categories = tfctv.getMyListCategories()
-        for c in categories:
-            self.addDirectoryItem(c.get('name'), str(c.get('id')), config.LISTCATEGORY, control.addonFolderIcon(c.get('name')), **self.formatMenu())
+        self.addDirectoryItem(control.lang(50214), '/', config.LISTCATEGORY, control.addonFolderIcon(control.lang(50214)), isFolder=True, **self.formatMenu())
         self.endDirectory()
 
-    def showMyListShowLastEpisodes(self):   
+    def showMyListShowLastEpisodes(self):
+        logger.logInfo('called function') 
         episodes = tfctv.getMylistShowLastEpisodes()
         for e in episodes:
-            title = '%s - %s' % (e.get('show'), e.get('dateaired'))
+            title = e.get('title')
+            title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+            if title_match:
+                title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': title}, **self.formatVideoInfo(e, addToList=False))
         self.endDirectory()
 
-    def showMyListCategory(self, url):   
-        items = tfctv.getMylistCategoryItems(url)
-        for e in items:
-            if e['type'] == 'show':
-                image = e.get('logo') if control.setting('useShowLogo') == 'true' else e.get('image')
-                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SHOWEPISODES, image, isFolder=True, query={'parentid' : str(e.get('parentid')), 'year' : e.get('year')}, **self.formatShowInfo(e, addToList=False))
-            elif e['type'] == 'episode':
-                title = '%s - %s' % (e.get('show'), e.get('dateaired')) # if e.get('type') == 'movie' else '%s - Ep.%s - %s' % (e.get('show'), e.get('episodenumber'), e.get('dateaired'))
-                self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': title}, **self.formatVideoInfo(e, addToList=False))
+    def showMyListCategory(self, url):
+        logger.logInfo('called function')
+        items = tfctv.getMyList()
+        for item in items:
+            image = item.get('logo') if control.setting('useShowLogo') == 'true' else item.get('image')
+            self.addDirectoryItem(item.get('name'), str(item.get('id')), config.SHOWEPISODES, image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
         self.endDirectory()
             
     def showCategories(self):
+        logger.logInfo('called function')
         categories = tfctv.getCategories()
         for c in categories:
-            self.addDirectoryItem(c.get('name'), str(c.get('id')), config.SUBCATEGORIES, control.addonFolderIcon(c.get('name')), isFolder=True, **self.formatMenu())
+            self.addDirectoryItem(c.get('name'), str(c.get('id')), config.SUBCATEGORYSHOWS, control.addonFolderIcon(c.get('name')), isFolder=True, **self.formatMenu())
             
         if control.setting('displayWebsiteSections') == 'true':
             self.endDirectory()
-          
-    def showSubCategories(self, categoryId):
-        subCategories = tfctv.getSubCategories(categoryId)
-        for s in subCategories:
-            self.addDirectoryItem(s.get('name'), str(s.get('id')), config.SUBCATEGORYSHOWS, control.addonFolderIcon(s.get('name')), isFolder=True, **self.formatMenu())
-        self.endDirectory()
        
     def showSubCategoryShows(self, subCategoryId):
+        logger.logInfo('called function')
         shows = tfctv.getShows(subCategoryId)
         if len(shows) > 0:
             self.displayShows(shows)
@@ -136,48 +133,68 @@ class navigator:
             self.endDirectory()
         
     def showWebsiteSectionContent(self, section, page=1):
+        logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
         content = tfctv.getWebsiteSectionContent(section, page, itemsPerPage)
         for e in content:
-            if e['type'] == 'show':
+            if e['ltype'] == 'show':
                 image = e.get('logo') if control.setting('useShowLogo') == 'true' else e.get('image')
                 self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
-            elif e['type'] == 'episode':
-                title = '%s - %s' % (e.get('show'), e.get('dateaired')) # if e.get('type') == 'movie' else '%s - Ep.%s - %s' % (e.get('show'), e.get('episodenumber'), e.get('dateaired'))
-                self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': title}, **self.formatVideoInfo(e))
+            elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream'):
+                title = e.get('name')
+                title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
+                if title_match:
+                    title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
+                self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e['ltype'], 'title': title}, **self.formatVideoInfo(e))
         if len(content) == itemsPerPage:
             self.addDirectoryItem(control.lang(56008), section, config.SECTIONCONTENT, '', page + 1)
         self.endDirectory()
 
     def displayShows(self, shows):
+        logger.logInfo('called function')
         sortedShowInfos = []
         for show in shows:
             image = show['logo'] if control.setting('useShowLogo') == 'true' else show['image']
-            sortedShowInfos.append((show.get('name').lower(), show.get('name'), str(show.get('id')), config.SHOWEPISODES, image, {'parentid' : str(show.get('parentid')), 'year' : show.get('year')}, self.formatShowInfo(show)))
+            if show['ltype'] == 'show':
+                sortedShowInfos.append((show.get('name').lower(), show.get('name'), str(show.get('id')), config.SHOWEPISODES, image, True, {'parentid' : str(show.get('parentid')), 'year' : show.get('year')}, self.formatShowInfo(show)))
+            elif show['ltype'] in ('movie', 'episode', 'documentary', 'livestream'):
+                title = show.get('name')
+                sortedShowInfos.append((title.lower(), title, str(show.get('id')), config.PLAY, show.get('image'), False, {'ltype': show['ltype'], 'title': title}, self.formatVideoInfo(show)))
         
         sortedShowInfos = sorted(sortedShowInfos, key = itemgetter(0))
         for info in sortedShowInfos:
-            self.addDirectoryItem(info[1], info[2], info[3], info[4], isFolder=True, query=info[5], **info[6])
+            self.addDirectoryItem(info[1], info[2], info[3], info[4], isFolder=info[5], query=info[6], **info[7])
                 
         self.endDirectory()
         
-    def showEpisodes(self, showId, page=1, parentId=-1, year=''):
+    def showEpisodes(self, showId, page=1):
+        logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
-        (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, parentId, year, page, itemsPerPage)
-        episodes = sorted(episodes, key=lambda item: item['episodenumber'], reverse=True)
+        (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, page, itemsPerPage)
+        episodes = sorted(episodes, key=lambda item: item['title'], reverse=True)
         for e in episodes:
-            self.addDirectoryItem(e.get('title'), str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': e.get('title')}, **self.formatVideoInfo(e))
+            title = e.get('title')
+            title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+            if title_match:
+                title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
+            self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title')}, **self.formatVideoInfo(e, addToList=False))
         if len(episodes) == itemsPerPage or nextPage == True:
             self.addDirectoryItem(control.lang(56008), showId, config.SHOWEPISODES, '', page + 1)
         self.endDirectory()
 
-    def chooseBandwidth(self, episodeId, title, thumbnail):
-        bandwidths = tfctv.getEpisodeBandwidthList(episodeId, title, thumbnail)
-        for e in sorted(bandwidths, key = itemgetter('bandwidth')):
-            self.addDirectoryItem('%s | %sp | BITRATE %s' % (e.get('title'), e.get('resolution').split('x')[1], e.get('bandwidth')), str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': e.get('title'), 'bandwidth': e.get('bandwidth')}, **self.formatVideoInfo(e))
+    def chooseBandwidth(self, episodeId, title, type, thumbnail):
+        logger.logInfo('called function')
+        bandwidths = tfctv.getEpisodeBandwidthList(episodeId, title, type, thumbnail)
+        for e in bandwidths: # sorted(bandwidths, key = itemgetter('bandwidth')):
+            title = e.get('title')
+            title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+            if title_match:
+                title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
+            self.addDirectoryItem('%s | %sp | %s' % (title, e.get('resolution').split('x')[1], e.get('resolution')), str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title'), 'bandwidth': e.get('bandwidth')}, **self.formatVideoInfo(e))
         self.endDirectory()
 
     def showSearchMenu(self, category):    
+        logger.logInfo('called function')
         if category == 'movieshow':
             self.addDirectoryItem(control.lang(50208), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(50208)), isFolder=True, query='category=%s&type=%s' % (category, 'title'), **self.formatMenu())
             self.addDirectoryItem(control.lang(50209), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(50209)), isFolder=True, query='category=%s&type=%s' % (category, 'category'), **self.formatMenu())
@@ -191,10 +208,11 @@ class navigator:
         else:
              self.addDirectoryItem(control.lang(50205), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(50205)), isFolder=True, query='category=%s' % 'movieshow', **self.formatMenu())
              self.addDirectoryItem(control.lang(50206), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(50206)), isFolder=True, query='category=%s' % 'episode', **self.formatMenu())
-             self.addDirectoryItem(control.lang(50207), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(50207)), isFolder=True, query='category=%s' % 'celebrity', **self.formatMenu())
+            #  self.addDirectoryItem(control.lang(50207), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(50207)), isFolder=True, query='category=%s' % 'celebrity', **self.formatMenu())
         self.endDirectory()
 
     def executeSearch(self, category, type):
+        logger.logInfo('called function')
         if category != False and type != False:
             result = tfctv.enterSearch(category, type)
             if len(result) > 0:
@@ -202,11 +220,16 @@ class navigator:
                     self.displayShows(result)
                     return True
                 elif category == 'episode':
-                    for e in result:
-                        self.addDirectoryItem(e.get('title'), str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title' : e.get('title')}, **self.formatVideoInfo(e))
+                    for e in sorted(result, key=lambda episode: episode['show']):
+                        title = e.get('title')
+                        title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+                        if title_match:
+                            title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
+                        self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title' : title}, **self.formatVideoInfo(e, addToList=False))
         self.endDirectory()
             
     def showMyAccount(self):
+        logger.logInfo('called function')
         tfctv.checkAccountChange(False)
         categories = [
             { 'name' : control.lang(56004), 'url' : config.uri.get('profile'), 'mode' : config.MYINFO },
@@ -219,6 +242,7 @@ class navigator:
         self.endDirectory()
     
     def showMyInfo(self):
+        logger.logInfo('called function')
         loggedIn = tfctv.isLoggedIn()
         message = control.lang(57002)
         if loggedIn == True:
@@ -237,6 +261,7 @@ class navigator:
         control.showMessage(message, control.lang(56001))
     
     def showMySubscription(self):
+        logger.logInfo('called function')
         sub = tfctv.getUserSubscription()
         message = ''
         if sub:
@@ -246,6 +271,7 @@ class navigator:
         control.showMessage(message, control.lang(56002))
         
     def showMyTransactions(self):
+        logger.logInfo('called function')
         transactions = tfctv.getUserTransactions()
         message = ''
         if len(transactions) > 0:
@@ -256,17 +282,21 @@ class navigator:
         control.showMessage(message, control.lang(56003))
 
     def showExportedShows(self):
+        logger.logInfo('called function')
         exported = tfctv.showExportedShowsToLibrary()
         self.displayShows(exported)
 
     def removeShowFromLibrary(self, id, name):
+        logger.logInfo('called function')
         tfctv.removeFromLibrary(id, name)
         control.refresh()
             
     def showTools(self):
+        logger.logInfo('called function')
         self.addDirectoryItem(control.lang(56021), config.uri.get('base'), config.IMPORTALLDB, control.addonFolderIcon(control.lang(56021)))
         self.addDirectoryItem(control.lang(56019), config.uri.get('base'), config.IMPORTSHOWDB, control.addonFolderIcon(control.lang(56019)))
         self.addDirectoryItem(control.lang(56020), config.uri.get('base'), config.IMPORTEPISODEDB, control.addonFolderIcon(control.lang(56020)))
+        self.addDirectoryItem(control.lang(50215), config.uri.get('base'), config.CHECKFORUPDATES, control.addonFolderIcon(control.lang(50215)))
         self.addDirectoryItem(control.lang(56009), config.uri.get('base'), config.RELOADCATALOG, control.addonFolderIcon(control.lang(56009)))
         self.addDirectoryItem(control.lang(56018), config.uri.get('base'), config.RESETCATALOG, control.addonFolderIcon(control.lang(56018)))
         self.addDirectoryItem(control.lang(56017), config.uri.get('base'), config.CHECKLIBRARYUPDATES, control.addonFolderIcon(control.lang(56017)))
@@ -275,46 +305,55 @@ class navigator:
         self.endDirectory()
             
     def firstInstall(self):
+        logger.logInfo('called function')
         if control.setting('showWelcomeMessage') == 'true':
             control.showMessage(control.lang(57016), control.lang(57018))
             control.setSetting('showWelcomeMessage', 'false')
         
         self.addDirectoryItem(control.lang(56025), config.uri.get('base'), config.LOGINWITHTFC, control.addonIcon())
-        self.addDirectoryItem(control.lang(56024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon())
+        if control.setting('FBAppID') != '' or control.setting('FBClientToken') != '':
+            self.addDirectoryItem(control.lang(56024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon())
         self.endDirectory()
 
     def loginWithTFC(self):
+        logger.logInfo('called function')
         control.setSetting('loginType', 'TFC.tv')
         if control.setting('emailAddress') == '':
             if control.setting('showEnterCredentials') == 'true':
+                self.enterCredentials()
                 self.addDirectoryItem(control.lang(56011), config.uri.get('base'), config.ENTERCREDENTIALS, control.addonFolderIcon(control.lang(56011)))
             # self.addDirectoryItem(control.lang(56012) % (' ' if control.setting('showPersonalize') == 'true' else 'x'), config.uri.get('base'), config.PERSONALIZESETTINGS, control.addonFolderIcon(control.lang(56012)))
             # self.addDirectoryItem(control.lang(56013) % (' ' if control.setting('showUpdateCatalog') == 'true' else 'x'), config.uri.get('base'), config.IMPORTALLDB, control.addonFolderIcon(control.lang(56013)))
             self.addDirectoryItem(control.lang(56014) % (control.lang(56015) if control.setting('showEnterCredentials') == 'true' else control.lang(56016)), config.uri.get('base'), config.ENDSETUP, control.addonFolderIcon('Skip'))
             self.endDirectory()
-        else:
-            self.endSetup()
+        # else:
+        self.endSetup()
         
     def enterCredentials(self):
+        logger.logInfo('called function')
         if tfctv.enterCredentials() == True:
             control.setSetting('showEnterCredentials', 'false')
             self.endSetup()
 
     def loginWithFB(self):
+        logger.logInfo('called function')
         control.setSetting('loginType', 'Facebook')
         self.endSetup()
         
     def optimizeLibrary(self):
+        logger.logInfo('called function')
         tfctv.reloadCatalogCache()
         control.setSetting('showUpdateCatalog', 'false')
         control.refresh()
         
     def personalizeSettings(self):
+        logger.logInfo('called function')
         control.openSettings()
         control.setSetting('showPersonalize', 'false')
         control.refresh()
         
     def endSetup(self):
+        logger.logInfo('called function')
         control.setSetting('addonNewInstall', 'false')
         # control.refresh()
         self.showMainMenu()

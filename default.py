@@ -65,21 +65,21 @@ if caller == 'addon' and control.setting('lastVersion') != control.addonInfo('ve
 if mode == None:
     from resources.lib.indexers import navigator
     navigator.navigator().root()
-elif mode == config.SUBCATEGORIES:
-    from resources.lib.indexers import navigator
-    navigator.navigator().showSubCategories(url)
+elif mode == config.CHECKFORUPDATES:
+    from resources.lib.sources import tfctv
+    tfctv.checkCatalogUpdates()
 elif mode == config.SUBCATEGORYSHOWS:
     from resources.lib.indexers import navigator
     navigator.navigator().showSubCategoryShows(url)
 elif mode == config.SHOWEPISODES:
     from resources.lib.indexers import navigator
-    navigator.navigator().showEpisodes(url, page, params.get('parentid', -1), params.get('year', ''))
+    navigator.navigator().showEpisodes(url, page)
 elif mode == config.CHOOSEBANDWIDTH:
     from resources.lib.indexers import navigator
-    navigator.navigator().chooseBandwidth(url, title, thumbnail)
+    navigator.navigator().chooseBandwidth(url, title, params.get('ltype', show), thumbnail)
 elif mode == config.PLAY:
     from resources.lib.sources import tfctv
-    tfctv.playEpisode(url, title, thumbnail, params.get('bandwidth', False))
+    tfctv.playEpisode(url, title, params.get('ltype', show), thumbnail, params.get('bandwidth', False))
 elif mode == config.CATEGORIES:
     from resources.lib.indexers import navigator
     navigator.navigator().showCategories()

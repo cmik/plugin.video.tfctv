@@ -15,11 +15,11 @@ class Show(model.Model):
     def _getStructure(self, data):
         logger.logDebug(len(data))
         logger.logDebug(data)
-        if len(data) == 17:
+        if len(data) == 18:
             return {
-                'id' : int(data[0]),
+                'id' : data[0],
                 'name' : data[1],
-                'parentid' : int(data[2]),
+                'parentid' : data[2],
                 'parentname' : data[3],
                 'logo' : data[4],
                 'image' : data[5],
@@ -34,6 +34,7 @@ class Show(model.Model):
                 'views' : int(data[14]),
                 'rating' : int(data[15]),
                 'votes' : int(data[16]),
+                'mylist' : data[17],
                 'type' : 'show'
                 }
         return {}
@@ -58,7 +59,8 @@ class Show(model.Model):
             DURATION, \
             VIEWS, \
             RATING, \
-            VOTES \
+            VOTES, \
+            MYLIST \
             FROM SHOW \
             WHERE %s %s" % (' AND '.join(where), first)))
         return logger.logDebug(dbcur.fetchall())
@@ -81,7 +83,8 @@ class Show(model.Model):
             DURATION, \
             VIEWS, \
             RATING, \
-            VOTES \
+            VOTES, \
+            MYLIST \
             FROM SHOW"))
         return logger.logDebug(dbcur.fetchall())
          
@@ -103,9 +106,10 @@ class Show(model.Model):
             DURATION, \
             VIEWS, \
             RATING, \
-            VOTES \
+            VOTES, \
+            MYLIST \
             FROM SHOW \
-            WHERE %s IN (%s)" % (key, ','.join(str(v) for v in mixed))))
+            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
         return logger.logDebug(dbcur.fetchall())
 
     def _save(self, mixed):
@@ -132,8 +136,9 @@ class Show(model.Model):
                     query += "DURATION = %d, " % data.get('duration') if data.get('duration', False) else "DURATION = DURATION, "
                     query += "VIEWS = %d, " % data.get('views') if data.get('views', False) else "VIEWS = VIEWS, "
                     query += "RATING = %d, " % data.get('rating') if data.get('rating', False) else "RATING = RATING, "
-                    query += "VOTES = %d " % data.get('votes') if data.get('votes', False) else "VOTES = VOTES "
-                    query += "WHERE ID = %d" % data.get('id')
+                    query += "VOTES = %d " % data.get('votes') if data.get('votes', False) else "VOTES = VOTES, "
+                    query += "MYLIST = '%s' " % data.get('mylist') if data.get('mylist', False) else "MYLIST = MYLIST "
+                    query += "WHERE ID = '%s'" % data.get('id')
                     dbcur.execute(logger.logDebug(query))
         self._dbcon.commit()
         return True
@@ -145,9 +150,9 @@ class Show(model.Model):
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM SHOW WHERE ID in (%s)" % ','.join(ids)))
+            dbcur.execute(logger.logDebug("DELETE FROM SHOW WHERE ID in ('%s')" % "','".join(ids)))
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO SHOW VALUES (%d, '%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d)" % (
+                dbcur.execute(logger.logDebug("INSERT INTO SHOW VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, '%s')" % (
                     data.get('id'), 
                     data.get('name').replace('\'', '\'\''), 
                     data.get('parentid'), 
@@ -164,7 +169,8 @@ class Show(model.Model):
                     data.get('duration', 0), 
                     data.get('views', 0), 
                     data.get('rating', 0), 
-                    data.get('votes', 0))))
+                    data.get('votes', 0), 
+                    data.get('mylist', 'false'))))
             self._dbcon.commit()
             return True
         return False
@@ -178,7 +184,7 @@ class Show(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM SHOW WHERE ID in (%s)" % ','.join(ids)))
+                dbcur.execute(logger.logDebug("DELETE FROM SHOW WHERE ID in ('%s')" % "','".join(ids)))
                 self._dbcon.commit()
                 return True
             except: pass
@@ -202,12 +208,23 @@ class Show(model.Model):
     def searchByYear(self, year, limit=100):
         return self.search({'YEAR' : year}, limit)
 
+    def getMyList(self, limit=100):
+        return self.search({'MYLIST' : 'true'}, limit)
+
+    def getAllCategories(self):
+        dbcur = self.getCursor()
+        dbcur.execute(logger.logDebug("SELECT DISTINCT PARENTNAME FROM SHOW"))
+        ret = []
+        for data in logger.logDebug(dbcur.fetchall()):
+            ret.append(data[0])
+        return ret 
+
     def checkIfTableExists(self):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("CREATE TABLE IF NOT EXISTS SHOW (\
-            ID INTEGER PRIMARY KEY, \
+            ID TEXT PRIMARY KEY, \
             TITLE TEXT, \
-            PARENTID INTEGER, \
+            PARENTID TEXT, \
             PARENTNAME TEXT, \
             THUMBNAIL TEXT, \
             IMAGE TEXT, \
@@ -221,7 +238,8 @@ class Show(model.Model):
             DURATION INTEGER NOT NULL DEFAULT 0, \
             VIEWS INTEGER NOT NULL DEFAULT 0, \
             RATING INTEGER NOT NULL DEFAULT 0, \
-            VOTES INTEGER NOT NULL DEFAULT 0)"))
+            VOTES INTEGER NOT NULL DEFAULT 0, \
+            MYLIST TEXT)"))
         self._dbcon.commit()
         return True
             
