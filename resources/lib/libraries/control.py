@@ -20,14 +20,15 @@
 
 
 import os,xbmc,xbmcaddon,xbmcplugin,xbmcgui,xbmcvfs
-import CommonFunctions as common
+#import CommonFunctions as common
+from bs4 import BeautifulSoup as soup
 from resources.lib.libraries import logger
 
-lang = xbmcaddon.Addon().getLocalizedString
+addon = xbmcaddon.Addon()
 
 settingsCache = {}
-getAddonSetting = xbmcaddon.Addon().getSetting
-setAddonSetting = xbmcaddon.Addon().setSetting
+getAddonSetting = addon.getSetting
+setAddonSetting = addon.setSetting
 def setting(key):
     return settingsCache[key] if key in settingsCache else getAddonSetting(key)
 
@@ -35,7 +36,8 @@ def setSetting(key, value):
     settingsCache[key] = value
     return setAddonSetting(key, value)
 
-addon = xbmcaddon.Addon
+
+lang = addon.getLocalizedString
 
 addItem = xbmcplugin.addDirectoryItem
 
@@ -47,7 +49,7 @@ content = xbmcplugin.setContent
 
 property = xbmcplugin.setProperty
 
-addonInfo = xbmcaddon.Addon().getAddonInfo
+addonInfo = addon.getAddonInfo
 
 logger.plugin = addonInfo('name')
 
@@ -97,15 +99,15 @@ listDir = xbmcvfs.listdir
 
 pathExists = xbmcvfs.exists
 
-transPath = xbmc.translatePath
+transPath = xbmcvfs.translatePath
 
-skinPath = xbmc.translatePath('special://skin/')
+skinPath = transPath('special://skin/')
 
-addonPath = xbmc.translatePath(addonInfo('path'))
+addonPath = transPath(addonInfo('path'))
 
-dataPath = xbmc.translatePath(addonInfo('profile')).decode('utf-8')
+dataPath = transPath(addonInfo('profile'))
 
-homePath = xbmc.translatePath('special://home')
+homePath = transPath('special://home')
 
 settingsFile = os.path.join(dataPath, 'settings.xml')
 
@@ -198,15 +200,15 @@ def infoDialog(message, heading=addonInfo('name'), icon=addonIcon(), time=3000):
     except: execute("Notification(%s, %s, %s, %s)" % (heading, message, time, icon))
 
 
-def yesnoDialog(line1, line2, line3, heading=addonInfo('name'), nolabel='', yeslabel=''):
-    return dialog.yesno(heading, line1, line2, line3, nolabel, yeslabel)
+def yesnoDialog(message, heading=addonInfo('name'), nolabel='', yeslabel=''):
+    return dialog.yesno(heading, message, lang(30020) if not nolabel else nolabel, lang(30021) if not yeslabel else yeslabel)
 
 
 def selectDialog(list, heading=addonInfo('name')):
     return dialog.select(heading, list)
 
     
-def showMessage(message, title = lang(50001)):
+def showMessage(message, title = lang(30001)):
     if not message:
         return
     xbmc.executebuiltin("ActivateWindow(%d)" % 10147)
@@ -215,20 +217,20 @@ def showMessage(message, title = lang(50001)):
     win.getControl(1).setLabel(title)
     win.getControl(5).setText(message)
     
-def confirm(message, line1='', line2='', title=lang(50001)):
+def confirm(message, title=lang(30001)):
     if not message:
         return
-    return yesnoDialog(message, line1, line2, title)  
+    return yesnoDialog(message, title)  
     
 def numpad(message, default=''):
     if not message:
         return
     return dialog.numeric(0, message, default)
     
-def alert(message, line1='', line2='', title=lang(50001)):
+def alert(message, line1='', line2='', title=lang(30001)):
     if not message:
         return
-    return dialog.ok(title, message, line1, line2)
+    return dialog.ok(title, message)
     
 def browse(type, title, shares='files', mask='', useThumbs=False, treatAsFolder=False, defaultt='', enableMultiple=False):
     return dialog.browse(type, title, shares, mask, useThumbs, treatAsFolder, defaultt, enableMultiple)
@@ -239,7 +241,7 @@ def inputText(title, defaultValue=''):
 def inputPassword(title, defaultValue=''):
     return dialog.input(title, defaultValue, xbmcgui.INPUT_ALPHANUM, xbmcgui.ALPHANUM_HIDE_INPUT)
     
-def showNotification(message, title=lang(50001), time=3000):
+def showNotification(message, title=lang(30001), time=3000):
     infoDialog(message, title, addonIcon(), time)
     # xbmc.executebuiltin('Notification(%s, %s)' % (title, message))
 

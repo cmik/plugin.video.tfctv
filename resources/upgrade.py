@@ -36,4 +36,4 @@ def upgradeDB():
 def upgradeSettings():
     if control.addonInfo('version') == '1.5.0': 
         control.setSetting('proxyStreamingUrl', 'http://%s:%s/?url=%s%s')
-        control.showMessage(control.lang(57047), control.lang(50002))
+        control.showMessage(control.lang(37047), control.lang(30002))

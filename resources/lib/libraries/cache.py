@@ -68,4 +68,4 @@ def getCached(cacheType, key, func, refresh=False):
     return logger.logDebug(cached)
     
 def generateHashKey(string):
-    return hashlib.md5(string).hexdigest()
+    return hashlib.md5(string.encode()).hexdigest()

@@ -19,19 +19,15 @@ class Library(model.Model):
         logger.logDebug(data)
         if len(data) == 6:
             try:
-                date = datetime.strptime(data[4], '%Y-%m-%d')
+                lastCheck = time.strptime(data[5], '%Y-%m-%d %H:%M:%S')
             except TypeError:
-                date = datetime(*(time.strptime(data[4], '%Y-%m-%d')[0:6]))
-            try:
-                lastCheck = datetime.strptime(data[5], '%Y-%m-%d %H:%M:%S')
-            except TypeError:
-                lastCheck = datetime(*(time.strptime(data[5], '%Y-%m-%d %H:%M:%S')[0:6]))
+                lastCheck = datetime.datetime(1900, 1, 1)
             return {
-                'id' : int(data[0]), 
+                'id' : data[0], 
                 'name' : data[1], 
-                'parentid' : int(data[2]),
+                'parentid' : data[2],
                 'year' : data[3],
-                'date' : date,
+                'compare' : data[4],
                 'lastCheck' : lastCheck,
                 'inLibrary' : True
                 }
@@ -43,7 +39,7 @@ class Library(model.Model):
             NAME, \
             PARENTID, \
             YEAR, \
-            DATE, \
+            COMPARE, \
             LASTCHECK \
             FROM LIBRARY_SHOW"))
         return logger.logDebug(dbcur.fetchall())
@@ -54,10 +50,10 @@ class Library(model.Model):
             NAME, \
             PARENTID, \
             YEAR, \
-            DATE, \
+            COMPARE, \
             LASTCHECK \
             FROM LIBRARY_SHOW \
-            WHERE %s IN (%s)" % (key, ','.join(str(v) for v in mixed))))
+            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
         return logger.logDebug(dbcur.fetchall())
        
     def _save(self, mixed):
@@ -69,14 +65,14 @@ class Library(model.Model):
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM LIBRARY_SHOW WHERE ID in (%s)" % ','.join(ids)))
+            dbcur.execute(logger.logDebug("DELETE FROM LIBRARY_SHOW WHERE ID in ('%s')" % "','".join(ids)))
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO LIBRARY_SHOW VALUES (%d, '%s', %d, '%s', '%s', '%s')" % (
+                dbcur.execute(logger.logDebug("INSERT INTO LIBRARY_SHOW VALUES ('%s', '%s', '%s', '%s', '%s', '%s')" % (
                     data.get('id'), 
                     data.get('name').replace('\'', '\'\''), 
                     data.get('parentid'),
                     data.get('year'), 
-                    data.get('date'), 
+                    data.get('compare', '0'), 
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'))))
             self._dbcon.commit()
             return True
@@ -88,7 +84,7 @@ class Library(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM LIBRARY_SHOW WHERE ID in (%s)" % ','.join(ids)))
+                dbcur.execute(logger.logDebug("DELETE FROM LIBRARY_SHOW WHERE ID in ('%s')" % "','".join(ids)))
                 self._dbcon.commit()
                 return True
             except: 
@@ -107,11 +103,11 @@ class Library(model.Model):
     def checkIfTableExists(self):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("CREATE TABLE IF NOT EXISTS LIBRARY_SHOW (\
-            ID INTEGER PRIMARY KEY, \
+            ID TEXT PRIMARY KEY, \
             NAME TEXT, \
-            PARENTID INTEGER, \
+            PARENTID TEXT, \
             YEAR TEXT, \
-            DATE TEXT, \
+            COMPARE TEXT, \
             LASTCHECK TEXT)"))
         self._dbcon.commit()
         return True

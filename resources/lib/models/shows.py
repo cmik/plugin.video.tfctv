@@ -41,7 +41,7 @@ class Show(model.Model):
     
     def _search(self, search, limit):
         dbcur = self.getCursor()
-        where = ["%s LIKE '%%%s%%'" % (str(k), str(v)) for k,v in search.iteritems()]
+        where = ["%s LIKE '%%%s%%'" % (str(k), str(v)) for k,v in search.items()]
         first = 'LIMIT %d' % int(limit) if limit != False else ''
         dbcur.execute(logger.logDebug("SELECT ID, \
             TITLE, \
@@ -90,7 +90,7 @@ class Show(model.Model):
          
     def _retrieve(self, mixed, key):
         dbcur = self.getCursor()
-        dbcur.execute(logger.logDebug("SELECT ID, \
+        dbcur.execute(logger.logInfo("SELECT ID, \
             TITLE, \
             PARENTID, \
             PARENTNAME, \
@@ -119,7 +119,7 @@ class Show(model.Model):
             if 'id' in data:
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')
-                for k, e in data.iteritems():
+                for k, e in data.items():
                     query = "UPDATE SHOW SET "
                     query += "TITLE = '%s', " % data.get('name') if data.get('name', False) else "TITLE = TITLE, "
                     query += "PARENTID = '%s', " % data.get('parentid') if data.get('parentid', False) else "PARENTID = PARENTID, "

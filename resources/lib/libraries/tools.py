@@ -9,20 +9,19 @@ import os,xbmcvfs
 from resources import config
 from resources.lib.libraries import control
 
-common = control.common
 logger = control.logger
 
 def importShowDB():
     fileSource = logger.logInfo(control.browse(1, 'Select your shows DB file', 'files', '.db'))
     if (fileSource != ''):
         logger.logInfo(xbmcvfs.copy(fileSource, control.showsFile))
-        control.showNotification(control.lang(57040), control.lang(50010))
+        control.showNotification(control.lang(37040), control.lang(30010))
 
 def importEpisodeDB():
     fileSource = logger.logInfo(control.browse(1, 'Select your episodes DB file', 'files', '.db'))
     if (fileSource != ''):
         logger.logInfo(xbmcvfs.copy(fileSource, control.episodesFile))
-        control.showNotification(control.lang(57040), control.lang(50010))
+        control.showNotification(control.lang(37040), control.lang(30010))
 
 def importDBFiles():
     status = True
@@ -48,9 +47,9 @@ def importDBFiles():
         pass
     if status is True:
         control.setSetting('showUpdateCatalog', 'false')
-        control.showNotification(control.lang(57003), control.lang(50010))
+        control.showNotification(control.lang(37003), control.lang(30010))
     else:
-        control.showNotification(control.lang(57027), control.lang(50004))
+        control.showNotification(control.lang(37027), control.lang(30004))
     return status
 
 def deleteDBFiles():
@@ -73,7 +72,7 @@ def deleteDBFiles():
     return status
 
 def checkInstallDB(refresh=False):
-    control.showNotification(control.lang(50005))
+    control.showNotification(control.lang(30005))
     isInstalled = isDBInstalled()
     
     if refresh == True and isInstalled == True:

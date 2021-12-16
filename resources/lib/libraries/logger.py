@@ -18,7 +18,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import xbmc,inspect,os
+import xbmc
+from inspect import stack as getStack
+from os import path
 
 LOGDEBUG = 7
 LOGINFO = 6
@@ -49,17 +51,17 @@ def setLevel(level):
 def log(mixed, level=defaultLogLevel, subFonc=False):
     stackSubLevel = 1 if not subFonc else 2
     if status and logLevel >= level:
-        xbmcLogLevel = xbmc.LOGNOTICE
+        xbmcLogLevel = xbmc.LOGINFO
         if level == LOGWARNING:     
             xbmcLogLevel = xbmc.LOGWARNING        
         if level == LOGERROR:     
             xbmcLogLevel = xbmc.LOGERROR
         
-        stack = inspect.stack()
+        stack = getStack()
         try:
-            xbmc.log((u"[%s] %s :%s @%s : '%s'" % (plugin, os.path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], mixed)).decode("utf-8"), xbmcLogLevel)
+            xbmc.log(u"[%s] %s :%s @%s : '%s'" % (plugin, path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], mixed), xbmcLogLevel)
         except:
-            xbmc.log(u"[%s] %s : '%s'" % (plugin, os.path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], repr(mixed)), xbmcLogLevel)
+            xbmc.log(u"[%s] %s : '%s'" % (plugin, path.basename(stack[stackSubLevel][1]), stack[stackSubLevel][2], stack[stackSubLevel][3], repr(mixed)), xbmcLogLevel)
     return mixed
             
 def logDebug(mixed):

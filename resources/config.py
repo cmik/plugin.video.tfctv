@@ -22,10 +22,9 @@ websiteUrl = 'https://www.iwanttfc.com'
 websiteSecuredUrl = 'https://www.iwanttfc.com'
 websiteCDNUrl = 'https://img.tfc.tv'
 Facebook = {
-#    'appIdentifier' : '1393656554318534|c48cd90c2848791fa2b04c735fbe7ca9',
-    'login' : 'https://graph.facebook.com/v2.6/device/login',
-    'status' : 'https://graph.facebook.com/v2.6/device/login_status',
-    'info' : 'https://graph.facebook.com/v2.3/me'
+    'login' : 'https://graph.facebook.com/v12.0/device/login',
+    'status' : 'https://graph.facebook.com/v12.0/device/login_status',
+    'info' : 'https://graph.facebook.com/v12.0/me'
 }
 uri = {
     'base' : '/',
@@ -34,12 +33,14 @@ uri = {
     'profile' : 'https://purchase.iwanttfc.com/proxy',
     'licence' : '/api/1.0/license?itemID=%s',
     'livestream' : '/api/1.0/stream?streamID=%s',
+    'devices' : '/api/1.0/user/devices',
+    'deleteDevice' : '/api/1.0/user/devices?action=delete&deviceID=%s',
     'profileDetails' : '/profile/details',
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
     'ssoLogin' : '/sso/api/sso.login?include=profile,loginIDs,data,password',
     'login' : '/api/1.0/user/auth',
-    'socialLogin' : '/user/sociallogin?accesstoken=%s',
+    'socialLogin' : '/api/1.0/user/auth',
     'callback' : '/callback',
     'authSSO' : '/sso/authenticate',
     'checkSSO' : '/sso/checksession',
@@ -84,7 +85,9 @@ MYACCOUNT = 12
 MYINFO = 13
 MYSUBSCRIPTIONS = 14
 MYTRANSACTIONS = 15
-LOGOUT = 16
+MYDEVICES = 16
+INFODEVICE = 17
+LOGOUT = 18
 MYLISTSHOWLASTEPISODES = 19
 MYLIST = 20
 LISTCATEGORY = 21

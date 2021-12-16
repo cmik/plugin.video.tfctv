@@ -5,18 +5,18 @@
     Copyright (C) 2018 cmik
 '''
 
-import os,sys,re,urllib,urllib2,ssl,cookielib,json,datetime,time,hashlib,inputstreamhelper
+import os,sys,re,ssl,json,datetime,time,hashlib
+import http.cookiejar as cookielib
+import inputstreamhelper
 from unidecode import unidecode
+from urllib import request as libRequest
+from urllib.parse import urlencode,quote,quote_plus
 from operator import itemgetter
 from resources import config
-from resources.lib.libraries import control
-from resources.lib.libraries import cache
-from resources.lib.models import episodes
-from resources.lib.models import shows
-from resources.lib.models import library
-from resources.lib.models import showcast
+from resources.lib.libraries import control,cache
+from resources.lib.models import episodes,shows,library,showcast
 
-common = control.common
+bs = control.soup
 logger = control.logger
 
 # Load DB
@@ -37,11 +37,11 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
     if checkProxy() == True:
         # Check if logged in
         if control.setting('emailAddress') != '' and isLoggedIn() == False:
-            control.showNotification(control.lang(57012), control.lang(50002))
+            control.showNotification(control.lang(37012), control.lang(30002))
             login()
             
         # for i in range(int(control.setting('loginRetries')) + 1):
-            # episodeDetails = getMediaInfo(episodeId, name, thumbnail)
+            # episodeDetails = getMediaInfo(episode, name, thumbnail)
             # if episodeDetails and 'errorCode' in episodeDetails and episodeDetails['errorCode'] == 0 and 'data' in episodeDetails:
                 # break
             # else:
@@ -51,12 +51,19 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
         logger.logDebug(episodeDetails)
         if episodeDetails and 'errorCode' in episodeDetails and episodeDetails['errorCode'] == 0 and 'data' in episodeDetails:
             if 'preview' in episodeDetails['data'] and episodeDetails['data']['preview'] == True:
-                control.infoDialog(control.lang(57025), control.lang(50002), time=5000)
+                control.infoDialog(control.lang(37025), control.lang(30002), time=5000)
             elif 'StatusMessage' in episodeDetails and episodeDetails['StatusMessage'] != '':
-                control.showNotification(episodeDetails['StatusMessage'], control.lang(50009))
+                control.showNotification(episodeDetails['StatusMessage'], control.lang(30009))
             
-            url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote(episodeDetails['data']['uri']), '') if not episodeDetails.get('disableProxy', False) and not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
-            liz = control.item(name, path=url+'|User-Agent=%s' % (config.userAgents['default']), thumbnailImage=thumbnail, iconImage="DefaultVideo.png")
+            url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), quote(episodeDetails['data']['uri']), '') if not episodeDetails.get('disableProxy', False) and not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
+            kodiurl = url+'|Origin=%s&Referer=%s&User-Agent=%s&Sec-Fetch-Mode=cors' % (config.websiteUrl, config.websiteUrl+'/', config.userAgents['default'])
+            # '|User-Agent=%s' % (config.userAgents['default']))
+            if ('tfcmsl.akamaized.net' in url): 
+                kodiurl = kodiurl + '&Sec-Fetch-Dest=empty&Sec-Fetch-Site=cross-site'
+            else:
+                kodiurl = kodiurl + '&Accept=*/*,akamai/media-acceleration-sdk;b=1702200;v=1.2.2;p=javascript'
+            liz = control.item(name, path=kodiurl)
+            liz.setArt({'thumb':thumbnail, 'icon':"DefaultVideo.png"})
             liz.setInfo(type='video', infoLabels={
                 'title': name, 
                 'sorttitle' : episodeDetails['data']['dateaired'],
@@ -89,7 +96,7 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
 
                 is_helper = inputstreamhelper.Helper(protocol, drm=drm)
                 is_helper.check_inputstream()
-                liz.setProperty('inputstreamaddon', 'inputstream.adaptive')
+                liz.setProperty('inputstream', 'inputstream.adaptive')
                 liz.setProperty('inputstream.adaptive.manifest_type', protocol)
                 liz.setProperty('inputstream.adaptive.license_type', drm)
                 liz.setProperty('inputstream.adaptive.stream_headers','Origin=%s&Referer=%s&User-Agent=%s&cache-control=no-cache&pragma=no-cache&sec-fetch-mode=cors&sec-fetch-site=cross-site' % (config.websiteUrl, config.websiteUrl+'/', config.userAgents['default']))
@@ -103,13 +110,13 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             try: 
                 return control.resolve(thisPlugin, True, liz)
             except: 
-                control.showNotification(control.lang(57032), control.lang(50004))
+                control.showNotification(control.lang(37032), control.lang(30004))
         elif (not episodeDetails) or (episodeDetails and 'errorCode' in episodeDetails and episodeDetails['errorCode'] != 0):
             logger.logNotice(episodeDetails['StatusMessage'])
             if 'StatusMessage' in episodeDetails:
-                control.showNotification(episodeDetails['StatusMessage'], control.lang(50004))
+                control.showNotification(episodeDetails['StatusMessage'], control.lang(30004))
             else:
-                control.showNotification(control.lang(57001), control.lang(50009))
+                control.showNotification(control.lang(37001), control.lang(30009))
     return False
     
 def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
@@ -191,17 +198,17 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
     episode = {}
     if type == 'show':
         logger.logInfo('episode')
-        episode = logger.logInfo(getEpisode(episodeId))
+        episode = logger.logDebug(getEpisode(episodeId))
     elif type == 'livestream':
         logger.logInfo('livestream')
-        episode = logger.logInfo(getEpisodeFromLiveStream(episodeId))
+        episode = logger.logDebug(getEpisodeFromLiveStream(episodeId))
         liveStream = True
     else:
         logger.logInfo(type)
-        episode = logger.logInfo(getEpisodeFromShow(episodeId))
+        episode = logger.logDebug(getEpisodeFromShow(episodeId))
 
     if episode.get('id', True) == True:
-        mediaInfo['StatusMessage'] = control.lang(57032)
+        mediaInfo['StatusMessage'] = control.lang(37032)
         mediaInfo['errorCode'] = 2
     else :
         show = logger.logInfo(episode.get('showObj', {}))
@@ -214,11 +221,11 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
         if episode.get('parentalAdvisory') == 'true':
             mediaInfo['data']['parentalAdvisory'] = 'true'
             if control.setting('parentalAdvisoryCheck') == 'true':
-                control.alert(control.lang(57011),title=control.lang(50003))
+                control.alert(control.lang(37011),title=control.lang(30003))
             if control.setting('parentalControl') == 'true':
-                code = control.numpad(control.lang(57021))
+                code = control.numpad(control.lang(37021))
                 if code != control.setting('parentalCode'):
-                    mediaInfo['StatusMessage'] = control.lang(57022)
+                    mediaInfo['StatusMessage'] = control.lang(37022)
                     mediaInfo['errorCode'] = 3
                     mediaInfo['data'] = {}
                     return mediaInfo
@@ -226,7 +233,7 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
         # check if amssabscbn.akamaized.net to use inputstream.adaptive
 
         if 'mpds' in episode.get('media', {}):
-            # mediaInfo['StatusMessage'] = control.lang(57038)
+            # mediaInfo['StatusMessage'] = control.lang(37038)
             # mediaInfo['errorCode'] = 5
 
             mediaInfo['useDash'] = True
@@ -248,41 +255,41 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
             mediaInfo['dash'] = {
                 'type': 'com.widevine.alpha',
                 'headers': headers,
-                'key': control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), urllib.quote_plus(config.websiteUrl + config.uri.get('licence') % episodeId), '')
+                'key': control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), quote_plus(config.websiteUrl + config.uri.get('licence') % episodeId), '')
                 }
                 
-        #     logger.logDebug(m3u8)
-        #     if m3u8:
-        #         lines = m3u8.split('\n')
-        #         i = 0
-        #         bestBandwidth = 0
-        #         choosedStream = ''
-        #         for l in lines:
-        #             bw_match = re.compile('BANDWIDTH=([0-9]+)', re.IGNORECASE).search(lines[i])
-        #             if bw_match :
-        #                 currentBandwidth = int(bw_match.group(1))
-        #                 res_match = re.compile('RESOLUTION=([0-9]+x[0-9]+)', re.IGNORECASE).search(lines[i])
-        #                 if res_match :
-        #                     mediaInfo['data']['bandwidth'][str(currentBandwidth)] = res_match.group(1)
-        #                 if bandwidth != False and currentBandwidth == int(bandwidth):
-        #                     choosedStream = lines[i+1]
-        #                     break
-        #                 elif currentBandwidth > bestBandwidth:
-        #                     bestBandwidth = currentBandwidth
-        #                     choosedStream = lines[i+1]
-        #                 i+=2
-        #             else:
-        #                 i+=1
+            # logger.logDebug(m3u8)
+            # if m3u8:
+            #     lines = m3u8.split('\n')
+            #     i = 0
+            #     bestBandwidth = 0
+            #     choosedStream = ''
+            #     for l in lines:
+            #         bw_match = re.compile('BANDWIDTH=([0-9]+)', re.IGNORECASE).search(lines[i])
+            #         if bw_match :
+            #             currentBandwidth = int(bw_match.group(1))
+            #             res_match = re.compile('RESOLUTION=([0-9]+x[0-9]+)', re.IGNORECASE).search(lines[i])
+            #             if res_match :
+            #                 mediaInfo['data']['bandwidth'][str(currentBandwidth)] = res_match.group(1)
+            #             if bandwidth != False and currentBandwidth == int(bandwidth):
+            #                 choosedStream = lines[i+1]
+            #                 break
+            #             elif currentBandwidth > bestBandwidth:
+            #                 bestBandwidth = currentBandwidth
+            #                 choosedStream = lines[i+1]
+            #             i+=2
+            #         else:
+            #             i+=1
 
-        #             if i >= len(lines):
-        #                 break
+            #         if i >= len(lines):
+            #             break
 
-        #         if (control.setting('chooseBestStream') == 'true' or bandwidth != False): # and liveStream == False: 
-        #             logger.logInfo(choosedStream)
-        #             mediaInfo['data']['uri'] = choosedStream
-        #     else:
-        #         mediaInfo['StatusMessage'] = control.lang(57032)
-        #         mediaInfo['errorCode'] = 9
+            #     if (control.setting('chooseBestStream') == 'true' or bandwidth != False): # and liveStream == False: 
+            #         logger.logInfo(choosedStream)
+            #         mediaInfo['data']['uri'] = choosedStream
+        else:
+            mediaInfo['StatusMessage'] = control.lang(37032)
+            mediaInfo['errorCode'] = 9
 
         mediaInfo['data'].update(episode.get('media'))
         mediaInfo['data']['preview'] = False
@@ -322,22 +329,22 @@ def resetCatalogCache():
     logger.logInfo('called function')
     episodeDB.drop()
     showDB.drop()
-    control.showNotification(control.lang(57039), control.lang(50010))
+    control.showNotification(control.lang(37039), control.lang(30010))
     reloadCatalogCache()
 
 def reloadCatalogCache():
     logger.logInfo('called function')
     updateEpisodes = False
-    if (control.confirm(control.lang(57035), line1=control.lang(57036), title=control.lang(50402))):
+    if (control.confirm('%s\n%s' % (control.lang(37035), control.lang(37036)), title=control.lang(30402))):
         updateEpisodes = True
     if updateCatalogCache(updateEpisodes) is True:
-        control.showNotification(control.lang(57003), control.lang(50010))
+        control.showNotification(control.lang(37003), control.lang(30010))
     else:
-        control.showNotification(control.lang(57027), control.lang(50004))
+        control.showNotification(control.lang(37027), control.lang(30004))
     
 def updateCatalogCache(loadEpisodes=False):
     logger.logInfo('called function')
-    control.showNotification(control.lang(57015), control.lang(50005))
+    control.showNotification(control.lang(37015), control.lang(30005))
     cache.longCache.cacheClean(True) 
     cache.shortCache.cacheClean(True)
     
@@ -345,15 +352,15 @@ def updateCatalogCache(loadEpisodes=False):
     elaps = start = time.time()
     
     try:
-        control.showNotification(control.lang(57014), control.lang(50005))
-        # update by items
+        # update sections cache
         # if control.setting('displayWebsiteSections') == 'true':
-            # control.showNotification(control.lang(57013))
+            # control.showNotification(control.lang(37013))
             # sections = cache.sCacheFunction(getWebsiteHomeSections)
             # for section in sections:
                 # cache.sCacheFunction(getWebsiteSectionContent, section['id'])
-
+        
         # update categories cache
+        control.showNotification(control.lang(37014), control.lang(30005))
         # categories = cache.lCacheFunction(getCategories)
         categories = getWebsiteHomeSections()
         nbCat = len(categories)
@@ -389,7 +396,7 @@ def updateCatalogCache(loadEpisodes=False):
                 showpercent = 100 * j / nbItems
                 percent = part * 100 * (1 + 1 * (catpercent + (cat1percent * (cat1percent * showpercent / 100) / 100)))
                 logger.logNotice('Updating catalog... %s' % (str(percent)+'%'))
-                control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(50005), icon=control.addonIcon(), time=10000)
+                control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
         i+=1
         
     return True
@@ -424,7 +431,7 @@ def checkCatalogUpdates(loadEpisodes=True):
             start = time.time()
             percent = 100 * k / nbItems
             logger.logNotice('Updating catalog... %s' % (str(percent)+'%'))
-            control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(50005), icon=control.addonIcon(), time=10000)
+            control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
         k+=1
 
     return True
@@ -480,16 +487,42 @@ def getSettings(refresh=False):
 
     if not settingJson or refresh == True:
         logger.logDebug('Update settings')
-        html = callServiceApi(config.uri.get('base'), base_url=config.websiteUrl, useCache=False)
-        scriptUrlMatch = re.compile('<script src="(((https://.+/c/6/)catalog/.+/)script\.js)"></script>', re.IGNORECASE).search(html)
+        html = callServiceApi(
+            config.uri.get('base'), 
+            headers=[
+                ('Referer', config.websiteSecuredUrl+'/'),
+                ('Origin', config.websiteSecuredUrl),
+                ('Cache-Control', 'no-cache'),
+                ('Pragma', 'no-cache'),
+                ('Sec-Fetch-Dest', 'script'),
+                ('Sec-Fetch-Mode', 'no-cors'),
+                ('Sec-Fetch-Site', 'cross-site')
+                ],
+            base_url=config.websiteUrl, 
+            useCache=False if refresh is True else False
+            )
+        scriptUrlMatch = re.compile('<script src="(((https://.+/c/6/)catalog/.+/)script\.js)"></script>', re.IGNORECASE).search(html.decode('utf-8'))
         if scriptUrlMatch:
             scriptUrl = scriptUrlMatch.group(1)
             catalogBasePath = scriptUrlMatch.group(2)
             basePath = scriptUrlMatch.group(3)
             control.setSetting('catalogBasePath', catalogBasePath);
             control.setSetting('basePath', basePath);
-            scriptContent = callServiceApi(scriptUrl, base_url='', useCache=False)
-            settingMatch = re.compile('var index = (\{[^\r\n]+\});', re.IGNORECASE).search(scriptContent)
+            scriptContent = callServiceApi(
+                scriptUrl, 
+                headers=[
+                    ('Referer', config.websiteSecuredUrl+'/'),
+                    ('Origin', config.websiteSecuredUrl),
+                    ('Cache-Control', 'no-cache'),
+                    ('Pragma', 'no-cache'),
+                    ('Sec-Fetch-Dest', 'script'),
+                    ('Sec-Fetch-Mode', 'no-cors'),
+                    ('Sec-Fetch-Site', 'cross-site')
+                    ],
+                base_url='',
+                useCache=False if refresh is True else False
+                )
+            settingMatch = re.compile('var index = (\{[^\r\n]+\});', re.IGNORECASE).search(scriptContent.decode('utf-8'))
             if settingMatch:
                 settingJson = re.sub(r"<\w+>", "%s", settingMatch.group(1))
                 control.setSetting('iwanttfc_settings', settingJson)
@@ -510,7 +543,16 @@ def loadSettings(refresh=False):
 def getHomeCatalog(refresh=False):
     logger.logInfo('called function')
     catalogKey = 'catalog-%s' % datetime.datetime.now().strftime('%Y%m%d%H')
-    catalogJson = cache.getCached(cache.shortCache, catalogKey, lambda: json.dumps(callJsonApi(config.uri.get('catalog'), base_url=control.setting('basePath'), useCache=False)), refresh)
+    header=[
+        ('Referer', config.websiteSecuredUrl+'/'),
+        ('Origin', config.websiteSecuredUrl),
+        ('Cache-Control', 'no-cache'),
+        ('Pragma', 'no-cache'),
+        ('Sec-Fetch-Dest', 'script'),
+        ('Sec-Fetch-Mode', 'no-cors'),
+        ('Sec-Fetch-Site', 'cross-site')
+        ]
+    catalogJson = cache.getCached(cache.shortCache, catalogKey, lambda: json.dumps(callJsonApi(config.uri.get('catalog'), headers=header, base_url=control.setting('basePath'), useCache=False)), refresh)
     return {} if catalogJson is None else json.loads(catalogJson)
 
 def getWebsiteHomeSections():
@@ -573,18 +615,17 @@ def getItemData(id):
     if len(res) == 1:
         return res[0]
     else:
-        showName = common.replaceHTMLCodes(common.parseDOM(html, "h3", attrs = { 'class' : 'show-cover-thumb-title-mobile' })[0])
-        try:image = common.parseDOM(html, "div", attrs = { 'class' : 'show-cover' }, ret = 'data-src')[0]
-        except:image = common.parseDOM(html, "div", attrs = { 'class' : 'show-cover lazy' }, ret = 'data-src')[0]
-        dateAired = common.parseDOM(html, "h4", attrs = { 'class' : 'show-cover-thumb-aired-mobile' })
+        showName = html.find("h3", attrs = { 'class' : 'show-cover-thumb-title-mobile' }).get_text()
+        try:image = html.find("div", attrs = { 'class' : 'show-cover' })['data-src']
+        except:image = html.find("div", attrs = { 'class' : 'show-cover lazy' })['data-src']
+        dateAired = html.find("h4", attrs = { 'class' : 'show-cover-thumb-aired-mobile' })
         
         year = ''
         episodeNumber = 0
-        description = ''
         episodeName = ''
         
-        if dateAired and len(dateAired) > 0:
-            episodeName = dateAired[0]
+        if dateAired:
+            episodeName = dateAired.get_text()
             year = episodeName.split(', ')[1]
 
         try:
@@ -596,7 +637,7 @@ def getItemData(id):
             'id' : int(episodeId), 
             'parentid' : -1,
             'parentname' : '',
-            'title' : common.replaceHTMLCodes('%s - %s' % (showName, episodeName)), 
+            'title' : '%s - %s' % (showName, episodeName), 
             'show' : showName, 
             'image' : image, 
             'episodenumber' : episodeNumber,
@@ -627,7 +668,19 @@ def getShow(id, withEpisodes=False):
         res[0]['actors'] = actors
         data = res[0]
     else:
-        show = callJsonApi(config.uri.get('item') % id, base_url=control.setting('basePath'), useCache=False)
+        show = callJsonApi(
+            config.uri.get('item') % id,
+            headers=[
+                ('Referer', config.websiteSecuredUrl+'/'),
+                ('Origin', config.websiteSecuredUrl),
+                ('Cache-Control', 'no-cache'),
+                ('Pragma', 'no-cache'),
+                ('Sec-Fetch-Dest', 'script'),
+                ('Sec-Fetch-Mode', 'no-cors'),
+                ('Sec-Fetch-Site', 'cross-site')
+                ],
+            base_url=control.setting('basePath'),
+            useCache=False)
         logger.logInfo(control.setting('basePath') + config.uri.get('item') % id)
         if show:
             name = unicodetoascii(show.get('title', {}).get('en', ''))
@@ -638,7 +691,19 @@ def getShow(id, withEpisodes=False):
             genres = show.get('tags', {}).get('tag_id_genres', [])
             genreLabels = []
             for genre in genres:
-                label = callJsonApi(config.uri.get('value') % genre, base_url=control.setting('basePath'), useCache=True)
+                label = callJsonApi(
+                    config.uri.get('value') % genre,
+                    headers=[
+                        ('Referer', config.websiteSecuredUrl+'/'),
+                        ('Origin', config.websiteSecuredUrl),
+                        ('Cache-Control', 'no-cache'),
+                        ('Pragma', 'no-cache'),
+                        ('Sec-Fetch-Dest', 'script'),
+                        ('Sec-Fetch-Mode', 'no-cors'),
+                        ('Sec-Fetch-Site', 'cross-site')
+                        ],
+                    base_url=control.setting('basePath'),
+                    useCache=True)
                 if 'en' in label:
                     genreLabels.append(label.get('en'))
             type = 'show'
@@ -661,7 +726,19 @@ def getShow(id, withEpisodes=False):
                     actor[0]['order'] = i
                     actors.append(actor[0])
                 else:
-                    cast = callJsonApi(config.uri.get('value') % castId, base_url=control.setting('basePath'), useCache=True)
+                    cast = callJsonApi(
+                        config.uri.get('value') % castId,
+                        headers=[
+                            ('Referer', config.websiteSecuredUrl+'/'),
+                            ('Origin', config.websiteSecuredUrl),
+                            ('Cache-Control', 'no-cache'),
+                            ('Pragma', 'no-cache'),
+                            ('Sec-Fetch-Dest', 'script'),
+                            ('Sec-Fetch-Mode', 'no-cors'),
+                            ('Sec-Fetch-Site', 'cross-site')
+                            ],
+                        base_url=control.setting('basePath'),
+                        useCache=True)
                     logger.logInfo(cast)
                     castName = unicodetoascii(cast.get('en', ''))
                     castUrl = ''
@@ -802,7 +879,19 @@ def getEpisodesPerPage(showId, page=1, itemsPerPage=8, order='desc'):
                         e['showObj'] = show
                     data.append(e)
                 else:
-                    episode = callJsonApi(config.uri.get('item') % episodeData.get('id'), base_url = control.setting('basePath'), useCache = False)
+                    episode = callJsonApi(
+                        config.uri.get('item') % episodeData.get('id'),
+                        headers=[
+                            ('Referer', config.websiteSecuredUrl+'/'),
+                            ('Origin', config.websiteSecuredUrl),
+                            ('Cache-Control', 'no-cache'),
+                            ('Pragma', 'no-cache'),
+                            ('Sec-Fetch-Dest', 'script'),
+                            ('Sec-Fetch-Mode', 'no-cors'),
+                            ('Sec-Fetch-Site', 'cross-site')
+                            ],
+                        base_url = control.setting('basePath'),
+                        useCache = False)
                     image = control.setting('basePath') + config.uri.get('images') % episode.get('thumbnail') if episode.get('thumbnail', '') != '' else ''
                     description = unicodetoascii(episode.get('description', {}).get('en', ''))
                     e = {
@@ -827,23 +916,56 @@ def getEpisodesPerPage(showId, page=1, itemsPerPage=8, order='desc'):
                     episodeDB.set(e)
                     data.append(e)
 
-    # return (sorted(data, key=lambda episode: episode['title'], reverse=True), hasNextPage)
+    # return sorted(data, key=lambda episode: episode['title'], reverse=True)
     return (data, hasNextPage)
          
 def getEpisode(id, show={}):
     logger.logInfo('called function with param (%s)' % id)
     data = {}
     
-    episode = callJsonApi(config.uri.get('item') % id, base_url = control.setting('basePath'), useCache = False)
+    episode = callJsonApi(
+        config.uri.get('item') % id,
+        headers=[
+            ('Referer', config.websiteSecuredUrl+'/'),
+            ('Origin', config.websiteSecuredUrl),
+            ('Cache-Control', 'no-cache'),
+            ('Pragma', 'no-cache'),
+            ('Sec-Fetch-Dest', 'script'),
+            ('Sec-Fetch-Mode', 'no-cors'),
+            ('Sec-Fetch-Site', 'cross-site')
+            ],
+        base_url = control.setting('basePath'), 
+        useCache = False
+        )
     if episode.get('id', False):
         parent = episode.get('parents', []).pop(0)
         if show == {} and type(parent) is dict:
             show = getShow(parent.get('id', ''))
+        title = unicodetoascii(episode.get('title', {}).get('en', id))
         image = control.setting('basePath') + config.uri.get('images') % episode.get('thumbnail') if episode.get('thumbnail', '') != '' else ''
         description = unicodetoascii(episode.get('description', {}).get('en', ''))
+        dateaired = ''
+        date = ''
+        
+        # check if aired date in title
+        logger.logInfo(title)
+        dateaired_match = re.compile('([a-z-A-Z]+ \d+, \d{4})', re.IGNORECASE).search(title)
+        if dateaired_match :
+            dateAiredString = dateaired_match.group(1)
+            logger.logInfo(dateAiredString)
+            try:
+                logger.logInfo('here')
+                datePublished = time.strptime(dateAiredString, '%B %d, %Y')
+            except:
+                logger.logInfo('there')
+                datePublished = time.strptime(dateAiredString, '%b %d, %Y')
+            logger.logInfo(datePublished)
+            dateaired = time.strftime('%B %d, %Y', datePublished)
+            date = time.strftime('%Y-%m-%d', datePublished)
+
         data = {
             'id' : id,
-            'title' : unicodetoascii(episode.get('title', {}).get('en', id)),
+            'title' : title,
             'parentid' : show.get('id'),
             'show' : show.get('name', ''),
             'image' : image,
@@ -852,8 +974,8 @@ def getEpisode(id, show={}):
             'url' : id,
             'description' : description,
             'shortdescription' : description,
-            'dateaired' : '',
-            'date' : '',
+            'dateaired' : dateaired,
+            'date' : date,
             'year' : show.get('year', ''),
             'parentalAdvisory' : show.get('parentalAdvisory'),
             'showObj' : show,
@@ -867,8 +989,8 @@ def getEpisode(id, show={}):
             data = res[0]
         episodeDB.set(data)
         data['media']['id'] = episode.get('mediaID')
-                
-    return data
+    
+    return logger.logInfo(data)
 
 def getEpisodeFromShow(id):
     logger.logInfo('called function with param (%s)' % id)
@@ -950,13 +1072,26 @@ def getEpisodeFromLiveStream(id):
 def getUserInfo():
     logger.logInfo('called function')
     url = config.uri.get('profile')
-    html = callJsonApi(url, params={'data': control.setting('iWantUserAuthentication')}, base_url='', useCache = False)
+    html = callJsonApi(
+        url, 
+        params={'data': control.setting('iWantUserAuthentication')}, 
+        headers=[
+            ('Referer', config.websiteSecuredUrl+'/'),
+            ('Origin', config.websiteSecuredUrl),
+            ('Cache-Control', 'no-cache'),
+            ('Pragma', 'no-cache'),
+            ('Sec-Fetch-Dest', 'script'),
+            ('Sec-Fetch-Mode', 'no-cors'),
+            ('Sec-Fetch-Site', 'cross-site')
+            ],
+        base_url='', 
+        useCache = False)
     
     # Retrieve info from website
-    profileHeader = common.parseDOM(html, 'div', attrs = {'class' : 'profile_header'})
-    name = common.parseDOM(profileHeader, 'div', attrs = {'class' : 'name'})[0]
-    state = common.parseDOM(profileHeader, 'div', attrs = {'class' : 'name'})[0]
-    memberSince = common.parseDOM(profileHeader, 'div', attrs = {'class' : 'date'})[0]    
+    profileHeader = bs(html, 'html.parser').find_all( 'div', attrs = {'class' : 'profile_header'})
+    name = profileHeader.find( 'div', attrs = {'class' : 'name'}).get_text()
+    state = profileHeader.find( 'div', attrs = {'class' : 'name'}).get_text()
+    memberSince = profileHeader.find( 'div', attrs = {'class' : 'date'}).get_text()    
     
     # Retrieve info from account JSON string
     user = json.loads(control.setting('accountJSON')).get('profile')
@@ -998,37 +1133,54 @@ def getUserSubscription():
     
 def getUserTransactions():
     logger.logInfo('called function')
-    TAG_HTML = re.compile('<[^>]+>')
+    see_more = re.compile('See more')
 
     data = []
     url = config.uri.get('profile')
     html = callServiceApi(url, useCache = False)
     
-    transactionsHtml = common.parseDOM(html, 'div', attrs = {'id' : 'transactions'})
-    transactions = common.parseDOM(common.parseDOM(transactionsHtml, 'tbody'), 'tr')
+    transactions = bs(html, 'html.parser').select('div[id=transactions] tbody > tr');
+    headers = bs(html, 'html.parser').select('div[id=transactions] thead th');
     
+    # logger.logInfo(headers)
     header = []
-    headers = common.parseDOM(common.parseDOM(transactionsHtml, 'thead'), 'th')
     for h in headers:
-        header.append(h)
+        header.append(h.get_text())
     
     for transaction in transactions:
-        columns = common.parseDOM(transaction, 'td', attrs = {'class' : 'loader'})
-        if len(columns) > 0:
-            continue
-        
-        columns = common.parseDOM(transaction.replace('<td></td>', '<td>-</td>'), 'td')
         t = ''
         i = 0
         
-        for c in columns:
+        columns = transaction.select('td:not(.loader)')
+        for col in columns:
             value = '-'
-            if not TAG_HTML.search(c):
+            c = col.get_text()
+            if not see_more.search(c) and len(c)>0:
                 value = c
-            t += "%s: %s\n" % (header[i], value)
+            t+= "%s: %s\n" % (header[i], value)
             i+=1
         data.append(t)
                 
+    return data
+
+def getUserDevices():
+    logger.logInfo('called function')
+    data = callJsonApi(
+        config.uri.get('devices'),
+        headers=[
+            ('Cookie', 'UserAuthentication='+control.setting('iWantUserAuthentication')),
+            ('UserAuthentication', control.setting('iWantUserAuthentication')),
+            ('Referer', config.websiteSecuredUrl+'/'),
+            ('Origin', config.websiteSecuredUrl),
+            ('Pragma', 'no-cache'),
+            ('Sec-Fetch-Dest', 'empty'),
+            ('Sec-Fetch-Mode', 'cors'),
+            ('Sec-Fetch-Site', 'same-orig')
+            ],
+        useCache = False
+        )
+    if len(data) == 0:
+        control.showNotification(control.lang(37055))
     return data
     
 def addToMyList(id, name, ltype, type):
@@ -1036,18 +1188,18 @@ def addToMyList(id, name, ltype, type):
     show = getShow(id)
     show['mylist'] = 'true'
     if showDB.update(show):
-        control.showNotification(control.lang(57053) % name)
+        control.showNotification(control.lang(37053) % name)
     else:
-        control.showNotification(control.lang(57054) % name)
+        control.showNotification(control.lang(37054) % name)
 
 def removeFromMyList(id, name, ltype, type):
     logger.logInfo('called function with param (%s, %s, %s, %s)' % (id, name, ltype, type))
     show = getShow(id)
     show['mylist'] = 'false'
     if showDB.update(show):
-        control.showNotification(control.lang(57053) % name)
+        control.showNotification(control.lang(37053) % name)
     else:
-        control.showNotification(control.lang(57054) % name)
+        control.showNotification(control.lang(37054) % name)
     
 def showExportedShowsToLibrary():
     data = []
@@ -1057,26 +1209,26 @@ def showExportedShowsToLibrary():
         if 'id' in d:
             temp[d.get('id')] = d
     if len(temp) > 0:
-        shows = showDB.get(temp.keys())
+        shows = showDB.get(list(temp.keys()))
         for s in shows:
             temp[s.get('id')].update(s)
             data.append(temp.get(s.get('id')))
     return data
 
 def removeFromLibrary(id, name):
-    data = libraryDB.get(int(id))
+    data = libraryDB.get(id)
     if len(data) > 0:
         if logger.logInfo(libraryDB.delete(data[0])):
             path = os.path.join(control.showsLibPath, name, '')
             logger.logInfo(path)
             if logger.logInfo(control.pathExists(path)): 
-                if control.confirm(control.lang(57041), line1=control.lang(57042), title=name) == False:
+                if control.confirm('%s\n%s' % (control.lang(37041), control.lang(37042)), title=name) == False:
                     control.deleteFolder(path, True)
-            control.showNotification(control.lang(57043) % name, control.lang(50010))
+            control.showNotification(control.lang(37043) % name, control.lang(30010))
         else:
-            control.showNotification(control.lang(57044), control.lang(50004))
+            control.showNotification(control.lang(37044), control.lang(30004))
     else:
-        control.showNotification(control.lang(57045), control.lang(50001))
+        control.showNotification(control.lang(37045), control.lang(30001))
 
 
 def addToLibrary(id, name, parentId=-1, year='', updateOnly=False):
@@ -1099,35 +1251,30 @@ def addToLibrary(id, name, parentId=-1, year='', updateOnly=False):
             show = e.get('showObj')
             res = libraryDB.get(show.get('id'))
             lib = res[0] if len(res) == 1 else {}
-            control.writeFile(logger.logNotice(os.path.join(path, 'tvshow.nfo')), generateShowNFO(show, path).encode('utf-8'))
+            control.writeFile(logger.logNotice(str(os.path.join(path, 'tvshow.nfo'))), str(generateShowNFO(show, path)))
         except Exception as err:
             logger.logError(err)
             status = False
         
         if status == True:
             
-            mostRecentDate = lastDate = lib.get('date', datetime.datetime(1900, 1, 1))
+            mostRecentEpisodeNumber = lastEpisodeNumber = int(lib.get('compare', '0'))
             lastCheck = lib.get('lastCheck', datetime.datetime(1900, 1, 1))
             logger.logNotice('last check date : %s' % lastCheck.strftime('%Y-%m-%d %H:%M:%S'))
-            for e in sorted(episodes, key=lambda item: item['date'], reverse=False):
+            for e in sorted(episodes, key=lambda item: item['episodenumber'], reverse=False):
                 filePath = os.path.join(path, '%s.strm' % e.get('title'))
-
-                logger.logNotice('episode date : %s' % e.get('date'))
-                try:
-                    episodeDate = datetime.datetime.strptime(e.get('date'), '%Y-%m-%d')
-                except TypeError:
-                    episodeDate = datetime.datetime(*(time.strptime(e.get('date'), '%Y-%m-%d')[0:6]))
-                
-                if lastDate.date() < episodeDate.date():
+                logger.logNotice('Last episode number : %s' % e.get('compare'))
+                episodeNumber = int(e.get('episodenumber', '0'))
+                if lastEpisodeNumber < episodeNumber:
                     updated = True
                     nbUpdated += 1
-                    if mostRecentDate.date() < episodeDate.date(): mostRecentDate = episodeDate
+                    if mostRecentEpisodeNumber < episodeNumber: mostRecentEpisodeNumber = episodeNumber
                     
                 if not updateOnly or updated:
                     try:
                         # Episode STRM / NFO files
-                        control.writeFile(logger.logNotice(os.path.join(path, '%s.nfo' % e.get('title'))), generateEpisodeNFO(e, path, filePath).encode('utf-8'))
-                        control.writeFile(logger.logNotice(filePath), navigator.navigator().generateActionUrl(str(e.get('id')), config.PLAY, '%s - %s' % (e.get('show'), e.get('dateaired')), e.get('image')))
+                        control.writeFile(logger.logNotice(os.path.join(path, '%s.nfo' % e.get('title'))), generateEpisodeNFO(e, path, filePath))
+                        control.writeFile(logger.logNotice(filePath), navigator.navigator().generateActionUrl(e.get('id'), config.PLAY, '%s - %s' % (e.get('show'), e.get('title')), e.get('image')))
                     except Exception as err:
                         logger.logError(err)
                         status = False
@@ -1136,15 +1283,16 @@ def addToLibrary(id, name, parentId=-1, year='', updateOnly=False):
         status = False
             
     if status == True: 
-        if not updateOnly: control.showNotification(control.lang(57034) % name, control.lang(50010))
-        libraryDB.set({'id' : int(show.get('id')), 
+        if not updateOnly: control.showNotification(control.lang(37034) % name, control.lang(30010))
+        libraryDB.set({
+            'id' : show.get('id'), 
             'name' : show.get('name'), 
-            'parentid' : int(show.get('parentid')),
+            'parentid' : show.get('parentid'),
             'year' : show.get('year'),
-            'date' : mostRecentDate.strftime('%Y-%m-%d')
+            'compare' : mostRecentEpisodeNumber
             })
     else: 
-        if not updateOnly: control.showNotification(control.lang(57033), control.lang(50004))
+        if not updateOnly: control.showNotification(control.lang(37033), control.lang(30004))
     return {'status': status, 'updated': updated, 'nb': nbUpdated}
 
 def generateShowNFO(info, path):
@@ -1202,7 +1350,7 @@ def checkLibraryUpdates(quiet=False):
         result = addToLibrary(show.get('id'), show.get('name'), show.get('parentid'), show.get('year'), updateOnly=True)
         if result.get('updated') == True:
             logger.logNotice('Updated %s episodes' % str(result.get('nb')))
-            if not quiet: control.showNotification(control.lang(57037) % (str(result.get('nb')), show.get('name')), control.lang(50011))
+            if not quiet: control.showNotification(control.lang(37037) % (str(result.get('nb')), show.get('name')), control.lang(30011))
         else:
             logger.logNotice('No updates for show %s' % show.get('name'))
     return True
@@ -1210,7 +1358,7 @@ def checkLibraryUpdates(quiet=False):
 def enterSearch(category, type):
     logger.logInfo('called function with params (%s, %s)' % (category, type))
     data = []
-    search = control.inputText(control.lang(50204)).strip()
+    search = control.inputText(control.lang(30204)).strip()
     if len(search) >= 3:
         if category == 'movieshow':
             if type == 'title':
@@ -1228,7 +1376,7 @@ def enterSearch(category, type):
             elif type == 'date':
                 data = episodeDB.searchByDate(search)
     else:
-        control.showNotification(control.lang(57046), control.lang(50001))
+        control.showNotification(control.lang(37046), control.lang(30001))
     return data
 
 def getUserName(html=False):
@@ -1236,21 +1384,19 @@ def getUserName(html=False):
     userName = ''
     if html == False:
         html = callServiceApi(config.uri.get('profile'), headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
-    avatar = common.parseDOM(html, "div", attrs = { 'class' : 'avatar' })[0]
-    if len(avatar) > 0:
-        avatarName = common.parseDOM(avatar, "img", ret = 'alt')
-        if len(avatarName) > 0:
-            userName = avatarName[0]
+    avatar = bs(html, 'html.parser').find( "div", attrs = { 'class' : 'avatar' })
+    if avatar:
+        userName = avatar.find( "img")['alt']
         logger.logInfo(userName)
     return userName
 
 def enterCredentials():
     logger.logInfo('called function')
-    email = control.inputText(control.lang(50400), control.setting('emailAddress'))
+    email = control.inputText(control.lang(30400), control.setting('emailAddress'))
     password = ''
     i = 1
     while i < 3 and password == '':
-        password = control.inputPassword(control.lang(50401))
+        password = control.inputPassword(control.lang(30401))
         i+=1
     logger.logNotice('%s - %s' % (email, password))
     control.setSetting('emailAddress', email)
@@ -1261,7 +1407,7 @@ def checkAccountChange(forceSignIn=False):
     logger.logInfo('called function')
     email = control.setting('emailAddress')
     password = control.setting('password')
-    hash = hashlib.sha1(email + password).hexdigest()
+    hash = hashlib.sha1((email + password).encode()).hexdigest()
     hashFile = os.path.join(control.dataPath, 'a.tmp')
     savedHash = ''
     accountChanged = False
@@ -1313,10 +1459,11 @@ def isLoggedIn():
                 ('UserAuthentication', control.setting('iWantUserAuthentication')),
                 ('Referer', config.websiteSecuredUrl+'/'),
                 ('Origin', config.websiteSecuredUrl),
+                ('Cache-Control', 'no-cache'),
                 ('Pragma', 'no-cache'),
                 ('Sec-Fetch-Dest', 'empty'),
                 ('Sec-Fetch-Mode', 'cors'),
-                ('Sec-Fetch-Site', 'same-orig')
+                ('Sec-Fetch-Site', 'same-origin')
                 ],
             base_url=config.websiteSecuredUrl,
             useCache=False
@@ -1361,15 +1508,15 @@ def loginToWebsite(quiet=False, login=False, password=False):
                 control.setSetting('iWantUserAuthentication', authInfos.get('UserAuthentication'))
             if not isLoggedIn() and quiet == False:
                 logger.logError('Authentification failed')
-                control.showNotification(control.lang(57024), control.lang(50006))
+                control.showNotification(control.lang(37024), control.lang(30006))
             else:
                 logged = True
                 logger.logNotice('You are now logged in')
-                control.showNotification(control.lang(57009) % '', control.lang(50007))
+                control.showNotification(control.lang(37009) % '', control.lang(30007))
                 if control.setting('generateNewFingerprintID') == 'true':
                     generateNewFingerprintID()
         else:
-            control.showNotification(control.lang(50205), control.lang(50204))
+            control.showNotification(control.lang(30205), control.lang(30204))
     return logged
 
 def checkFacebookToken(accessToken=''):
@@ -1401,7 +1548,7 @@ def loginWithFacebook(quiet=False, accessToken=''):
                     if 'access_token' in status:
                         info = callJsonApi(config.Facebook.get('info'), params = {'fields' : 'name,first_name,last_name,email', 'access_token' : status.get('access_token')}, headers=[], base_url='', useCache=False)
                         if 'name' in info:
-                            accountJSON = {'name' : info.get('name', ''), 'firstName' : info.get('first_name', ''), 'lastName': info.get('last_name', ''), 'email': info.get('email', '')}
+                            accountJSON = {'name' : info.get('name', ''), 'firstName' : info.get('first_name', ''), 'lastName': info.get('last_name', ''), 'email': info.get('email', ''), 'id': info.get('id', '')}
                             control.setSetting('accountJSON', json.dumps(accountJSON))
                             token = status.get('access_token')
                     elif 'error' in status and status.get('error').get('error_subcode', 0) == 1349152:
@@ -1411,7 +1558,27 @@ def loginWithFacebook(quiet=False, accessToken=''):
             token = accessToken
 
         if token != None:
-            html = callServiceApi(config.uri.get('socialLogin') % token, headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
+            params = {
+                'facebookUserId': accountJSON.get('id'),
+                'socialAccessToken': token
+            }
+            authInfos = callJsonApi(
+                config.uri.get('socialLogin'), 
+                params=params, 
+                headers = [
+                    ('Referer', config.websiteSecuredUrl+'/'),
+                    ('Origin', config.websiteSecuredUrl),
+                    ('Pragma', 'no-cache'),
+                    ('Sec-Fetch-Dest', 'empty'),
+                    ('Sec-Fetch-Mode', 'cors'),
+                    ('Sec-Fetch-Site', 'same-orig')
+                    ], 
+                base_url=config.websiteSecuredUrl,
+                useCache=False
+                )
+            if authInfos.get('status') == 'OK':
+                control.setSetting('iWantRefreshToken', authInfos.get('refreshToken'))
+                control.setSetting('iWantUserAuthentication', authInfos.get('UserAuthentication'))
             logged = isLoggedIn()
 
         if quiet == False:
@@ -1456,7 +1623,7 @@ def generateNewFingerprintID(previous=False):
         control.setSetting('previousFingerprintID', control.setting('fingerprintID'))
     else:
         control.setSetting('previousFingerprintID', previous)
-    control.setSetting('fingerprintID', hashlib.md5(control.setting('emailAddress')+str(randint(0, 1000000))).hexdigest())
+    control.setSetting('fingerprintID', hashlib.md5((control.setting('emailAddress')+str(randint(0, 1000000))).encode()).hexdigest())
     if control.setting('generateNewFingerprintID') == 'true':
         control.setSetting('generateNewFingerprintID', 'false')
     return True
@@ -1464,14 +1631,13 @@ def generateNewFingerprintID(previous=False):
 def logout(quiet=True):
     logger.logInfo('called function')
     if quiet == False and isLoggedIn() == False:
-        control.showNotification(control.lang(57000), control.lang(50005))
-    # callServiceApi(config.uri.get('logout'), headers = [('Referer', config.websiteUrl + config.uri.get('base'))], base_url = config.websiteUrl, useCache = False)
+        control.showNotification(control.lang(37000), control.lang(30005))
     control.setSetting('FBAccessToken', '')
     control.setSetting('iWantUserAuthentication', '')
     control.setSetting('iWantRefreshToken', '')
     cookieJar.clear()
     if quiet == False and isLoggedIn() == False:
-        control.showNotification(control.lang(57010))
+        control.showNotification(control.lang(37010))
         control.exit()
 
 def checkIfError(html):
@@ -1479,13 +1645,13 @@ def checkIfError(html):
     message = ''
     if html == '' or html == None:
         error = True
-        message = control.lang(57029)
+        message = control.lang(37029)
     else:
-        t = common.parseDOM(html, "title")
-        if len(t) > 0:
-            if 'Error' in t[0]:
+        t = bs(html, 'html.parser').title
+        if t:
+            if 'Error' in t:
                 error = True
-                message = t[0].split(' | ')[1]
+                message = t.get_text().split(' | ')[1]
     return { 'error' : error, 'message' : message }
 
 def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useCache=True, jsonData=False, returnMessage=True):
@@ -1500,7 +1666,7 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
     if returnMessage == False:
         useCache = False
     
-    key = config.urlCachePrefix + cache.generateHashKey(base_url + path + urllib.urlencode(params))
+    key = config.urlCachePrefix + cache.generateHashKey(base_url + path + urlencode(params))
     logger.logDebug('Key %s : %s - %s' % (key, base_url + path, params))
     
     if useCache == True:
@@ -1514,9 +1680,11 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
             logger.logInfo('Used cache for (%s)' % key)
     
     if cached is False:
-        opener = urllib2.build_opener(urllib2.HTTPRedirectHandler(), urllib2.HTTPCookieProcessor(cookieJar))
+        opener = libRequest.build_opener(libRequest.HTTPRedirectHandler(), libRequest.HTTPCookieProcessor(cookieJar))
         userAgent = config.userAgents[base_url] if base_url in config.userAgents else config.userAgents['default']
         headers.append(('User-Agent', userAgent))
+        headers.append(('Accept-encoding', 'gzip'))
+        headers.append(('Connection', 'keep-alive'))
         opener.addheaders = headers
         logger.logDebug('### Request headers, URL & params ###')
         logger.logDebug(headers)
@@ -1527,11 +1695,11 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
         try:
             if params:
                 if jsonData == True:                    
-                    request = urllib2.Request(base_url + path)
+                    request = libRequest.Request(base_url + path)
                     request.add_header('Content-Type', 'application/json')
-                    response = opener.open(request, json.dumps(params), timeout = requestTimeOut)
+                    response = opener.open(request, json.dumps(params).encode("utf-8"), timeout = requestTimeOut)
                 else:
-                    data_encoded = urllib.urlencode(params)
+                    data_encoded = urlencode(params).encode("utf-8")
                     response = opener.open(base_url + path, data_encoded, timeout = requestTimeOut)
             else:
                 response = opener.open(base_url + path, timeout = requestTimeOut)
@@ -1541,26 +1709,30 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
             logger.logDebug('### Response redirect URL ###')
             logger.logDebug(response.info())
             logger.logDebug('### Response ###')
-            res['message'] = response.read() if response else ''
+            if response.info().get('Content-Encoding') == 'gzip':
+                import gzip
+                res['message'] = gzip.decompress(response.read())
+            else:
+                res['message'] = response.read() if response else ''
             res['status'] = int(response.getcode())
             res['headers'] = response.info()
             res['url'] = response.geturl()
             logger.logDebug(res)
-        except (urllib2.URLError, ssl.SSLError) as e:
+        except (libRequest.URLError, ssl.SSLError) as e:
             logger.logError(e)
             message = '%s : %s' % (e, base_url + path)
             # message = "Connection timeout : " + base_url + path
             logger.logSevere(message)
-            control.showNotification(message, control.lang(50004))
+            control.showNotification(message, control.lang(30004))
             # No internet connection error
             if 'Errno 11001' in message:
                 logger.logError('Errno 11001 - No internet connection')
-                control.showNotification(control.lang(57031), control.lang(50004), time=5000)
+                control.showNotification(control.lang(37031), control.lang(30004), time=5000)
             toCache = False
             pass
         
         if toCache == True and res:
-            value = res.get('message') if re.compile('application/json', re.IGNORECASE).search('|'.join(res['headers'].headers)) or re.compile('binary/octet-stream', re.IGNORECASE).search('|'.join(res['headers'].headers)) else repr(res.get('message'))
+            value = res.get('message') if re.compile('application/json', re.IGNORECASE).search('|'.join(res['headers'].keys())) or re.compile('binary/octet-stream', re.IGNORECASE).search('|'.join(res['headers'].values())) else repr(res.get('message'))
             cache.shortCache.setMulti(key, {'url': value, 'timestamp' : time.time()})
             logger.logDebug(res.get('message'))
             logger.logInfo('Stored in cache (%s) : %s' % (key, {'url': value, 'timestamp' : time.time()}))
@@ -1589,7 +1761,7 @@ def checkProxy():
         response = callServiceApi(url, base_url = '', useCache=False, returnMessage=False)
         logger.logDebug(response)
         if response.get('status', '') != 200:
-            control.alert(control.lang(57028), title=control.lang(50004))
+            control.alert(control.lang(37028), title=control.lang(30004))
             return False
     return True
             
@@ -1608,26 +1780,26 @@ def cleanCookies(notify=True):
         logger.logInfo('cookies file FOUND (cache)')
         try: 
             os.unlink(os.path.join(control.homePath, 'cache', 'cookies.dat'))
-            message = control.lang(57004)
+            message = control.lang(37004)
         except: 
-            message = control.lang(57005)
+            message = control.lang(37005)
                 
     elif os.path.exists(os.path.join(control.homePath, 'temp', 'cookies.dat'))==True:  
         logger.logInfo('cookies file FOUND (temp)')
         try: 
             os.unlink(os.path.join(control.homePath, 'temp', 'cookies.dat'))
-            message = control.lang(57004)
+            message = control.lang(37004)
         except: 
-            message = control.lang(57005)
+            message = control.lang(37005)
     elif os.path.exists(os.path.join(control.dataPath, config.cookieFileName))==True:  
         logger.logInfo('cookies file FOUND (profile)')
         try: 
             os.unlink(os.path.join(control.dataPath, config.cookieFileName))
-            message = control.lang(57004)
+            message = control.lang(37004)
         except: 
-            message = control.lang(57005)
+            message = control.lang(37005)
     else:
-        message = control.lang(57006)
+        message = control.lang(37006)
         
     if notify == True:
         control.showNotification(message)
@@ -1639,7 +1811,7 @@ cookieJar = cookielib.CookieJar()
 cookieFile = ''
 cookieJarType = ''
 
-if os.path.exists(control.dataPath):
+if control.pathExists(control.dataPath):
     cookieFile = os.path.join(control.dataPath, config.cookieFileName)
     cookieJar = cookielib.LWPCookieJar(cookieFile)
     cookieJarType = 'LWPCookieJar'

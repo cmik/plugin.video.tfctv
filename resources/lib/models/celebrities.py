@@ -65,7 +65,7 @@ class Actor(model.Model):
             if 'id' in data:
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')
-                for k, e in data.iteritems():
+                for k, e in data.items():
                     query = "UPDATE ACTOR SET "
                     query += "NAME = '%s', " % data.get('name') if data.get('name', False) else "NAME = NAME, "
                     query += "THUMBNAIL = '%s', " % data.get('logo') if data.get('logo', False) else "THUMBNAIL = THUMBNAIL, "

@@ -41,7 +41,7 @@ class ExecutionCache:
             del self._execCache[name]
 
     def setMulti(self, name, data):
-        for k, v in data.iteritems():
+        for k, v in data.items():
             key = name + k
             self._execCache[key] = v
         return ""

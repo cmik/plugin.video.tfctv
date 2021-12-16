@@ -1,0 +1,797 @@
+# Kodi Media Center language file
+# Addon Name: iWantTFC
+# Addon id: plugin.video.tfctv
+# Addon Provider: cmik
+msgid ""
+msgstr ""
+"Project-Id-Version: plugin.video.tfctv\n"
+"Report-Msgid-Bugs-To: https://github.com/cmik/plugin.video.tfctv\n"
+"POT-Creation-Date: 2021-03-13 16:15+0000\n"
+"PO-Revision-Date: 2021-03-13 20:40+0000\n"
+"Last-Translator: Cmik\n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# message types
+
+msgctxt "#30001"
+msgid "Message"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Information"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Parental Advisory"
+msgstr ""
+
+msgctxt "#30004"
+msgid "Error"
+msgstr ""
+
+msgctxt "#30005"
+msgid "Please wait"
+msgstr ""
+
+msgctxt "#30006"
+msgid "Login Failed"
+msgstr ""
+
+msgctxt "#30007"
+msgid "Login successful"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Loading"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Media Error"
+msgstr ""
+
+msgctxt "#30010"
+msgid "Success"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Library"
+msgstr ""
+
+msgctxt "#30020"
+msgid "Yes"
+msgstr ""
+
+msgctxt "#30021"
+msgid "No"
+msgstr ""
+
+# settings
+
+msgctxt "#30100"
+msgid "General"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Advanced"
+msgstr ""
+
+msgctxt "#30102"
+msgid "Menu settings"
+msgstr ""
+
+msgctxt "#30103"
+msgid "Requests"
+msgstr ""
+
+msgctxt "#30104"
+msgid "Use show logo"
+msgstr ""
+
+msgctxt "#30105"
+msgid "Episodes per page"
+msgstr ""
+
+msgctxt "#30106"
+msgid "Last version installed"
+msgstr ""
+
+msgctxt "#30107"
+msgid "Display iWantTFC's website sections"
+msgstr ""
+
+msgctxt "#30108"
+msgid "Display most loved shows"
+msgstr ""
+
+msgctxt "#30109"
+msgid "Display Live TV Channels"
+msgstr ""
+
+msgctxt "#30110"
+msgid "Parental Control"
+msgstr ""
+
+msgctxt "#30111"
+msgid "Enable cache    "
+msgstr ""
+
+msgctxt "#30112"
+msgid "Display Tools"
+msgstr ""
+
+msgctxt "#30113"
+msgid "HTTP request time out"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Display Account menu"
+msgstr ""
+
+msgctxt "#30115"
+msgid "Force best stream"
+msgstr ""
+
+msgctxt "#30116"
+msgid "Request verification token"
+msgstr ""
+
+msgctxt "#30117"
+msgid "Parental advisory alert"
+msgstr ""
+
+msgctxt "#30118"
+msgid "Debug"
+msgstr ""
+
+msgctxt "#30119"
+msgid "Enable debug mode"
+msgstr ""
+
+msgctxt "#30120"
+msgid "Debug level"
+msgstr ""
+
+msgctxt "#30121"
+msgid "Stream Server"
+msgstr ""
+
+msgctxt "#30122"
+msgid "Enable stream server modification"
+msgstr ""
+
+msgctxt "#30123"
+msgid "Specific stream server"
+msgstr ""
+
+msgctxt "#30124"
+msgid "Fingerprint ID"
+msgstr ""
+
+msgctxt "#30125"
+msgid "Generate new fingerprint ID"
+msgstr ""
+
+msgctxt "#30126"
+msgid "Addon new installation"
+msgstr ""
+
+msgctxt "#30127"
+msgid "iWantTFC UID"
+msgstr ""
+
+msgctxt "#30128"
+msgid "iWantTFC UID Signature"
+msgstr ""
+
+msgctxt "#30129"
+msgid "iWantTFC Signature timestamp"
+msgstr ""
+
+msgctxt "#30130"
+msgid "Display my iWantTFC List"
+msgstr ""
+
+msgctxt "#30131"
+msgid "Default directory background image"
+msgstr ""
+
+msgctxt "#30132"
+msgid "Streaming Proxy"
+msgstr ""
+
+msgctxt "#30133"
+msgid "Use streaming proxy"
+msgstr ""
+
+msgctxt "#30134"
+msgid "Host"
+msgstr ""
+
+msgctxt "#30135"
+msgid "Port"
+msgstr ""
+
+msgctxt "#30136"
+msgid "Enable parental control"
+msgstr ""
+
+msgctxt "#30137"
+msgid "Parental code"
+msgstr ""
+
+msgctxt "#30138"
+msgid "Authentication / Credentials"
+msgstr ""
+
+msgctxt "#30139"
+msgid "Email Address"
+msgstr ""
+
+msgctxt "#30140"
+msgid "Password"
+msgstr ""
+
+msgctxt "#30141"
+msgid "Login Retries"
+msgstr ""
+
+msgctxt "#30142"
+msgid "Account JSON"
+msgstr ""
+
+msgctxt "#30143"
+msgid "Proxy URL format"
+msgstr ""
+
+msgctxt "#30144"
+msgid "Proxy check URL"
+msgstr ""
+
+msgctxt "#30145"
+msgid "Show welcome message"
+msgstr ""
+
+msgctxt "#30146"
+msgid "Show enter credentials"
+msgstr ""
+
+msgctxt "#30147"
+msgid "Show personalize"
+msgstr ""
+
+msgctxt "#30148"
+msgid "Show update catalog"
+msgstr ""
+
+msgctxt "#30149"
+msgid "Wizard installation"
+msgstr ""
+
+msgctxt "#30150"
+msgid "Export to Library"
+msgstr ""
+
+msgctxt "#30151"
+msgid "Enable context menu"
+msgstr ""
+
+msgctxt "#30152"
+msgid "Automatic update"
+msgstr ""
+
+msgctxt "#30153"
+msgid "Check schedule (minutes) (reboot required)"
+msgstr ""
+
+msgctxt "#30154"
+msgid "Last nb episodes to export"
+msgstr ""
+
+msgctxt "#30155"
+msgid "Theme"
+msgstr ""
+
+msgctxt "#30156"
+msgid "Databases import URL"
+msgstr ""
+
+msgctxt "#30157"
+msgid "Export path"
+msgstr ""
+
+msgctxt "#30158"
+msgid "Cache timeout (in minutes)"
+msgstr ""
+
+msgctxt "#30159"
+msgid "Login with Kapamilya SSO"
+msgstr ""
+
+msgctxt "#30160"
+msgid "Login with"
+msgstr ""
+
+msgctxt "#30161"
+msgid "Facebook access token"
+msgstr ""
+
+msgctxt "#30162"
+msgid "Facebook Login"
+msgstr ""
+
+msgctxt "#30163"
+msgid "FB App ID"
+msgstr ""
+
+msgctxt "#30164"
+msgid "FB Client Token"
+msgstr ""
+
+msgctxt "#30165"
+msgid "Catalog base path"
+msgstr ""
+
+msgctxt "#30166"
+msgid "URL API Base path"
+msgstr ""
+
+msgctxt "#30167"
+msgid "iWantTFC settings"
+msgstr ""
+
+msgctxt "#30168"
+msgid "iWantTFC settings timestamp"
+msgstr ""
+
+msgctxt "#30169"
+msgid "iWantTFC Refresh Token"
+msgstr ""
+
+msgctxt "#30170"
+msgid "iWantTFC UserAuthentication"
+msgstr ""
+
+msgctxt "#30171"
+msgid "Login Session"
+msgstr ""
+
+msgctxt "#30199"
+msgid "Other settings"
+msgstr ""
+
+# Home menu
+
+msgctxt "#30200"
+msgid "My List"
+msgstr ""
+
+msgctxt "#30201"
+msgid "By Category"
+msgstr ""
+
+msgctxt "#30202"
+msgid "My Account"
+msgstr ""
+
+msgctxt "#30203"
+msgid "Tools"
+msgstr ""
+
+msgctxt "#30204"
+msgid "Search"
+msgstr ""
+
+msgctxt "#30205"
+msgid "Movie / Show"
+msgstr ""
+
+msgctxt "#30206"
+msgid "Episode"
+msgstr ""
+
+msgctxt "#30207"
+msgid "Celebrity"
+msgstr ""
+
+msgctxt "#30208"
+msgid "By Title"
+msgstr ""
+
+msgctxt "#30209"
+msgid "By Category"
+msgstr ""
+
+msgctxt "#30210"
+msgid "By Cast"
+msgstr ""
+
+msgctxt "#30211"
+msgid "By Date"
+msgstr ""
+
+msgctxt "#30212"
+msgid "By Year"
+msgstr ""
+
+msgctxt "#30213"
+msgid "My Shows Last Episodes"
+msgstr ""
+
+msgctxt "#30214"
+msgid "My Shows"
+msgstr ""
+
+msgctxt "#30215"
+msgid "Check for catalog updates"
+msgstr ""
+
+# context menu
+
+msgctxt "#30300"
+msgid "Add to my watchlist"
+msgstr ""
+
+msgctxt "#30301"
+msgid "Remove from my watchlist"
+msgstr ""
+
+msgctxt "#30302"
+msgid "Add to library"
+msgstr ""
+
+msgctxt "#30303"
+msgid "Choose resolution"
+msgstr ""
+
+msgctxt "#30304"
+msgid "Remove from library"
+msgstr ""
+
+# Other menu items
+
+msgctxt "#30400"
+msgid "Enter your Kapamilya ID"
+msgstr ""
+
+msgctxt "#30401"
+msgid "Enter your password"
+msgstr ""
+
+msgctxt "#30402"
+msgid "Update catalog"
+msgstr ""
+
+msgctxt "#36001"
+msgid "iWantTFC My Account Information"
+msgstr ""
+
+msgctxt "#36002"
+msgid "iWantTFC My Subscriptions"
+msgstr ""
+
+msgctxt "#36003"
+msgid "iWantTFC My Transactions"
+msgstr ""
+
+msgctxt "#36004"
+msgid "My info"
+msgstr ""
+
+msgctxt "#36005"
+msgid "My subscription"
+msgstr ""
+
+msgctxt "#36006"
+msgid "Transactions"
+msgstr ""
+
+msgctxt "#36007"
+msgid "Logout"
+msgstr ""
+
+msgctxt "#36008"
+msgid "Next >>"
+msgstr ""
+
+msgctxt "#36009"
+msgid "Reload Catalog Cache"
+msgstr ""
+
+msgctxt "#36010"
+msgid "Clean cookies files"
+msgstr ""
+
+msgctxt "#36011"
+msgid "Enter your credentials"
+msgstr ""
+
+msgctxt "#36012"
+msgid "Personalize your settings"
+msgstr ""
+
+msgctxt "#36013"
+msgid "Optimize your catalog cache"
+msgstr ""
+
+msgctxt "#36014"
+msgid "< %s >"
+msgstr ""
+
+msgctxt "#36015"
+msgid "Skip the setup"
+msgstr ""
+
+msgctxt "#36016"
+msgid "Enjoy TFC"
+msgstr ""
+
+msgctxt "#36017"
+msgid "Check library updates"
+msgstr ""
+
+msgctxt "#36018"
+msgid "Reset Catalog Cache"
+msgstr ""
+
+msgctxt "#36019"
+msgid "Select shows database file to import"
+msgstr ""
+
+msgctxt "#36020"
+msgid "Select episodes database file to import"
+msgstr ""
+
+msgctxt "#36021"
+msgid "Import automatically all database files"
+msgstr ""
+
+msgctxt "#36022"
+msgid "Quick setup"
+msgstr ""
+
+msgctxt "#36023"
+msgid "My exported items"
+msgstr ""
+
+msgctxt "#36024"
+msgid "Continue with Facebook"
+msgstr ""
+
+msgctxt "#36025"
+msgid "Login with iWantTFC"
+msgstr ""
+
+msgctxt "#36026"
+msgid "My Devices"
+msgstr ""
+
+# notifications / messages
+
+msgctxt "#37000"
+msgid "Logging out in progress..."
+msgstr ""
+
+msgctxt "#37001"
+msgid "Subscription is already expired or the item is not part of your subscription"
+msgstr ""
+
+msgctxt "#37002"
+msgid "No available information"
+msgstr ""
+
+msgctxt "#37003"
+msgid "Catalog cache loaded successfully"
+msgstr ""
+
+msgctxt "#37004"
+msgid "Cookies data has successfully been deleted"
+msgstr ""
+
+msgctxt "#37005"
+msgid "Can't delete cookies data file"
+msgstr ""
+
+msgctxt "#37006"
+msgid "Can't find cookies data file"
+msgstr ""
+
+msgctxt "#37007"
+msgid "You're not logged into iWantTFC."
+msgstr ""
+
+msgctxt "#37008"
+msgid "Do you want to log in as %s?"
+msgstr ""
+
+msgctxt "#37009"
+msgid "Welcome %s"
+msgstr ""
+
+msgctxt "#37010"
+msgid "You are now logged out from TFC. Hope to see you soon"
+msgstr ""
+
+msgctxt "#37011"
+msgid "This video contains mature scenes, language and themes that are not suitable for young viewers aged 17 years and below."
+msgstr ""
+
+msgctxt "#37012"
+msgid "Session timed out. Trying to reconnect..."
+msgstr ""
+
+msgctxt "#37013"
+msgid "Retrieving home sections..."
+msgstr ""
+
+msgctxt "#37014"
+msgid "Retrieving categories, shows and episodes..."
+msgstr ""
+
+msgctxt "#37015"
+msgid "Cleaning caches..."
+msgstr ""
+
+msgctxt "#37016"
+msgid "Thank you for using this iWantTFC addon![CR][CR][CR]Watch your favorite online Pinoy shows, movies, news and live channels directly from your KODI plateform![CR][CR]This add-on uses your iWantTFC account to access and display iWantTFC website contents:[CR]- Easily access the different categories and shows[CR]- Manage your favorite shows and episodes through your watchlist.[CR]- Search your shows, movies, episodes by category, title, cast, date, year[CR]- Export your favorite show's expisodes to your Kodi library (still needs iWantTFC add-on for playback)[CR][CR]For better experience, a subscription to iWantTFC website (https://www.iwanttfc.com) is required to enjoy iWantTFC's catalog.[CR][CR]Enjoy![CR][CR]PS: This add-on is not officially released nor supported by iWantTFC. Please report directly to KODI forum or plugin.video.tfctv Github repository if you have any issues."
+msgstr ""
+
+msgctxt "#37017"
+msgid "You're actually not connected. You are only able to watch previews."
+msgstr ""
+
+msgctxt "#37018"
+msgid "Welcome Kapamilya!"
+msgstr ""
+
+msgctxt "#37019"
+msgid "Login into iWantTFC..."
+msgstr ""
+
+msgctxt "#37020"
+msgid "Preparing menu..."
+msgstr ""
+
+msgctxt "#37021"
+msgid "Please enter your parental code"
+msgstr ""
+
+msgctxt "#37022"
+msgid "You are not allowed to watch this video"
+msgstr ""
+
+msgctxt "#37023"
+msgid "Your iWantTFC addon has been updated to version %s.[CR][CR][CR]Please see the changelog for further informations.[CR]Please report bugs/issues to the iWantTFC Kodi Forum thread (https://forum.kodi.tv/showthread.php?tid=317008) or to the add-on repository (https://github.com/cmik/plugin.video.tfctv/issues).[CR][CR]Enjoy!"
+msgstr ""
+
+msgctxt "#37024"
+msgid "Can't login to iWantTFC"
+msgstr ""
+
+msgctxt "#37025"
+msgid "You are only allowed to watch a preview"
+msgstr ""
+
+msgctxt "#37026"
+msgid "This feature is coming soon :)"
+msgstr ""
+
+msgctxt "#37027"
+msgid "Can't refresh catalog cache - an error occured"
+msgstr ""
+
+msgctxt "#37028"
+msgid "The streaming proxy is not active. You will not be able to watch videos.[CR]Please reboot your Kodi system."
+msgstr ""
+
+msgctxt "#37029"
+msgid "The response is empty"
+msgstr ""
+
+msgctxt "#37030"
+msgid "Do you want to open the addon settings?"
+msgstr ""
+
+msgctxt "#37031"
+msgid "Please check your Internet connection"
+msgstr ""
+
+msgctxt "#37032"
+msgid "Can't play the selected item"
+msgstr ""
+
+msgctxt "#37033"
+msgid "Can't add to library - an error occured"
+msgstr ""
+
+msgctxt "#37034"
+msgid "Last episode(s) of %s has been added to library"
+msgstr ""
+
+msgctxt "#37035"
+msgid "Do you want to load episodes data?"
+msgstr ""
+
+msgctxt "#37036"
+msgid "(take a break 'cause this will take some time)"
+msgstr ""
+
+msgctxt "#37037"
+msgid "%s episode(s) of %s added to library"
+msgstr ""
+
+msgctxt "#37038"
+msgid "This type of media is not supported"
+msgstr ""
+
+msgctxt "#37039"
+msgid "Catalog cache is now empty"
+msgstr ""
+
+msgctxt "#37040"
+msgid "The file was loaded successfully"
+msgstr ""
+
+msgctxt "#37041"
+msgid "Corresponding folders and files have been detected."
+msgstr ""
+
+msgctxt "#37042"
+msgid "Do you want to keep them?"
+msgstr ""
+
+msgctxt "#37043"
+msgid "%s has been removed from your library"
+msgstr ""
+
+msgctxt "#37044"
+msgid "Can't remove from library - an error occured"
+msgstr ""
+
+msgctxt "#37045"
+msgid "Nothing to do"
+msgstr ""
+
+msgctxt "#37046"
+msgid "Please type at least 3 charaters for search"
+msgstr ""
+
+msgctxt "#37047"
+msgid "You need to restart KODI or reboot your system"
+msgstr ""
+
+msgctxt "#37048"
+msgid "visit %s on your smartphone or computer and enter this code:"
+msgstr ""
+
+msgctxt "#37049"
+msgid "Then press OK"
+msgstr ""
+
+msgctxt "#37050"
+msgid "Credentials are not configured in settings"
+msgstr ""
+
+msgctxt "#37051"
+msgid "Do you want to log in with Facebook?"
+msgstr ""
+
+msgctxt "#37052"
+msgid "To use Facebook Login, create your app at FACEBOOK for Developers (https://developers.facebook.com/) and fill your Application ID and Client Token in the iWantTFC add-on advanced setings."
+msgstr ""
+
+msgctxt "#37053"
+msgid "%s has been saved to my list"
+msgstr ""
+
+msgctxt "#37054"
+msgid "%s has been removed from my lis"
+msgstr ""
+
+msgctxt "#37055"
+msgid "No device registered"
+msgstr ""

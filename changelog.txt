@@ -1,3 +1,5 @@
+2.0.0
+    iWantTCF version for Kodi 19+
 1.7.0
     Reworked version for iWantTFC (still for Kodi 18+)
 1.6.2

@@ -32,7 +32,7 @@ class ShowCast(model.Model):
     
     def _search(self, search, limit):
         dbcur = self.getCursor()
-        where = ["%s LIKE '%%%s%%'" % (str(k), str(v)) for k,v in search.iteritems()]
+        where = ["%s LIKE '%%%s%%'" % (str(k), str(v)) for k,v in search.items()]
         first = 'LIMIT %d' % int(limit) if limit != False else ''
         dbcur.execute(logger.logDebug("SELECT ID, \
             SHOWID, \
@@ -80,7 +80,7 @@ class ShowCast(model.Model):
             if 'id' in data or ('showid' in data and 'castid' in data):
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')
-                for k, e in data.iteritems():
+                for k, e in data.items():
                     query = "UPDATE SHOW_CAST SET "
                     query += "SHOWID = '%s', " % data.get('showid') if data.get('showid', False) else "SHOWID = SHOWID, "
                     query += "ACTORID = '%s', " % data.get('castid') if data.get('castid', False) else "ACTORID = ACTORID, "
