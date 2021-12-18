@@ -22,9 +22,9 @@
         <licence>GNU</licence>
         <website>https://addons.cmik.me/tfc-tv/</website>
         <forum>https://forum.kodi.tv/showthread.php?tid=317008</forum>
-        <source>https://github.com/cmik/cmik.xbmc</source>
-        <news>v2.0.0 (XX/11/2021)
-          [new] new version for Kodi 19
+        <source>https://github.com/cmik/plugin.video.tfctv</source>
+        <news>v2.0.0 (17/12/2021)
+            [new] new version for Kodi 19
         </news>
         <assets>
             <icon>resources/icon.jpg</icon>

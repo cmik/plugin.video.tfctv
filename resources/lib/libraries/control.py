@@ -201,7 +201,7 @@ def infoDialog(message, heading=addonInfo('name'), icon=addonIcon(), time=3000):
 
 
 def yesnoDialog(message, heading=addonInfo('name'), nolabel='', yeslabel=''):
-    return dialog.yesno(heading, message, lang(30020) if not nolabel else nolabel, lang(30021) if not yeslabel else yeslabel)
+    return dialog.yesno(heading, message, lang(30021) if not nolabel else nolabel, lang(30020) if not yeslabel else yeslabel)
 
 
 def selectDialog(list, heading=addonInfo('name')):
