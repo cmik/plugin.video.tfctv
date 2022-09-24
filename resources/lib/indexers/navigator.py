@@ -333,7 +333,7 @@ class navigator:
         
         self.addDirectoryItem(control.lang(36025), config.uri.get('base'), config.LOGINWITHTFC, control.addonIcon())
         if control.setting('FBAppID') != '' or control.setting('FBClientToken') != '':
-        	self.addDirectoryItem(control.lang(36024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon())
+            self.addDirectoryItem(control.lang(36024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon())
         self.endDirectory()
 
     def loginWithTFC(self):

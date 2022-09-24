@@ -394,7 +394,7 @@ def updateCatalogCache(loadEpisodes=False):
                 catpercent = 100 * i / nbCat
                 cat1percent = 100 * 1 / nbCat
                 showpercent = 100 * j / nbItems
-                percent = part * 100 * (1 + 1 * (catpercent + (cat1percent * (cat1percent * showpercent / 100) / 100)))
+                percent = 100 * (1 + 1 * (catpercent + (cat1percent * (cat1percent * showpercent / 100) / 100)))
                 logger.logNotice('Updating catalog... %s' % (str(percent)+'%'))
                 control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
         i+=1
