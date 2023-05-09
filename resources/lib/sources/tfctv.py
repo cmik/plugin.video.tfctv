@@ -501,7 +501,7 @@ def getSettings(refresh=False):
             base_url=config.websiteUrl, 
             useCache=False if refresh is True else False
             )
-        scriptUrlMatch = re.compile('<script src="(((https://.+/c/6/)catalog/.+/)script\.js)"></script>', re.IGNORECASE).search(html.decode('utf-8'))
+        scriptUrlMatch = re.compile('<script src="(((https://.+/c/6/)catalog/.+/)script\.js)".*></script>', re.IGNORECASE).search(html.decode('utf-8'))
         if scriptUrlMatch:
             scriptUrl = scriptUrlMatch.group(1)
             catalogBasePath = scriptUrlMatch.group(2)
@@ -1535,11 +1535,11 @@ def loginWithFacebook(quiet=False, accessToken=''):
     if control.setting('FBAppID') != '' or control.setting('FBClientToken') != '':
 
         appIdentifier = '%s|%s' % (control.setting('FBAppID'), control.setting('FBClientToken'))
-        control.showNotification(control.lang(56024), control.lang(50005))
+        control.showNotification(control.lang(36024), control.lang(30005))
         if accessToken == '':
             login = callJsonApi(config.Facebook.get('login'), params = {'access_token' : appIdentifier}, headers=[], base_url='', useCache=False)
             if 'code' in login and 'user_code' in login:
-                control.alert(control.lang(57048) % login.get('verification_uri'), line1='[B]%s[/B]' % login.get('user_code'), line2=control.lang(57049), title=control.lang(56024))
+                control.alert(control.lang(37048) % login.get('verification_uri'), line1='[B]%s[/B]' % login.get('user_code'), line2=control.lang(37049), title=control.lang(36024))
                 i = 1
                 expired = False
                 while i < 5 and token == None and expired == False:
@@ -1585,12 +1585,12 @@ def loginWithFacebook(quiet=False, accessToken=''):
             if logged == True:
                 logger.logNotice('You are now logged in')
                 control.setSetting('FBAccessToken', token)
-                control.showNotification(control.lang(57009) % accountJSON.get('name'), control.lang(50007))
+                control.showNotification(control.lang(37009) % accountJSON.get('name'), control.lang(30007))
             else:
                 logger.logError('Authentification failed')
-                control.showNotification(control.lang(57024), control.lang(50006))
+                control.showNotification(control.lang(37024), control.lang(30006))
     else:
-        control.showMessage(control.lang(57052), control.lang(50006))
+        control.showMessage(control.lang(37052), control.lang(30006))
 
     return logged
 

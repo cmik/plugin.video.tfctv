@@ -1,7 +1,9 @@
+2.0.2
+    fixed issue when retrieving catalog URL
 2.0.1
     Minor fixes
 2.0.0
-    iWantTCF version for Kodi 19+
+    iWantTFC version for Kodi 19+
 1.7.0
     Reworked version for iWantTFC (still for Kodi 18+)
 1.6.2
