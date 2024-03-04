@@ -501,7 +501,7 @@ def getSettings(refresh=False):
             base_url=config.websiteUrl, 
             useCache=False if refresh is True else False
             )
-        scriptUrlMatch = re.compile('<script src="(((https://.+/c/6/)catalog/.+/)script\.js)".*></script>', re.IGNORECASE).search(html.decode('utf-8'))
+        scriptUrlMatch = re.compile('<script src="(((https://.+/c/6/)catalog/.+/)script\.js[^"]*)".*></script>', re.IGNORECASE).search(html.decode('utf-8'))
         if scriptUrlMatch:
             scriptUrl = scriptUrlMatch.group(1)
             catalogBasePath = scriptUrlMatch.group(2)

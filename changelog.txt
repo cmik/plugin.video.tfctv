@@ -1,3 +1,5 @@
+2.0.3
+    fixed issue when retrieving catalog URL
 2.0.2
     fixed issue when retrieving catalog URL
 2.0.1
