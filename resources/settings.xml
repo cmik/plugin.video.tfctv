@@ -1,5 +1,3 @@
-
-
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
     <category label="30100">
@@ -54,6 +52,11 @@
         <setting id="iWantRefreshToken" type="text" label="30169" default="" visible="false"/>
         <setting id="iWantUserAuthentication" type="text" label="350170" default="" visible="false"/>
         <setting id="loginSession" type="text" label="30171" default="" visible="false"/>
+        <setting id="geoLocation" type="text" label="30172" default="" visible="false"/>
+        <setting id="userData" type="text" label="30173" default="" visible="false"/>
+        <setting id="lastUserDataRefresh" type="text" label="30174" default="" visible="false"/>
+        <setting id="userSubscriptions" type="text" label="30175" default="" visible="false"/>
+        <setting id="serviceId" type="text" label="30176" default="" visible="false"/>
     </category>
     <category label="30101">
         <setting type="lsep" label="30103"/>

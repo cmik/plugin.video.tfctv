@@ -17,16 +17,21 @@ longCache = {'name' : 'tfctv_db', 'ttl': 24*7}
 urlCachePrefix = 'urlcache_'
 
 # HOSTS / URI
-webserviceUrl = 'https://www.iwanttfc.com'
+webserviceUrl = 'https://api.iwanttfc.com'
 websiteUrl = 'https://www.iwanttfc.com'
-websiteSecuredUrl = 'https://www.iwanttfc.com'
+websiteSecuredUrl = 'https://api.iwanttfc.com'
 websiteCDNUrl = 'https://img.tfc.tv'
+geoLocationUrl = 'https://pql-geo.iwanttfc.com/prod/location'
 Facebook = {
     'login' : 'https://graph.facebook.com/v12.0/device/login',
     'status' : 'https://graph.facebook.com/v12.0/device/login_status',
     'info' : 'https://graph.facebook.com/v12.0/me'
 }
 uri = {
+    'login' : '/identity/api/iam/oauth?api-version=1.2',
+    'getUserData' : '/identity/api/iam/get-contact?api-version=1.2',
+    'getSubscriptions' : '/subs/api/subscription/get-active-entitlements',
+
     'base' : '/',
     'home' : '/#!/',
     'loginStatus' : '/api/1.0/user/login',
@@ -39,7 +44,6 @@ uri = {
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
     'ssoLogin' : '/sso/api/sso.login?include=profile,loginIDs,data,password',
-    'login' : '/api/1.0/user/auth',
     'socialLogin' : '/api/1.0/user/auth',
     'callback' : '/callback',
     'authSSO' : '/sso/authenticate',

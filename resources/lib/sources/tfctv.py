@@ -34,9 +34,9 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
     errorCode = -1
     episodeDetails = {}
     
-    if checkProxy() == True:
+    if checkProxy():
         # Check if logged in
-        if control.setting('emailAddress') != '' and isLoggedIn() == False:
+        if control.setting('emailAddress') != '' and not isLoggedIn():
             control.showNotification(control.lang(37012), control.lang(30002))
             login()
             
@@ -1094,8 +1094,8 @@ def getUserInfo():
     memberSince = profileHeader.find( 'div', attrs = {'class' : 'date'}).get_text()    
     
     # Retrieve info from account JSON string
-    user = json.loads(control.setting('accountJSON')).get('profile')
-    
+    user = getAccount().get('profile')
+
     return {
         'name' : name,
         'firstName' : user.get('firstName', ''),
@@ -1108,28 +1108,12 @@ def getUserInfo():
     
 def getUserSubscription():
     logger.logInfo('called function')
-    url = config.uri.get('profileDetails')
-    subscription = callJsonApi(url, useCache=False)
-    logger.logInfo(subscription)
-    first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-        
-    subKeys = ['Type', 'SubscriptionName', 'SubscriptionStatus', 'ActivationDate', 'ExpirationDate', 'BillingPeriod', 'AutoRenewal']
-    details = ''
-    if 'Details' in subscription:
-        for d in subscription['Details']:
-            for key in subKeys:
-                label = first_cap_re.sub(r'\1 \2', key)
-                if key in d:
-                    value = ''
-                    if isinstance(d[key], (bool)):
-                        value = 'ACTIVE' if d[key] == True else 'NON ACTIVE'
-                    else:
-                        value = d[key]
-                    details += "%s: %s\n" % (label, value)
-            details += "\n"
-    return {
-            'details' : details
-        }
+    subscriptions = {}
+    if control.setting('userSubscriptions'):
+        subscriptions = json.loads(control.setting('userSubscriptions'))
+    if 'subscriptions' in subscriptions:
+        return subscriptions
+    return {}
     
 def getUserTransactions():
     logger.logInfo('called function')
@@ -1348,7 +1332,7 @@ def checkLibraryUpdates(quiet=False):
     for show in items:
         logger.logNotice('check for update for show %s' % show.get('name'))
         result = addToLibrary(show.get('id'), show.get('name'), show.get('parentid'), show.get('year'), updateOnly=True)
-        if result.get('updated') == True:
+        if result.get('updated', False):
             logger.logNotice('Updated %s episodes' % str(result.get('nb')))
             if not quiet: control.showNotification(control.lang(37037) % (str(result.get('nb')), show.get('name')), control.lang(30011))
         else:
@@ -1381,14 +1365,8 @@ def enterSearch(category, type):
 
 def getUserName(html=False):
     logger.logInfo('called function')
-    userName = ''
-    if html == False:
-        html = callServiceApi(config.uri.get('profile'), headers=[('Referer', config.websiteSecuredUrl+'/')], base_url=config.websiteSecuredUrl, useCache=False)
-    avatar = bs(html, 'html.parser').find( "div", attrs = { 'class' : 'avatar' })
-    if avatar:
-        userName = avatar.find( "img")['alt']
-        logger.logInfo(userName)
-    return userName
+    contact = getUserData().get('contact', {})
+    return '%s %s' % (contact.get('firstName', '') , contact.get('lastName', ''))
 
 def enterCredentials():
     logger.logInfo('called function')
@@ -1415,7 +1393,7 @@ def checkAccountChange(forceSignIn=False):
     loginSuccess = False
     
     if os.path.exists(hashFile):
-        if forceSignIn == True: 
+        if forceSignIn: 
             os.unlink(hashFile)
         else: 
             with open(hashFile) as f:
@@ -1433,11 +1411,11 @@ def checkAccountChange(forceSignIn=False):
     if logged:
         cleanCookies(False)
         loginSuccess = login()
-        if loginSuccess == True and os.path.exists(control.dataPath):
+        if loginSuccess and os.path.exists(control.dataPath):
             with open(hashFile, 'w') as f:
                 f.write(hash)
                 f.close()
-        elif os.path.exists(hashFile)==True: 
+        elif os.path.exists(hashFile): 
             os.unlink(hashFile)
         
     return (accountChanged, loginSuccess)
@@ -1445,35 +1423,75 @@ def checkAccountChange(forceSignIn=False):
 def login(quiet=False, login=False, password=False):
     logger.logInfo('called function')
     signedIntoWebsite = loginToWebsite(quiet, login, password)
+    if signedIntoWebsite:
+        refreshUserInfo()
     return signedIntoWebsite
     
 def isLoggedIn():
     logger.logInfo('called function')
     global Logged
-    if Logged == False and control.setting('iWantUserAuthentication') and control.setting('iWantUserAuthentication') != '':
-        userAuth = callJsonApi(
-            config.uri.get('loginStatus'),
-            headers=[
-                ('Content-Type', 'application/x-www-form-urlencoded'),
-                ('Cookie', 'UserAuthentication='+control.setting('iWantUserAuthentication')),
-                ('UserAuthentication', control.setting('iWantUserAuthentication')),
-                ('Referer', config.websiteSecuredUrl+'/'),
-                ('Origin', config.websiteSecuredUrl),
-                ('Cache-Control', 'no-cache'),
-                ('Pragma', 'no-cache'),
-                ('Sec-Fetch-Dest', 'empty'),
-                ('Sec-Fetch-Mode', 'cors'),
-                ('Sec-Fetch-Site', 'same-origin')
-                ],
-            base_url=config.websiteSecuredUrl,
-            useCache=False
-            )
-        if userAuth.get('status') == 'OK':
-            Logged = True  
-            control.setSetting('loginSession', json.dumps(userAuth))
-        else: 
-            Logged = False
+    userData = getUserData()
+    now = datetime.datetime.now()
+    lastRefresh = datetime.datetime.fromtimestamp(float(control.setting('lastUserDataRefresh'))) if control.setting('lastUserDataRefresh') != '' else None
+    if not Logged or userData == {} or lastRefresh is None or (now - lastRefresh).total_seconds() > 86400:
+        Logged = refreshUserData()
     return Logged
+
+def refreshUserInfo():
+    logger.logInfo('called function')
+    if refreshUserData():
+        return refreshUserSubscriptions()
+    return False
+
+def refreshUserContext():
+    logger.logInfo('called function')
+    # refreshWatchHistory()
+    # refreshWatchlist()
+    # refreshContinueWatching()
+    return True
+
+def refreshUserData():
+    logger.logInfo('called function')
+    userData = callJsonApi(
+        config.uri.get('getUserData'),
+        headers=[
+            ('Authorization', 'Bearer ' + control.setting('accessToken')),
+            ('Referer', config.websiteSecuredUrl+'/'),
+            ('Origin', config.websiteSecuredUrl),
+            ('Cache-Control', 'no-cache'),
+            ('Pragma', 'no-cache'),
+            ('Sec-Fetch-Dest', 'empty'),
+            ('Sec-Fetch-Mode', 'cors'),
+            ('Sec-Fetch-Site', 'same-origin'),
+            ('x-device-platform', 'web'),
+            ('X-Device-SubPlatform', 'browser'),
+            ('X-IW-UserAgent', 'Name=iWant; Version=1.0.0; Platform=Web; OSVersion=14.0.0 Model=Chrome; BuildType=debug Environment=development'),
+            ('Sec-GPC', '1'),
+            ('TE', 'trailers')
+            ],
+        useCache=False
+        )
+    if userData and userData.get('statusCode', '') == '1' and userData.get('statusMessage', '') == 'OK' and 'data' in userData:
+        control.setSetting('userData', json.dumps(userData.get('data', {}).get('user', {})))
+        control.setSetting('lastUserDataRefresh', datetime.datetime.now())
+        return True
+    else: 
+        control.setSetting('userData', '')
+        logout()
+    return False
+
+def refreshUserSubscriptions():
+    logger.logInfo('called function')
+    url = config.uri.get('getSubscriptions')
+    subscriptions = callJsonApi(url, useCache=False)
+    logger.logInfo(subscriptions)
+    if subscriptions and 'statusCode' in subscriptions and subscriptions['statusCode'] == '1' and 'data' in subscriptions:
+        control.setSetting('userSubscriptions', json.dumps(subscriptions.get('data', {})))
+        return True
+    else: 
+        control.setSetting('userSubscriptions', '')
+        logout()
+    return False
     
 def loginToWebsite(quiet=False, login=False, password=False):
     logger.logInfo('called function')
@@ -1481,7 +1499,7 @@ def loginToWebsite(quiet=False, login=False, password=False):
 
     if control.setting('loginType') == "Facebook":
         token = control.setting('FBAccessToken')
-        if token != None and token != '' and checkFacebookToken(token) == False:
+        if token is not None and token != '' and not checkFacebookToken(token):
             token = ''
             control.setSetting('FBAccessToken', '')
         logged = loginWithFacebook(quiet, token)
@@ -1489,24 +1507,35 @@ def loginToWebsite(quiet=False, login=False, password=False):
         if control.setting('emailAddress') != '':
             emailAddress = control.setting('emailAddress')
             password = control.setting('password')
-            params = { "email" : emailAddress, "password": password }
+            fingerprintId = getFingerprintID()
+            ipAddress = getDeviceIP()
+            params = {
+                "identifier": emailAddress,
+                "password": password,
+                "identifierType": "email",
+                "socialLoginToken": "",
+                "userAgent": config.userAgents['default'],
+                "deviceName": "MacIntel",
+                "deviceType": "desktop",
+                "deviceModelNumber": "5.0 (Macintosh)",
+                "fingerprintId": fingerprintId,
+                "ipAddress": ipAddress,
+                "webSource": config.websiteUrl+'/',
+            }
             authInfos = callJsonApi(config.uri.get('login'), 
                 params, 
                 headers = [
+
                     ('Referer', config.websiteSecuredUrl+'/'),
                     ('Origin', config.websiteSecuredUrl),
-                    ('Pragma', 'no-cache'),
-                    ('Sec-Fetch-Dest', 'empty'),
-                    ('Sec-Fetch-Mode', 'cors'),
-                    ('Sec-Fetch-Site', 'same-orig')
-                    ], 
-                base_url = config.websiteSecuredUrl, 
+                    ('Pragma', 'no-cache')
+                    ],
                 useCache = False
                 )
-            if authInfos.get('status') == 'OK':
+            if authInfos and authInfos.get('statusCode', '') == '1' and authInfos.get('statusMessage', '') == 'OK' and 'data' in authInfos and 'refreshToken' in authInfos.get('data', {}) and 'UserAuthentication' in authInfos.get('data', {}):
                 control.setSetting('iWantRefreshToken', authInfos.get('refreshToken'))
-                control.setSetting('iWantUserAuthentication', authInfos.get('UserAuthentication'))
-            if not isLoggedIn() and quiet == False:
+                control.setSetting('iWantUserAuthentication', authInfos.get('accessToken'))
+            if not isLoggedIn() and not quiet:
                 logger.logError('Authentification failed')
                 control.showNotification(control.lang(37024), control.lang(30006))
             else:
@@ -1530,7 +1559,7 @@ def loginWithFacebook(quiet=False, accessToken=''):
     logger.logInfo('called function')
     logged = False
     token = None
-    accountJSON = json.loads(control.setting('accountJSON')) if control.setting('accountJSON') else {}
+    account = getAccount()
 
     if control.setting('FBAppID') != '' or control.setting('FBClientToken') != '':
 
@@ -1542,14 +1571,13 @@ def loginWithFacebook(quiet=False, accessToken=''):
                 control.alert(control.lang(37048) % login.get('verification_uri'), line1='[B]%s[/B]' % login.get('user_code'), line2=control.lang(37049), title=control.lang(36024))
                 i = 1
                 expired = False
-                while i < 5 and token == None and expired == False:
+                while i < 5 and token is None and not expired:
                     time.sleep(login.get('interval', 5))
                     status = callJsonApi(config.Facebook.get('status'), params = {'access_token' : appIdentifier, 'code' : login.get('code')}, headers=[], base_url='', useCache=False)
                     if 'access_token' in status:
                         info = callJsonApi(config.Facebook.get('info'), params = {'fields' : 'name,first_name,last_name,email', 'access_token' : status.get('access_token')}, headers=[], base_url='', useCache=False)
                         if 'name' in info:
-                            accountJSON = {'name' : info.get('name', ''), 'firstName' : info.get('first_name', ''), 'lastName': info.get('last_name', ''), 'email': info.get('email', ''), 'id': info.get('id', '')}
-                            control.setSetting('accountJSON', json.dumps(accountJSON))
+                            account = setAccount(info.get('id', ''), info.get('name', ''), info.get('first_name', ''), info.get('last_name', ''), info.get('email', ''))
                             token = status.get('access_token')
                     elif 'error' in status and status.get('error').get('error_subcode', 0) == 1349152:
                         expired = True
@@ -1557,9 +1585,9 @@ def loginWithFacebook(quiet=False, accessToken=''):
         else: 
             token = accessToken
 
-        if token != None:
+        if token is not None:
             params = {
-                'facebookUserId': accountJSON.get('id'),
+                'facebookUserId': account.get('id'),
                 'socialAccessToken': token
             }
             authInfos = callJsonApi(
@@ -1581,11 +1609,11 @@ def loginWithFacebook(quiet=False, accessToken=''):
                 control.setSetting('iWantUserAuthentication', authInfos.get('UserAuthentication'))
             logged = isLoggedIn()
 
-        if quiet == False:
-            if logged == True:
+        if not quiet:
+            if logged:
                 logger.logNotice('You are now logged in')
                 control.setSetting('FBAccessToken', token)
-                control.showNotification(control.lang(37009) % accountJSON.get('name'), control.lang(30007))
+                control.showNotification(control.lang(37009) % account.get('name'), control.lang(30007))
             else:
                 logger.logError('Authentification failed')
                 control.showNotification(control.lang(37024), control.lang(30006))
@@ -1616,27 +1644,87 @@ def getCookieContent(filter=False, exceptFilter=False):
         cookie.append('%s=%s' % (c.name, c.value))
     return cookie
 
-def generateNewFingerprintID(previous=False):
+def generateNewFingerprintID():
     logger.logInfo('called function')
     from random import randint
-    if previous == False:
-        control.setSetting('previousFingerprintID', control.setting('fingerprintID'))
-    else:
-        control.setSetting('previousFingerprintID', previous)
+    control.setSetting('previousFingerprintID', control.setting('fingerprintID'))
     control.setSetting('fingerprintID', hashlib.md5((control.setting('emailAddress')+str(randint(0, 1000000))).encode()).hexdigest())
     if control.setting('generateNewFingerprintID') == 'true':
         control.setSetting('generateNewFingerprintID', 'false')
     return True
-    
+
+def getUserData():
+    logger.logInfo('called function')
+    userData = {}
+    if control.setting('userData') and control.setting('userData') != '':
+        userData = json.loads(control.setting('userData') if control.setting('userData') else '{}')
+    return userData
+
+def getUserId():
+    logger.logInfo('called function')
+    return getUserData().get('id', '')
+
+def getAccount():
+    logger.logInfo('called function')
+    account = {}
+    if control.setting('accountJSON') and control.setting('accountJSON') != '':
+        account = json.loads(control.setting('accountJSON') if control.setting('accountJSON') else '{}')
+    return account
+
+def setAccount(id, name='', firstName='', lastName='', email=''):
+    logger.logInfo('called function')
+    account = {
+        'name' : name,
+        'firstName' : firstName,
+        'lastName': lastName,
+        'email': email,
+        'id': id
+    }
+    control.setSetting('account', json.dumps(account))
+    return account
+
+def getFingerprintID():
+    logger.logInfo('called function')
+    if control.setting('fingerprintID') == '':
+        generateNewFingerprintID()
+    return control.setting('fingerprintID')
+
+def getDeviceIP():
+    ipAddress = json.loads(control.setting('geoLocation') if control.setting('geoLocation') else {}).get('ipAddress', '')
+    if ipAddress == '':
+        ipAddress = getGeoLocation().get('ipAddress', '')
+    logger.logInfo('Device IP address is %s' % ipAddress)
+    return ipAddress
+
+def getCountryCode():
+    countryCode = json.loads(control.setting('geoLocation') if control.setting('geoLocation') else {}).get('geoLocation', {}).get('countryCode', '')
+    if countryCode == '':
+        countryCode = getGeoLocation().get('geoLocation', {}).get('countryCode', '')
+    logger.logInfo('Device country code is %s' % countryCode)
+    return countryCode
+
+def getGeoLocation():
+    location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False)
+    if 'status' in location and location.get('status') == 200 and 'data' in location and len(location.get('data')) > 0:
+        data = location.get('data')[0]
+        control.setSetting('geoLocation', json.dumps(data))
+        return data
+    return {}
+
 def logout(quiet=True):
     logger.logInfo('called function')
-    if quiet == False and isLoggedIn() == False:
+    if not quiet and not isLoggedIn():
         control.showNotification(control.lang(37000), control.lang(30005))
     control.setSetting('FBAccessToken', '')
     control.setSetting('iWantUserAuthentication', '')
     control.setSetting('iWantRefreshToken', '')
+    control.setSetting('userData', '')
+    control.setSetting('accountJSON', '')
+    control.setSetting('userSubscriptions', '')
+    control.setSetting('userId', '')
+    control.setSetting('serviceId', '')
     cookieJar.clear()
-    if quiet == False and isLoggedIn() == False:
+    if not quiet and not isLoggedIn():
         control.showNotification(control.lang(37010))
         control.exit()
 

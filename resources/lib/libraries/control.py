@@ -30,7 +30,12 @@ settingsCache = {}
 getAddonSetting = addon.getSetting
 setAddonSetting = addon.setSetting
 def setting(key):
-    return settingsCache[key] if key in settingsCache else getAddonSetting(key)
+    if key in settingsCache:
+        return settingsCache[key]
+    else:
+        setting = getAddonSetting(key)
+        settingsCache[key] = setting
+        return setting
 
 def setSetting(key, value):
     settingsCache[key] = value
