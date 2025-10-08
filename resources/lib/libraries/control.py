@@ -19,7 +19,13 @@
 '''
 
 
-import os,xbmc,xbmcaddon,xbmcplugin,xbmcgui,xbmcvfs
+import os
+import sys
+import xbmc
+import xbmcaddon
+import xbmcplugin
+import xbmcgui
+import xbmcvfs
 #import CommonFunctions as common
 from bs4 import BeautifulSoup as soup
 from resources.lib.libraries import logger
@@ -30,6 +36,7 @@ settingsCache = {}
 getAddonSetting = addon.getSetting
 setAddonSetting = addon.setSetting
 def setting(key):
+    logger.logDebug('called function with param (%s)' % key)
     if key in settingsCache:
         return settingsCache[key]
     else:
@@ -38,9 +45,13 @@ def setting(key):
         return setting
 
 def setSetting(key, value):
+    logger.logDebug('called function with param (%s, %s)' % (key, value))
     settingsCache[key] = value
     return setAddonSetting(key, value)
 
+sysaddon = sys.argv[0]
+
+thisPlugin = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 
 lang = addon.getLocalizedString
 
@@ -113,6 +124,8 @@ addonPath = transPath(addonInfo('path'))
 dataPath = transPath(addonInfo('profile'))
 
 homePath = transPath('special://home')
+
+tempPath = transPath('special://temp')
 
 settingsFile = os.path.join(dataPath, 'settings.xml')
 

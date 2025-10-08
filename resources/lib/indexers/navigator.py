@@ -19,7 +19,11 @@
 '''
 
 
-import os,sys,xbmc,time,re
+import os
+import sys
+import xbmc
+import time
+import re
 from urllib.parse import parse_qsl,quote_plus,urlencode
 from resources import config
 from resources.lib.libraries import control
@@ -33,11 +37,11 @@ logger = control.logger
 try: 
     action = dict(parse_qsl(sys.argv[2].replace('?','')))['action']
 except (Exception) as e:
-    logger.logError('Error occurred while parsing action: %s' % e)
+    logger.logNotice('No corresponding action found: %s' % e)
     action = None
 
-sysaddon = sys.argv[0]
-thisPlugin = int(sys.argv[1])
+sysaddon = control.sysaddon
+thisPlugin = control.thisPlugin
 
 class navigator:
 

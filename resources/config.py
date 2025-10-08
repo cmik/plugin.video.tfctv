@@ -19,7 +19,7 @@ urlCachePrefix = 'urlcache_'
 # HOSTS / URI
 webserviceUrl = 'https://api.iwanttfc.com'
 websiteUrl = 'https://www.iwanttfc.com'
-websiteSecuredUrl = 'https://api.iwanttfc.com'
+websiteSecuredUrl = 'https://www.iwanttfc.com'
 websiteCDNUrl = 'https://img.tfc.tv'
 geoLocationUrl = 'https://pql-geo.iwanttfc.com/prod/location'
 Facebook = {
@@ -31,6 +31,7 @@ uri = {
     'login' : '/identity/api/iam/oauth?api-version=1.2',
     'getUserData' : '/identity/api/iam/get-contact?api-version=1.2',
     'getSubscriptions' : '/subs/api/subscription/get-active-entitlements',
+    'graphql' : '/consumer/graphql',
 
     'base' : '/',
     'home' : '/#!/',
@@ -72,9 +73,9 @@ uri = {
 
 # User-agent
 userAgents = { 
-    webserviceUrl : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
-    websiteUrl : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
-    'default' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
+    webserviceUrl : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0',
+    websiteUrl : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0',
+    'default' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0'
     }
 
 # MODES
