@@ -320,3 +320,7 @@ def writeFile(filePath, content):
     if os.path.exists(filePath):
         return True
     return False
+
+def generateUUID():
+    import uuid
+    return str(uuid.uuid4())

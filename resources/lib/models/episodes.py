@@ -125,6 +125,32 @@ class Episode(model.Model):
         logger.logDebug(mixed)
         self.checkIfTableExists()
         for data in mixed:
+            if not isinstance(data, dict):
+                logger.logDebug("Skipping invalid data: not a dictionary")
+                continue
+            if not data:
+                logger.logDebug("Skipping empty data")
+                continue
+
+            # Validate required fields and types
+            required_fields = ['id', 'title', 'parentid', 'show', 'image', 'fanart', 
+                               'episodenumber', 'url', 'description', 'shortdescription', 
+                               'date', 'year', 'parentalAdvisory', 'ltype']
+            for field in required_fields:
+                if field not in data:
+                    logger.logDebug("Skipping data: missing required field '%s'" % field)
+                    continue
+
+            # Validate integer fields
+            int_fields = ['duration', 'views', 'rating', 'votes']
+            for field in int_fields:
+                if field in data and data[field] is not None:
+                    try:
+                        data[field] = int(data[field])
+                    except (ValueError, TypeError):
+                        logger.logError("Invalid integer value for field '%s', setting to 0" % field)
+                        #logger.logDebug("Invalid integer value for field '%s', setting to 0" % field)
+                        data[field] = 0
             if 'id' in data:
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')

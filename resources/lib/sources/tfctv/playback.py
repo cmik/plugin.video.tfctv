@@ -45,6 +45,7 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             else:
                 kodiurl = kodiurl + '&Accept=*/*,akamai/media-acceleration-sdk;b=1702200;v=1.2.2;p=javascript'
             liz = control.item(name, path=kodiurl)
+            #liz = control.item(name, path=episodeDetails['data']['uri'])
             liz.setArt({'thumb': thumbnail, 'icon': "DefaultVideo.png"})
             liz.setInfo(type='video', infoLabels={
                 'title': name,
@@ -60,12 +61,12 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 })
 
             # Add eventual subtitles
-            if 'subtitles' in episodeDetails['data'] and len(episodeDetails['data']['subtitles']) and 'id' in episodeDetails['data']['subtitles'][0]:
-                logger.logInfo(control.setting('basePath') + config.uri.get('captions') % (episodeDetails['data']['subtitles'][0]['id'], 'vtt'))
+            if 'subtitles' in episodeDetails['data'] and len(episodeDetails['data']['subtitles']) > 0:
                 try:
-                    liz.setSubtitles([control.setting('basePath') + config.uri.get('captions') % (episodeDetails['data']['subtitles'][0]['id'], 'vtt')])
-                    if 'lang' in episodeDetails['data']['subtitles'][0]:
-                        liz.addStreamInfo('subtitle', {'language': episodeDetails['data']['subtitles'][0]['lang']})
+                    liz.setSubtitles([s['url'] for s in episodeDetails['data']['subtitles'] if 'url' in s])
+                    for subtitle in episodeDetails['data']['subtitles']:
+                        if 'lang' in subtitle:
+                            liz.addStreamInfo('subtitle', {'language': subtitle['lang']})
                 except:
                     pass
 
@@ -105,7 +106,7 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
 def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
     """Get media info for playback"""
     logger.logInfo('called function')
-    mediaInfo = getMediaInfoFromWebsite(episodeId, type, bandwidth)
+    mediaInfo = retrieveMediaInfo(episodeId, type, bandwidth)
     if mediaInfo['errorCode'] == 0:
         e = {
             'id': episodeId,
@@ -139,7 +140,7 @@ def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
 def getEpisodeBandwidthList(episodeId, title, type, thumbnail):
     """Get available bandwidth options"""
     logger.logInfo('called function')
-    mediaInfo = getMediaInfoFromWebsite(episodeId, type)
+    mediaInfo = retrieveMediaInfo(episodeId, type)
     data = []
     if mediaInfo['errorCode'] == 0:
         i = 0
@@ -171,37 +172,72 @@ def getEpisodeBandwidthList(episodeId, title, type, thumbnail):
             i += 1
     return data
 
-def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
+def retrieveMediaInfo(episodeId, type, bandwidth=False):
     """Get media info from website"""
     logger.logInfo('called function with param (%s, %s, %s)' % (str(episodeId), type, bandwidth))
     from .api import callJsonApi
+
+    playback = callJsonApi(
+        config.uri.get('video') % episodeId,
+        {
+            'platform': 'web',
+            'subPlatform': 'firefox',
+            'appVersion': '25.09.11-1',
+            'appVersionCode': 1,
+            'playbackSessionId': control.generateUUID(),
+            'playbackCapabilities': {
+                'drm': [
+                    'wv'
+                ],
+                'streamType': [
+                    'dash'
+                ],
+                'resolution': [
+                    'fhd'
+                ],
+                'audio': [
+                    'stereo'
+                ],
+                'hdr': [
+                    'hdr10'
+                ]
+            }
+        },
+        useCache=False,
+    )
+
+    """
+    'referralProperties': {
+        'railTitle':'Hero Banner',
+        'railType':'Banner',
+        'railSubType':'Carousel',
+        'pageName':'page_details'
+    }
+
+    {
+        'railTitle': 'Continue Watching',
+        'railType': 'Portrait',
+        'railSubType': 'ContinueWatching',
+        'pageName': 'page_details'
+    }
+    """
     
     mediaInfo = {
         'errorCode': 0,
         'StatusMessage': ''
         }
 
-    liveStream = False
-    episode = {}
-    if type == 'show':
-        logger.logInfo('episode')
-        episode = logger.logDebug(getEpisode(episodeId))
-    elif type == 'livestream':
-        logger.logInfo('livestream')
-        episode = logger.logDebug(getEpisodeFromLiveStream(episodeId))
-        liveStream = True
-    else:
-        logger.logInfo(type)
-        episode = logger.logDebug(getEpisodeFromShow(episodeId))
+    logger.logInfo('episode')
+    episode = logger.logDebug(getEpisode(episodeId))
 
-    if episode.get('id', True) is True:
+    if episode.get('id', True) is True or 'playbackInfo' not in playback or 'url' not in playback.get('playbackInfo', {}):
         mediaInfo['StatusMessage'] = control.lang(37032)
         mediaInfo['errorCode'] = 2
     else:
         show = logger.logInfo(episode.get('showObj', {}))
         mediaInfo['data'] = {}
         mediaInfo['data']['url'] = episode.get('url')
-        mediaInfo['data']['uri'] = episode.get('media', {}).get('m3u8s', [])[0]
+        mediaInfo['data']['uri'] = playback.get('playbackInfo', {}).get('url', '')
         
         # Parental advisory
         mediaInfo['data']['parentalAdvisory'] = 'false'
@@ -217,11 +253,12 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
                     mediaInfo['data'] = {}
                     return mediaInfo
         
-        # check if amssabscbn.akamaized.net to use inputstream.adaptive
-        if 'mpds' in episode.get('media', {}):
+        # check if mpd to use inputstream.adaptive
+        if 'mpd' in mediaInfo['data']['uri']:
             mediaInfo['useDash'] = True
-            headers = 'Origin=%s&Referer=%s&User-Agent=%s&Sec-Fetch-Dest=empty&Sec-Fetch-Mode=cors&Sec-Fetch-Site=same-origin' % (config.websiteUrl, config.websiteUrl+'/', config.userAgents['default'])
+            headers = 'Origin=%s&Referer=%s&User-Agent=%s&Sec-Fetch-Dest=empty&Sec-Fetch-Mode=cors&Sec-Fetch-Site=cross-site&Sec-GPC=1&Connection=keep-alive' % (config.websiteUrl, config.websiteUrl+'/', quote(config.userAgents['default']))
 
+            """
             # choose best stream quality
             defaultQuality = 0
             if bandwidth is False:
@@ -241,13 +278,15 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
                 defaultQuality = bandwidth
                 
             mediaInfo['data']['uri'] = episode.get('media', {}).get('mpds', [])[defaultQuality]
+            """
             
             # DRM
             mediaInfo['dash'] = {
                 'type': 'com.widevine.alpha',
-                'key': episode.get('media', {}).get('key', ''),
+                'key': playback.get('playbackInfo', {}).get('licenseUrl', ''),
                 'headers': headers
             }
+        """
         else:
             # choose best stream quality
             defaultQuality = 0
@@ -268,8 +307,8 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
                 defaultQuality = bandwidth
                 
             mediaInfo['data']['uri'] = episode.get('media', {}).get('m3u8s', [])[defaultQuality]
+        """
 
-        mediaInfo['data'].update(episode.get('media'))
         mediaInfo['data']['preview'] = False
         mediaInfo['data']['showid'] = show.get('id')
         mediaInfo['data']['show'] = show.get('name', episode.get('title'))
@@ -281,13 +320,13 @@ def getMediaInfoFromWebsite(episodeId, type, bandwidth=False):
         mediaInfo['data']['fanart'] = show.get('fanart', episode.get('image'))
         mediaInfo['data']['ltype'] = episode.get('ltype', 'show')
         mediaInfo['data']['type'] = episode.get('type', 'show')
-        if 'captions' in mediaInfo['data'] and len(mediaInfo['data']['captions']):
-            mediaInfo['data']['subtitles'] = mediaInfo['data']['captions']
+        if 'subtitles' in playback.get('playbackInfo', {}) and len(playback.get('playbackInfo', {}).get('subtitles', [])) > 0:
+            mediaInfo['data']['subtitles'] = playback.get('playbackInfo', {}).get('subtitles', [])
         mediaInfo['data']['dateaired'] = ''
         mediaInfo['data']['date'] = ''
         mediaInfo['data']['year'] = show.get('year')
         mediaInfo['data']['episodenumber'] = episode.get('episodenumber', 1)
-        mediaInfo['data']['duration'] = episode.get('media', {}).get('duration')
+        mediaInfo['data']['duration'] = episode.get('duration')
         mediaInfo['data']['views'] = episode.get('views', 0)
         mediaInfo['data']['showObj'] = show
                 

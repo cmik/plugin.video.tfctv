@@ -215,7 +215,7 @@ def callJsonApi(path, params={}, headers=[], base_url=config.webserviceUrl, useC
 
 def callGraphQLApi(query, variables={}, headers=[], base_url=config.webserviceUrl, useCache=True):
     """Call GraphQL API"""
-    logger.logInfo('called function')
+    logger.logInfo('called function with query %s...' % query[:20])
     headers.append(('Accept', 'application/graphql-response+json, application/json'))
     headers.append(('Content-Type', 'application/json'))
     params = {
@@ -231,6 +231,9 @@ def callGraphQLApi(query, variables={}, headers=[], base_url=config.webserviceUr
         response = json.loads(res)
         if 'data' in response:
             return response['data']
+        if 'errors' in response:
+            logger.logError(f"GraphQL errors: {response['errors'][0].get('message', '')}")
+            control.showNotification(f"{response['errors'][0].get('message', '')}", control.lang(30004))
         return {}
     except (json.JSONDecodeError, ValueError) as e:
         logger.logError(f'JSON decode error: {e}')

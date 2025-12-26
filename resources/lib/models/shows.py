@@ -116,6 +116,9 @@ class Show(model.Model):
         logger.logDebug(mixed)
         self.checkIfTableExists()
         for data in mixed:
+            if 'name' in data and data.get('name', '') == '':
+                logger.logError("Missing required field 'name'")
+                continue
             if 'id' in data:
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')

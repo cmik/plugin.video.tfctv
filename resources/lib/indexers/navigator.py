@@ -34,11 +34,11 @@ artPath = control.artPath()
 addonFanart = control.addonFanart()
 logger = control.logger
 
-try: 
+""" try: 
     action = dict(parse_qsl(sys.argv[2].replace('?','')))['action']
 except (Exception) as e:
     logger.logNotice('No corresponding action found: %s' % e)
-    action = None
+    action = None """
 
 sysaddon = control.sysaddon
 thisPlugin = control.thisPlugin
@@ -76,11 +76,11 @@ class navigator:
             self.showCategories()
             
         if control.setting('displayWebsiteSections') == 'true':
-            control.showNotification(control.lang(37020), control.lang(30008))
-            sections = tfctv.getWebsiteHomeSections()
-            for s in sections:
-                self.addDirectoryItem(s['name'].title(), str(s['id']), config.SECTIONCONTENT, control.addonFolderIcon(s['name'].title()), isFolder=True, **self.formatMenu())
-            
+            # control.showNotification(control.lang(37020), control.lang(30008))
+            collections = tfctv.getWebsiteCollections()
+            for c in collections:
+                self.addDirectoryItem(c['title'].title(), str(c['collectionId']), config.COLLECTIONCONTENT, control.addonFolderIcon(c['title'].title()), isFolder=True, **self.formatMenu())
+
         if control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != '':
             self.addDirectoryItem(control.lang(30202), config.uri.get('base'), config.MYACCOUNT, control.addonFolderIcon(control.lang(30202)), isFolder=True, **self.formatMenu())
 
@@ -94,7 +94,21 @@ class navigator:
         
         if not tfctv.isLoggedIn():
             control.infoDialog(control.lang(37017), control.lang(30002), time=8000)
-            
+
+    def showCollectionContent(self, url):
+        logger.logInfo('called function')
+        sections = tfctv.getCollectionContent(url)
+        for s in sections:
+            self.addDirectoryItem(s['name'].title(), str(s['id']), config.SECTIONCONTENT, control.addonFolderIcon(s['name'].title()), isFolder=True, **self.formatMenu())
+        self.endDirectory()
+
+    def showSeasons(self, showId):
+        logger.logInfo('called function')
+        seasons = tfctv.getSeasons(showId)
+        for s in seasons:
+            self.addDirectoryItem(s['name'].title(), str(s['showId']), config.SHOWEPISODES, control.addonFolderIcon(s['name'].title()), isFolder=True, query={'season': s['id']}, **self.formatMenu())
+        self.endDirectory()
+
     def showMyList(self):
         logger.logInfo('called function')
         self.addDirectoryItem(control.lang(30213), '/', config.MYLISTSHOWLASTEPISODES, control.addonFolderIcon(control.lang(30213)), isFolder=True, **self.formatMenu())
@@ -144,8 +158,8 @@ class navigator:
         for e in content:
             if e['ltype'] == 'show':
                 image = e.get('logo') if control.setting('useShowLogo') == 'true' else e.get('image')
-                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
-            elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream'):
+                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SEASONS if e.get('nbSeasons', 0) > 1 else config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
+            elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream') and e.get('isPlayable', True):
                 title = e.get('name')
                 title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
                 if title_match:
@@ -172,10 +186,10 @@ class navigator:
                 
         self.endDirectory()
         
-    def showEpisodes(self, showId, page=1):
+    def showEpisodes(self, showId, season='1', page=1):
         logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
-        (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, page, itemsPerPage)
+        (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, season, page, itemsPerPage)
         episodes = sorted(episodes, key=lambda item: item['title'], reverse=True)
         for e in episodes:
             title = e.get('title')

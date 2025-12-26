@@ -6,11 +6,17 @@
     Copyright (C) 2018 cmik
 '''
 
-import re,shutil,threading,ssl,time,xbmc,xbmcaddon
+import re
+#import shutil
+import threading
+import ssl
+import time
+import xbmc
+import xbmcaddon
 import http.cookiejar as cookielib
 from six.moves import socketserver
 from urllib import request as libRequest
-from urllib.parse import quote,urlencode,urlparse,parse_qsl
+from urllib.parse import quote, urlencode, urlparse, parse_qsl
 from http.server import SimpleHTTPRequestHandler
 from resources import config
 from resources.lib.libraries import control
@@ -43,7 +49,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         xbmc.log('Service DATA_OUT: %s' % repr(data), level=xbmc.LOGDEBUG)
 
         if 'url' in query:
-            url = query.get('url') + '&UserAuthentication=%s' % control.setting('iWantUserAuthentication')
+            url = query.get('url') #+ '&UserAuthentication=%s' % control.setting('iWantUserAuthentication')
             xbmc.log('Service URL_OUT: %s' % url, level=xbmc.LOGDEBUG)
             res = self.urlopen(url, data, headers=requestHeaders.items())
             
