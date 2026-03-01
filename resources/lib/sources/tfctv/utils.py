@@ -46,7 +46,7 @@ def cleanCookies(notify=True):
         try:
             os.unlink(os.path.join(control.homePath, 'cache', 'cookies.dat'))
             message = control.lang(37004)
-        except:
+        except Exception:
             message = control.lang(37005)
                 
     elif os.path.exists(os.path.join(control.homePath, 'temp', 'cookies.dat')):
@@ -54,7 +54,7 @@ def cleanCookies(notify=True):
         try:
             os.unlink(os.path.join(control.homePath, 'temp', 'cookies.dat'))
             message = control.lang(37004)
-        except:
+        except Exception:
             message = control.lang(37005)
 
     elif os.path.exists(os.path.join(control.dataPath, config.cookieFileName)):
@@ -66,7 +66,7 @@ def cleanCookies(notify=True):
             else:
                 os.unlink(os.path.join(control.dataPath, config.cookieFileName))
             message = control.lang(37004)
-        except:
+        except Exception:
             message = control.lang(37005)
 
     else:
@@ -107,7 +107,7 @@ def removeDuplicates(list):
 def updateCatalogCache(loadEpisodes=False):
     """Update catalog cache"""
     logger.logInfo('called function')
-    from .catalog import getWebsiteHomeSections, getWebsiteSectionContent, getShow
+    from .catalog import getWebsiteCollections, getCollectionContent, getShow
     
     control.showNotification(control.lang(37015), control.lang(30005))
     cache.longCache.cacheClean(True)
@@ -118,7 +118,7 @@ def updateCatalogCache(loadEpisodes=False):
     try:
         # update categories cache
         control.showNotification(control.lang(37014), control.lang(30005))
-        categories = getWebsiteHomeSections()
+        categories = getWebsiteCollections()
         # nbCat = len(categories)
         i = 0
     except Exception as e:
@@ -128,7 +128,7 @@ def updateCatalogCache(loadEpisodes=False):
     for cat in categories:
         nbItems = 0
         try:
-            items = getWebsiteSectionContent(cat['id'], 1, 100)
+            items = getCollectionContent(cat['id'])
             nbItems = len(items)
         except Exception as ce:
             logger.logError('Can\'t update category %s : %s' % (cat['name'], str(ce)))
@@ -144,8 +144,8 @@ def updateCatalogCache(loadEpisodes=False):
             if elaps > 5:
                 # start = time.time()
                 percent = 100 * j / nbItems
-                logger.logNotice('Updating %s... %s' % (cat['name'], str(percent)+'%'))
-                control.infoDialog('Updating %s... %s' % (cat['name'], str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
+                logger.logNotice('Updating %s... %s' % (cat['title'], str(percent)+'%'))
+                control.infoDialog('Updating %s... %s' % (cat['title'], str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
         i += 1
         
     return True

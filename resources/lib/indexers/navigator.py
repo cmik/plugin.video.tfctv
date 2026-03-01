@@ -513,29 +513,30 @@ class navigator:
             
     def addDirectoryItem(self, name, url, mode, thumbnail, page=1, isFolder=True, query='', **kwargs):
         u = self.generateActionUrl(url, mode, name, thumbnail, page, query)
-        liz = control.item(label=name)
-        liz.setInfo(type="Video", infoLabels={"Title": name})
-        liz.setArt({'icon':"DefaultFolder.png", 'thumb':thumbnail})
+        item = control.item(label=name)
+        item.setInfo(type="Video", infoLabels={"Title": name})
+        item.setArt({'icon':"DefaultFolder.png", 'thumb':thumbnail})
         for k, v in kwargs.items():
             if k == 'listProperties':
                 for listPropertyKey, listPropertyValue in v.items():
-                    liz.setProperty(listPropertyKey, listPropertyValue)
+                    item.setProperty(listPropertyKey, listPropertyValue)
             if k == 'listInfos':
                 for listInfoKey, listInfoValue in v.items():
-                    liz.setInfo(listInfoKey, listInfoValue)
+                    item.setInfo(listInfoKey, listInfoValue)
             if k == 'listArts':
-                liz.setArt(v)
+                item.setArt(v)
             if k == 'listCasts':
                 try:
-                    liz.setCast(v)
+                    item.setCast([(castMember.get('name'), castMember.get('order')) for castMember in v])
                 except (Exception) as e:
                     logger.logError('Error occurred while setting cast: %s' % e)
+                    logger.logDebug([(castMember.get('name'), castMember.get('order')) for castMember in v])
             if k == 'contextMenu':
                 menuItems = []
                 for label, action in v.items():
                     menuItems.append((label, action))
-                if len(menuItems) > 0: liz.addContextMenuItems(menuItems)
-        return control.addItem(handle=thisPlugin, url=u, listitem=liz, isFolder=isFolder)
+                if len(menuItems) > 0: item.addContextMenuItems(menuItems)
+        return control.addItem(handle=thisPlugin, url=u, listitem=item, isFolder=isFolder)
 
     def generateActionUrl(self, url, mode, name=None, thumbnail='', page=1, query=''):
         url = '%s?url=%s&mode=%s' % (sysaddon, quote_plus(url), str(mode))

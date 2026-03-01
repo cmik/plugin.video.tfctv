@@ -217,7 +217,7 @@ def formatToShow(data):
         'description': unicodetoascii(data.get('shortDescription', '')),
         'year': data.get('releaseDate', '')[:4],
         'genres': data.get('genres', []),
-        'type': type,
+        'type': data.get('assetType', type),
         'ltype': type,
         'nbSeasons': showDetails.get('totalSeasons', 1),
         'isPlayable': data.get('isPlayable', True),
@@ -266,7 +266,7 @@ def formatAssetToShow(asset, episodes={}):
     if asset is None or not isinstance(asset, dict) or 'id' not in asset:
         return {}
 
-    type = 'show' if asset.get('type', '') == 'tvshow' else 'movie' if asset.get('type', '') == 'movie' else 'documentary' if asset.get('type', '') == 'documentary' else 'livestream' if asset.get('type', '') == 'channel' else 'unknown'
+    type = 'show' if asset.get('assetType', '') == 'tvshow' else 'movie' if asset.get('assetType', '') == 'movie' else 'documentary' if asset.get('assetType', '') == 'documentary' else 'livestream' if asset.get('assetType', '') == 'channel' else 'unknown'
     image = asset.get('images', {})
     showDetails = asset.get('tvShowDetails', {}) if asset.get('tvShowDetails', {}) is not None else {}
     return {
@@ -299,7 +299,7 @@ def formatAssetToShow(asset, episodes={}):
         'rating': 0,
         'votes': 0,
         'mylist': '',
-        'type': type,
+        'type': asset.get('assetType', type),
         'parentalAdvisory': 'true' if asset.get('rating', '') == 'SPG' else 'false',
         'media': False,
         'streamID': False,

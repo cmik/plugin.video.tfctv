@@ -49,7 +49,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         xbmc.log('Service DATA_OUT: %s' % repr(data), level=xbmc.LOGDEBUG)
 
         if 'url' in query:
-            url = query.get('url') #+ '&UserAuthentication=%s' % control.setting('iWantUserAuthentication')
+            url = query.get('url')
             xbmc.log('Service URL_OUT: %s' % url, level=xbmc.LOGDEBUG)
             res = self.urlopen(url, data, headers=requestHeaders.items())
             

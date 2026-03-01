@@ -5,7 +5,8 @@ Media playback module
 """
 
 import re
-from urllib.parse import quote
+import json
+from urllib.parse import quote, urlencode
 from resources import config
 from resources.lib.libraries import control
 from .catalog import getEpisode, getShow, episodeDB, showDB
@@ -16,7 +17,7 @@ logger = control.logger
 
 try:
     import inputstreamhelper
-except:
+except Exception:
     inputstreamhelper = None
 
 def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
@@ -39,15 +40,16 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 control.showNotification(episodeDetails['StatusMessage'], control.lang(30009))
             
             url = control.setting('proxyStreamingUrl') % (control.setting('proxyHost'), control.setting('proxyPort'), quote(episodeDetails['data']['uri']), '') if not episodeDetails.get('disableProxy', False) and not episodeDetails.get('useDash', False) and (control.setting('useProxy') == 'true') else episodeDetails['data']['uri']
-            kodiurl = url+'|Origin=%s&Referer=%s&User-Agent=%s&Sec-Fetch-Mode=cors' % (config.websiteUrl, config.websiteUrl+'/', config.userAgents['default'])
-            if ('tfcmsl.akamaized.net' in url):
-                kodiurl = kodiurl + '&Sec-Fetch-Dest=empty&Sec-Fetch-Site=cross-site'
-            else:
-                kodiurl = kodiurl + '&Accept=*/*,akamai/media-acceleration-sdk;b=1702200;v=1.2.2;p=javascript'
-            liz = control.item(name, path=kodiurl)
-            #liz = control.item(name, path=episodeDetails['data']['uri'])
-            liz.setArt({'thumb': thumbnail, 'icon': "DefaultVideo.png"})
-            liz.setInfo(type='video', infoLabels={
+            kodiurl = url
+            #+'|Origin=%s&Referer=%s&User-Agent=%s&Sec-Fetch-Mode=cors' % (config.websiteUrl, config.websiteUrl+'/', config.userAgents['default'])
+            #if ('tfcmsl.akamaized.net' in url):
+            #    kodiurl = kodiurl + '&Sec-Fetch-Dest=empty&Sec-Fetch-Site=cross-site'
+            #else:
+            #    kodiurl = kodiurl + '&Accept=*/*,akamai/media-acceleration-sdk;b=1702200;v=1.2.2;p=javascript'
+            logger.logDebug('Final Kodi URL: %s' % kodiurl)
+            item = control.item(name, path=kodiurl)
+            item.setArt({'thumb': thumbnail, 'icon': "DefaultVideo.png"})
+            item.setInfo(type='video', infoLabels={
                 'title': name,
                 'sorttitle': episodeDetails['data']['dateaired'],
                 'tvshowtitle': episodeDetails['data']['show'],
@@ -63,11 +65,11 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             # Add eventual subtitles
             if 'subtitles' in episodeDetails['data'] and len(episodeDetails['data']['subtitles']) > 0:
                 try:
-                    liz.setSubtitles([s['url'] for s in episodeDetails['data']['subtitles'] if 'url' in s])
+                    item.setSubtitles([s['url'] for s in episodeDetails['data']['subtitles'] if 'url' in s])
                     for subtitle in episodeDetails['data']['subtitles']:
                         if 'lang' in subtitle:
-                            liz.addStreamInfo('subtitle', {'language': subtitle['lang']})
-                except:
+                            item.addStreamInfo('subtitle', {'language': subtitle['lang']})
+                except Exception:
                     pass
 
             if episodeDetails.get('useDash', False) and inputstreamhelper:
@@ -77,23 +79,52 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 drm = episodeDetails['dash']['type']
                 license_server = episodeDetails['dash']['key']
                 headers = episodeDetails['dash']['headers']
-                license_key = logger.logDebug('%s|%s|%s|%s' % (license_server, headers, 'R{SSM}', ''))
+                stream_headers = {
+                    'Origin': config.websiteUrl,
+                    'Referer': config.websiteUrl+'/',
+                    'User-Agent': config.userAgents['default'],
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Site': 'cross-site',
+                    'Connection': 'keep-alive'
+                }
+                manifest_headers = {
+                    'Origin': config.websiteUrl,
+                    'Referer': config.websiteUrl+'/',
+                    'User-Agent': config.userAgents['default'],
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Site': 'cross-site',
+                    'Connection': 'keep-alive'
+                }
+                license_config = {
+                    'license_server_url': license_server,
+                    'headers': urlencode(headers),
+                    'post_data': 'R{SSM}',
+                    'response_data': 'JBlicense'
+                }
+                logger.logDebug(license_config)
+                inputstream_config = {
+                    'ssl_verify_peer': False
+                }
 
                 is_helper = inputstreamhelper.Helper(protocol, drm=drm)
                 is_helper.check_inputstream()
-                liz.setProperty('inputstream', 'inputstream.adaptive')
-                liz.setProperty('inputstream.adaptive.manifest_type', protocol)
-                liz.setProperty('inputstream.adaptive.license_type', drm)
-                liz.setProperty('inputstream.adaptive.stream_headers', 'Origin=%s&Referer=%s&User-Agent=%s&cache-control=no-cache&pragma=no-cache&sec-fetch-mode=cors&sec-fetch-site=cross-site' % (config.websiteUrl, config.websiteUrl+'/', config.userAgents['default']))
-                liz.setProperty('inputstream.adaptive.license_key', license_key)
-                liz.setMimeType(episodeDetails['data']['type'])
-                liz.setContentLookup(False)
+                item.setProperty('inputstream', 'inputstream.adaptive')
+                item.setProperty('inputstream.adaptive.manifest_type', protocol)
+                item.setProperty('inputstream.adaptive.license_type', drm)
+                item.setProperty('inputstream.adaptive.stream_headers', urlencode(stream_headers))
+                item.setProperty("inputstream.adaptive.manifest_headers", urlencode(manifest_headers))
+                item.setProperty('inputstream.adaptive.license_key', '|'.join(list(license_config.values())))
+                item.setProperty('inputstream.adaptive.config', json.dumps(inputstream_config))
+                item.setMimeType(episodeDetails['data']['type'])
+                item.setContentLookup(False)
             
-            liz.setProperty('fanart_image', episodeDetails['data']['fanart'])
-            liz.setProperty('IsPlayable', 'true')
+            item.setProperty('fanart_image', episodeDetails['data']['fanart'])
+            item.setProperty('IsPlayable', 'true')
             try:
-                return control.resolve(thisPlugin, True, liz)
-            except:
+                return control.resolve(thisPlugin, True, item)
+            except Exception:
                 control.showNotification(control.lang(37032), control.lang(30004))
         elif (not episodeDetails) or (episodeDetails and 'errorCode' in episodeDetails and episodeDetails['errorCode'] != 0):
             logger.logNotice(episodeDetails['StatusMessage'] if 'StatusMessage' in episodeDetails else 'Unknown error')
@@ -182,7 +213,7 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
         {
             'platform': 'web',
             'subPlatform': 'firefox',
-            'appVersion': '25.09.11-1',
+            'appVersion': '25.12.12-1',
             'appVersionCode': 1,
             'playbackSessionId': control.generateUUID(),
             'playbackCapabilities': {
@@ -193,7 +224,7 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
                     'dash'
                 ],
                 'resolution': [
-                    'fhd'
+                    'fhd'      #fhd, 'hd', 'sd', 'ld'
                 ],
                 'audio': [
                     'stereo'
@@ -256,8 +287,17 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
         # check if mpd to use inputstream.adaptive
         if 'mpd' in mediaInfo['data']['uri']:
             mediaInfo['useDash'] = True
-            headers = 'Origin=%s&Referer=%s&User-Agent=%s&Sec-Fetch-Dest=empty&Sec-Fetch-Mode=cors&Sec-Fetch-Site=cross-site&Sec-GPC=1&Connection=keep-alive' % (config.websiteUrl, config.websiteUrl+'/', quote(config.userAgents['default']))
-
+            headers = {
+                'Origin': config.websiteUrl,
+                'Referer': config.websiteUrl+'/',
+                'User-Agent': config.userAgents['default'],
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'cross-site',
+                'Sec-GPC': '1',
+                'Connection': 'keep-alive'
+            }
+            
             """
             # choose best stream quality
             defaultQuality = 0
@@ -310,6 +350,8 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
         """
 
         mediaInfo['data']['preview'] = False
+        mediaInfo['data']['disableProxy'] = True
+        mediaInfo['data']['livestream'] = True if 'content_livestream=1' in mediaInfo['data']['uri'] else False
         mediaInfo['data']['showid'] = show.get('id')
         mediaInfo['data']['show'] = show.get('name', episode.get('title'))
         mediaInfo['data']['parentname'] = show.get('parentname', '')
@@ -320,7 +362,7 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
         mediaInfo['data']['fanart'] = show.get('fanart', episode.get('image'))
         mediaInfo['data']['ltype'] = episode.get('ltype', 'show')
         mediaInfo['data']['type'] = episode.get('type', 'show')
-        if 'subtitles' in playback.get('playbackInfo', {}) and len(playback.get('playbackInfo', {}).get('subtitles', [])) > 0:
+        if 'subtitles' in playback.get('playbackInfo', {}) and playback.get('playbackInfo', {}).get('subtitles', []) is not None and len(playback.get('playbackInfo', {}).get('subtitles', [])) > 0:
             mediaInfo['data']['subtitles'] = playback.get('playbackInfo', {}).get('subtitles', [])
         mediaInfo['data']['dateaired'] = ''
         mediaInfo['data']['date'] = ''
