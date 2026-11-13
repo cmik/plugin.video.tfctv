@@ -22,7 +22,7 @@ __all__ = [
     'getShow', 'getShows', 'getShowWithEpisodes', 'getEpisode',
     'getEpisodesPerPage', 'getCategories', 'getWebsiteHomeSections',
     'getWebsiteSectionContent', 'getHomeCatalog', 'getSettings', 'loadSettings',
-    'getItemData', 'getSiteItems', 'checkCatalogUpdates',
+    'getItemData', 'checkCatalogUpdates',
     
     # Playback
     'playEpisode', 'getMediaInfo', 'getMediaInfoFromWebsite',

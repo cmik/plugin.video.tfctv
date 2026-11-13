@@ -107,48 +107,14 @@ def removeDuplicates(list):
 def updateCatalogCache(loadEpisodes=False):
     """Update catalog cache"""
     logger.logInfo('called function')
-    from .catalog import getWebsiteCollections, getCollectionContent, getShow
-    
+    from .catalog import refreshCatalogShows
+
     control.showNotification(control.lang(37015), control.lang(30005))
     cache.longCache.cacheClean(True)
     cache.shortCache.cacheClean(True)
-    
-    elaps = start = time.time()
-    
-    try:
-        # update categories cache
-        control.showNotification(control.lang(37014), control.lang(30005))
-        categories = getWebsiteCollections()
-        # nbCat = len(categories)
-        i = 0
-    except Exception as e:
-        logger.logError('Can\'t update the catalog : %s' % (str(e)))
-        return False
 
-    for cat in categories:
-        nbItems = 0
-        try:
-            items = getCollectionContent(cat['id'])
-            nbItems = len(items)
-        except Exception as ce:
-            logger.logError('Can\'t update category %s : %s' % (cat['name'], str(ce)))
-            
-        j = 0
-        for s in items:
-            if loadEpisodes:
-                from .catalog import getShowWithEpisodes
-                getShowWithEpisodes(s.get('id'))
-            else:
-                getShow(s.get('id'))
-            j += 1
-            if elaps > 5:
-                # start = time.time()
-                percent = 100 * j / nbItems
-                logger.logNotice('Updating %s... %s' % (cat['title'], str(percent)+'%'))
-                control.infoDialog('Updating %s... %s' % (cat['title'], str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
-        i += 1
-        
-    return True
+    control.showNotification(control.lang(37014), control.lang(30005))
+    return refreshCatalogShows(loadEpisodes)
 
 def reloadCatalogCache():
     """Reload catalog cache"""

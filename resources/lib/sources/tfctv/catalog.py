@@ -109,7 +109,11 @@ def getCachedCollection(collectionId, refresh=False):
         lambda: json.dumps(getCollection(collectionId)),
         refresh
     )
-    return {} if catalogJson is None else json.loads(catalogJson)
+    collection = {} if catalogJson is None else json.loads(catalogJson)
+    if not collection:
+        # don't keep a failed call cached for the whole hour
+        cache.shortCache.delete(catalogKey)
+    return collection
 
 def getCollectionContent(id):
     """Get website home sections"""
@@ -127,6 +131,37 @@ def getCollectionContent(id):
                 })
     return data
 
+SHOW_ASSET_TYPES = ('tvshow', 'movie', 'documentary')
+
+def getCollectionShowIds(collectionId, refresh=False):
+    """Get the ids of the shows/movies listed in the rails of a collection"""
+    logger.logInfo('called function with param (%s, %s)' % (collectionId, refresh))
+    ids = []
+    for rail in getCachedCollection(collectionId, refresh).get('rails', {}):
+        for item in (rail.get('assets', {}) or {}).get('items', []) or []:
+            if item.get('id') and item.get('assetType', '') in SHOW_ASSET_TYPES:
+                ids.append(item.get('id'))
+    return list(dict.fromkeys(ids))
+
+def getCatalogShowIds(refresh=False):
+    """Get the ids of all the shows listed in the website collections (without duplicates).
+
+    Returns (ids, nbFailedCollections): a collection that can't be read is skipped."""
+    logger.logInfo('called function with param (%s)' % refresh)
+    ids = []
+    failed = 0
+    for collection in getWebsiteCollections():
+        collectionId = collection.get('collectionId', collection.get('id'))
+        try:
+            collectionIds = getCollectionShowIds(collectionId, refresh)
+            if not collectionIds:
+                logger.logWarning('No show found in collection %s' % collectionId)
+            ids += collectionIds
+        except Exception as e:
+            failed += 1
+            logger.logError('Can\'t read collection %s : %s' % (collectionId, str(e)))
+    return list(dict.fromkeys(ids)), failed
+
 def findCollectionRail(sectionId):
     """Find a rail (section) by id.
 
@@ -134,15 +169,19 @@ def findCollectionRail(sectionId):
     collection then returns another collection whose rails don't contain it (empty
     section). So look in the collection with this id first, then in the website
     collections the rail is listed from (home, movies, shows...)."""
-    candidates = [sectionId]
+    # a rail id that is a title hash can't be a collection id
+    candidates = [] if re.match(r'^[0-9a-f]{32}$', str(sectionId)) else [sectionId]
     try:
         candidates += [c.get('collectionId') for c in getWebsiteCollections() if c.get('collectionId')]
     except Exception as e:
         logger.logError('Unable to list website collections: %s' % str(e))
     for collectionId in dict.fromkeys(candidates):
-        for rail in getCachedCollection(collectionId).get('rails', {}):
-            if sectionId in (rail.get('id'), cache.generateHashKey(rail.get('title', {}))):
-                return rail
+        try:
+            for rail in getCachedCollection(collectionId).get('rails', {}):
+                if sectionId in (rail.get('id'), cache.generateHashKey(rail.get('title', {}))):
+                    return rail
+        except Exception as e:
+            logger.logError('Unable to read collection %s : %s' % (collectionId, str(e)))
     return {}
 
 def getWebsiteSectionContent(sectionId, page=1, itemsPerPage=8):
@@ -170,45 +209,42 @@ def getWebsiteSectionContent(sectionId, page=1, itemsPerPage=8):
         reverse=True if containsShows is False else False
     ))
 
-def getSiteItems():
-    """Get site items"""
-    logger.logInfo('called function')
-    return callJsonApi(config.uri.get('items'), base_url=control.setting('basePath'), useCache=False)
+def refreshCatalogShows(loadEpisodes=True, refresh=False):
+    """Refresh the shows listed in the website collections (and their episodes).
 
-def checkCatalogUpdates(loadEpisodes=True):
-    """Check catalog for updates"""
-    logger.logInfo('called function')
-
-    elaps = start = time.time()
+    Returns False when nothing could be read from the website collections."""
+    logger.logInfo('called function with param (%s, %s)' % (loadEpisodes, refresh))
     try:
-        items = getSiteItems()
-        nbItems = len(items.keys())
+        showIds, failed = getCatalogShowIds(refresh)
     except Exception as e:
         logger.logError('Can\'t update the catalog : %s' % (str(e)))
         return False
+    if not showIds:
+        return False
 
-    k = 0
+    nbItems = len(showIds)
     logger.logInfo(nbItems)
-    for id in items.keys():
-        item = items[id]
-        if 'parents' not in item:
-            try:
-                if loadEpisodes:
-                    getShowWithEpisodes(id)
-                else:
-                    getShow(id)
-            except Exception as se:
-                logger.logError('Error updating item %s : %s' % (id, str(se)))
+    start = time.time()
+    for k, showId in enumerate(showIds, 1):
+        try:
+            if loadEpisodes:
+                getShowWithEpisodes(showId)
+            else:
+                getShow(showId)
+        except Exception as se:
+            logger.logError('Error updating item %s : %s' % (showId, str(se)))
 
-        elaps = time.time()-start
-        if elaps > 5:
+        if time.time() - start > 5 and k < nbItems:
             start = time.time()
-            percent = 100 * k / nbItems
-            logger.logNotice('Updating catalog... %s' % (str(percent)+'%'))
-            control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
-        k += 1
-
+            message = 'Updating catalog... %d%%' % (100 * k // nbItems)
+            logger.logNotice(message)
+            control.infoDialog(message, heading=control.lang(30005), icon=control.addonIcon(), time=10000)
     return True
+
+def checkCatalogUpdates(loadEpisodes=True):
+    """Check catalog for updates (shows listed in the website collections)"""
+    logger.logInfo('called function')
+    return refreshCatalogShows(loadEpisodes, refresh=True)
 
 def formatToShow(data):
     """Format show data"""
@@ -233,7 +269,7 @@ def formatToShow(data):
         'genres': data.get('genres', []),
         'type': data.get('assetType', type),
         'ltype': type,
-        'nbSeasons': showDetails.get('totalSeasons', 1),
+        'nbSeasons': len(getSeasonFilters(data)),
         'isPlayable': data.get('isPlayable', True),
     }
 
@@ -317,7 +353,7 @@ def formatAssetToShow(asset, episodes={}):
         'parentalAdvisory': 'true' if asset.get('rating', '') == 'SPG' else 'false',
         'media': False,
         'streamID': False,
-        'nbSeasons': showDetails.get('totalSeasons', 1),
+        'nbSeasons': len(getSeasonFilters(asset)),
         'isPlayable': asset.get('isPlayable', True),
     }
 
@@ -367,19 +403,56 @@ def formatItemsToEpisodes(items, showAsset={}):
         data.append(e)
     return data
 
+def getSeasonFilters(asset):
+    """List the 'seasons' of an asset with the filter to use to get their episodes.
+
+    Most shows have numbered seasons, some (e.g. Pinoy Big Brother) have none and their
+    episodes are split by month: the API then lists them in asset.seasons with a null seasonId."""
+    asset = asset or {}
+    seasons = []
+    for season in asset.get('seasons') or []:
+        f = season.get('filter') or {}
+        seasons.append({
+            'id': season.get('id'),
+            'name': season.get('title') or str(season.get('id')),
+            'seasonId': f.get('seasonId'),
+            'year': f.get('year'),
+            'month': f.get('month')
+        })
+    if not seasons:
+        details = asset.get('tvShowDetails') or {}
+        for i in range(1, (details.get('totalSeasons') or 1) + 1):
+            seasons.append({'id': i, 'name': 'Season %d' % i, 'seasonId': str(i), 'year': None, 'month': None})
+    return seasons
+
 def getSeasons(showId):
     """Get seasons for a show"""
     logger.logInfo('called function with param (%s)' % showId)
     data = []
     asset = getAsset(showId)
-    if asset and 'tvShowDetails' in asset and 'totalSeasons' in asset['tvShowDetails']:
-        for i in range(1, asset['tvShowDetails']['totalSeasons'] + 1):
+    if asset and ('seasons' in asset or 'tvShowDetails' in asset):
+        for season in getSeasonFilters(asset):
             data.append({
-                'id': i,
+                'id': season['id'],
                 'showId': showId,
-                'name': 'Season %d' % i
+                'name': season['name']
             })
     return data
+
+def getShowEpisodeItems(id, season='1', asset=None):
+    """Get the episode items of a show for a season (an id of getSeasons()).
+
+    The season may also be a month for the shows split by month. When the season is unknown
+    (e.g. the default one) fall back on all the seasons/months of the show."""
+    seasons = getSeasonFilters(asset or getAsset(id))
+    selected = [x for x in seasons if str(x['id']) == str(season)]
+    if not selected:
+        logger.logWarning('Season %s not found for show %s, using all seasons' % (season, id))
+        selected = seasons
+    items = []
+    for x in selected:
+        items += (getTVShowEpisodes(id, year=x['year'], month=x['month'], seasonId=x['seasonId']) or {}).get('items') or []
+    return items
 
 def getShow(id, season='1', withEpisodes=False):
     """Get show details"""
@@ -398,7 +471,7 @@ def getShow(id, season='1', withEpisodes=False):
         if asset:
             episodes = []
             if withEpisodes:
-                episodes = getTVShowEpisodes(id, seasonId=season).get('items', [])
+                episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
         else:
@@ -990,7 +1063,8 @@ query TvShowEpisodes($tvShowEpisodesId: ID, $filters: TvShowEpisodesFilterInput,
         },
         useCache=False
     )
-    return response.get('tvShowEpisodes', {}) if response else {}
+    # the API answers with a null tvShowEpisodes (and an error) when the filters match nothing
+    return (response.get('tvShowEpisodes') if response else None) or {}
 
 def getAsset(id):
     """Get asset details"""

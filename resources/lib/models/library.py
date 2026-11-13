@@ -14,6 +14,15 @@ logger = control.logger
 
 class Library(model.Model):
     
+    _columns = ('ID', 'NAME', 'PARENTID', 'YEAR', 'COMPARE', 'LASTCHECK')
+    _select = "SELECT ID, \
+            NAME, \
+            PARENTID, \
+            YEAR, \
+            COMPARE, \
+            LASTCHECK \
+            FROM LIBRARY_SHOW"
+
     def _getStructure(self, data):
         logger.logDebug(len(data))
         logger.logDebug(data)
@@ -45,17 +54,8 @@ class Library(model.Model):
         return logger.logDebug(dbcur.fetchall())
       
     def _retrieve(self, mixed, key):
-        dbcur = self.getCursor()
-        dbcur.execute(logger.logDebug("SELECT ID, \
-            NAME, \
-            PARENTID, \
-            YEAR, \
-            COMPARE, \
-            LASTCHECK \
-            FROM LIBRARY_SHOW \
-            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
-        return logger.logDebug(dbcur.fetchall())
-       
+        return logger.logDebug(self._selectBy(self._select, key, mixed))
+
     def _save(self, mixed):
         return self._replace(mixed)
 
@@ -65,7 +65,7 @@ class Library(model.Model):
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM LIBRARY_SHOW WHERE ID in ('%s')" % "','".join(ids)))
+            self._deleteByIds(dbcur, 'LIBRARY_SHOW', ids)
             for data in mixed:
                 dbcur.execute(logger.logDebug("INSERT INTO LIBRARY_SHOW VALUES ('%s', '%s', '%s', '%s', '%s', '%s')" % (
                     data.get('id'), 
@@ -84,7 +84,7 @@ class Library(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM LIBRARY_SHOW WHERE ID in ('%s')" % "','".join(ids)))
+                self._deleteByIds(dbcur, 'LIBRARY_SHOW', ids)
                 self._dbcon.commit()
                 return True
             except: 
