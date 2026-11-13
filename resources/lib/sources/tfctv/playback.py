@@ -166,6 +166,13 @@ def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
             'rating': mediaInfo['data']['rating'],
             'votes': mediaInfo['data']['votes']
             }
+        # keep what is already stored (artwork, description): the values above can be
+        # empty or show-level when playing from a list without thumbnail
+        stored = episodeDB.get(episodeId)
+        if len(stored) == 1:
+            for k in ('image', 'fanart', 'description', 'shortdescription'):
+                if stored[0].get(k):
+                    e[k] = stored[0][k]
         episodeDB.set(e)
 
         s = mediaInfo['data']['showObj']

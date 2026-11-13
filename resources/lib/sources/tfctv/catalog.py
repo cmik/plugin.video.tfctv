@@ -246,8 +246,8 @@ def formatAssetToEpisode(asset, show={}):
         'fanart': show.get('fanart', ''),
         'episodenumber': showInfo.get('episodeNumber', 1),
         'url': asset.get('slugUrl', asset.get('id')),
-        'description': asset.get('description', ''),
-        'shortdescription': asset.get('description', ''),
+        'description': asset.get('shortDescription', asset.get('description', '')) or '',
+        'shortdescription': asset.get('shortDescription', asset.get('description', '')) or '',
         'dateaired': asset.get('releaseDate', ''),
         'date': asset.get('releaseDate', ''),
         'year': show.get('year', asset.get('releaseDate', '')[:4]),
@@ -491,7 +491,15 @@ def getEpisode(id, show={}):
     if episode.get('id', False):
         res = episodeDB.get(id)
         if len(res) == 1:
-            res[0].update(episode)
+            # don't let empty values from the asset erase what is already stored
+            # (description, fanart...) - only overwrite with non-empty data
+            update = {k: v for k, v in episode.items() if v not in ('', None, {}, [])}
+            # keep the artwork already stored for this episode (episode thumbnail):
+            # the freshly built fanart is the show-level one
+            for k in ('image', 'fanart'):
+                if res[0].get(k):
+                    update.pop(k, None)
+            res[0].update(update)
             episode = res[0]
         episodeDB.set(episode)
         return logger.logInfo(episode)
