@@ -9,6 +9,12 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # run it by hand on an existing tag (for example to retry a failed release)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release (vX.Y.Z)
+        required: true
 
 permissions:
   contents: write
@@ -18,8 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ADDON_ID: plugin.video.tfctv
+      TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -27,8 +36,8 @@ jobs:
       - name: Check the tag and the release files
         run: |
           version=$(python -c "import xml.etree.ElementTree as ET; print(ET.parse('addon.xml').getroot().get('version'))")
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::the tag is $GITHUB_REF_NAME but addon.xml version is $version"
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::the tag is $TAG but addon.xml version is $version"
             exit 1
           fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
@@ -47,8 +56,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "dist/$ADDON_ID-$VERSION.zip" \
-            --title "$GITHUB_REF_NAME" --notes-file notes.md
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # the release was already created from the GitHub interface: just attach the zip
+            gh release upload "$TAG" "dist/$ADDON_ID-$VERSION.zip" --clobber
+          else
+            gh release create "$TAG" "dist/$ADDON_ID-$VERSION.zip" --title "$TAG" --notes-file notes.md
+          fi
 
       - name: Open a pull request in cmik/cmik.xbmc
         env:
@@ -72,4 +85,4 @@ jobs:
           git -C repo push origin "release/$ADDON_ID-$VERSION"
           gh pr create --repo cmik/cmik.xbmc --base master --head "release/$ADDON_ID-$VERSION" \
             --title "Update $ADDON_ID to version $VERSION" \
-            --body "$(printf 'Automated release of %s %s from https://github.com/cmik/plugin.video.tfctv/releases/tag/%s\n\n%s\n' "$ADDON_ID" "$VERSION" "$GITHUB_REF_NAME" "$(cat notes.md)")"
+            --body "$(printf 'Automated release of %s %s from https://github.com/cmik/plugin.video.tfctv/releases/tag/%s\n\n%s\n' "$ADDON_ID" "$VERSION" "$TAG" "$(cat notes.md)")"
