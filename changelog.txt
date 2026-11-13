@@ -1,3 +1,5 @@
+3.0.1
+    Minor bug fixes and improvements 
 3.0.0
     Initial release of version 3.0.0 since last iWantTFC redesign
     Fixed playback error (need kodi 21.x and last version of widevine) 
