@@ -26,7 +26,8 @@ def isLoggedIn():
     logger.logDebug('Last user data refresh: %s' % str(lastRefresh))
     logger.logDebug('Seconds since last refresh: %s' % (now - lastRefresh).total_seconds() if lastRefresh is not None else 'N/A')
     if control.setting('iWantUserAuthentication') and control.setting('iWantUserAuthentication') != '':
-        Logged = refreshUserData() if (not Logged or userData == {} or lastRefresh is None or (now - lastRefresh).total_seconds() > 86400) else False
+        if not Logged or userData == {} or lastRefresh is None or (now - lastRefresh).total_seconds() > 86400:
+            Logged = refreshUserData()
     return Logged
 
 def login(quiet=False, login=False, password=False):

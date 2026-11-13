@@ -198,7 +198,7 @@ class navigator:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title')}, **self.formatVideoInfo(e, addToList=False))
         if len(episodes) == itemsPerPage or nextPage:
-            self.addDirectoryItem(control.lang(36008), showId, config.SHOWEPISODES, '', page + 1)
+            self.addDirectoryItem(control.lang(36008), showId, config.SHOWEPISODES, '', page + 1, query={'season': season})
         self.endDirectory()
 
     def chooseBandwidth(self, episodeId, title, type, thumbnail):

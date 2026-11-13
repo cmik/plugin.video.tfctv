@@ -251,7 +251,7 @@ def formatAssetToEpisode(asset, show={}):
         'dateaired': asset.get('releaseDate', ''),
         'date': asset.get('releaseDate', ''),
         'year': show.get('year', asset.get('releaseDate', '')[:4]),
-        'parentalAdvisory': show.get('parentalAdvisory', asset.get('rating', '') == 'SPG'),
+        'parentalAdvisory': show.get('parentalAdvisory', 'true' if asset.get('rating', '') == 'SPG' else 'false'),
         'duration': asset.get('durationInSeconds', 0),
         'showObj': show,
         'ltype': show.get('ltype', 'show'),
@@ -832,7 +832,7 @@ def getCollection(id):
   }
 }""",
         variables={
-            'collectionId': 'home',
+            'collectionId': id,
             'skus': getServiceIds()
         },
         useCache=False
