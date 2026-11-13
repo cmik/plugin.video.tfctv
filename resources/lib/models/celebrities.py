@@ -12,6 +12,18 @@ logger = control.logger
 
 class Actor(model.Model):
     
+    _columns = ('ID', 'NAME', 'THUMBNAIL', 'FANART', 'BANNER', 'URL', 'DESCRIPTION', 'BIRTHDAY', 'BIRTHPLACE')
+    _select = "SELECT ID, \
+            NAME, \
+            THUMBNAIL, \
+            FANART, \
+            BANNER, \
+            URL, \
+            DESCRIPTION, \
+            BIRTHDAY, \
+            BIRTHPLACE \
+            FROM ACTOR"
+
     def _getStructure(self, data):
         logger.logDebug(len(data))
         logger.logDebug(data)
@@ -44,20 +56,8 @@ class Actor(model.Model):
         return logger.logDebug(dbcur.fetchall())
          
     def _retrieve(self, mixed, key):
-        dbcur = self.getCursor()
-        dbcur.execute(logger.logDebug("SELECT ID, \
-            NAME, \
-            THUMBNAIL, \
-            FANART, \
-            BANNER, \
-            URL, \
-            DESCRIPTION, \
-            BIRTHDAY, \
-            BIRTHPLACE \
-            FROM ACTOR \
-            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
-        return logger.logDebug(dbcur.fetchall())
-        
+        return logger.logDebug(self._selectBy(self._select, key, mixed))
+
     def _save(self, mixed):
         logger.logDebug(mixed)
         self.checkIfTableExists()
@@ -65,18 +65,16 @@ class Actor(model.Model):
             if 'id' in data:
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')
-                for k, e in data.items():
-                    query = "UPDATE ACTOR SET "
-                    query += "NAME = '%s', " % data.get('name') if data.get('name', False) else "NAME = NAME, "
-                    query += "THUMBNAIL = '%s', " % data.get('logo') if data.get('logo', False) else "THUMBNAIL = THUMBNAIL, "
-                    query += "FANART = '%s', " % data.get('image') if data.get('image', False) else "FANART = FANART, "
-                    query += "BANNER = '%s', " % data.get('banner') if data.get('banner', False) else "BANNER = BANNER, "
-                    query += "URL = '%s', " % data.get('url') if data.get('url', False) else "URL = URL, "
-                    query += "DESCRIPTION = '%s', " % data.get('description') if data.get('description', False) else "DESCRIPTION = DESCRIPTION, "
-                    query += "BIRTHDAY = '%s', " % data.get('birthday') if data.get('birthday', False) else "BIRTHDAY = BIRTHDAY, "
-                    query += "BIRTHPLACE = '%s', " % data.get('birthplace') if data.get('birthplace', False) else "BIRTHPLACE = BIRTHPLACE "
-                    query += "WHERE ID = '%s'" % data.get('id')
-                    dbcur.execute(logger.logDebug(query))
+                self._updateRow(dbcur, 'ACTOR', data.get('id'), [
+                    ('NAME', data.get('name')),
+                    ('THUMBNAIL', data.get('logo')),
+                    ('FANART', data.get('image')),
+                    ('BANNER', data.get('banner')),
+                    ('URL', data.get('url')),
+                    ('DESCRIPTION', data.get('description')),
+                    ('BIRTHDAY', data.get('birthday')),
+                    ('BIRTHPLACE', data.get('birthplace'))
+                ])
         self._dbcon.commit()
         return True
 
@@ -87,18 +85,18 @@ class Actor(model.Model):
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM ACTOR WHERE ID in ('%s')" % "','".join(ids)))
+            self._deleteByIds(dbcur, 'ACTOR', ids)
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO ACTOR VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
-                    data.get('id'), 
-                    data.get('name').replace('\'', '\'\''), 
-                    data.get('thumbnail').replace('&#39;', '\'\''), 
-                    data.get('fanart').replace('&#39;', '\'\''), 
-                    data.get('banner').replace('&#39;', '\'\''), 
-                    data.get('url'), 
-                    data.get('description').replace('\'', '\'\''), 
-                    data.get('birthday'), 
-                    data.get('birthplace'))))
+                self._exec(dbcur, "INSERT INTO ACTOR VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+                    data.get('id'),
+                    data.get('name'),
+                    data.get('thumbnail'),
+                    data.get('fanart'),
+                    data.get('banner'),
+                    data.get('url'),
+                    data.get('description'),
+                    data.get('birthday'),
+                    data.get('birthplace')))
             self._dbcon.commit()
             return True
         return False
@@ -109,7 +107,7 @@ class Actor(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM ACTOR WHERE ID in ('%s')" % "','".join(ids)))
+                self._deleteByIds(dbcur, 'ACTOR', ids)
                 self._dbcon.commit()
                 return True
             except: pass
@@ -143,4 +141,4 @@ class Actor(model.Model):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("SELECT COUNT(*) FROM ACTOR"))
         stats['count'] = dbcur.fetchone()
-        return stats
+        return stats

@@ -14,6 +14,27 @@ logger = control.logger
 
 class Episode(model.Model):
     
+    _columns = ('ID', 'TITLE', 'SHOWID', 'SHOWNAME', 'THUMBNAIL', 'FANART', 'EPISODENUMBER', 'URL', 'DESCRIPTION', 'SHORTDESCRIPTION', 'DATEAIRED', 'YEAR', 'PARENTALADVISORY', 'TYPE', 'DURATION', 'VIEWS', 'RATING', 'VOTES')
+    _select = "SELECT ID, \
+            TITLE, \
+            SHOWID, \
+            SHOWNAME, \
+            THUMBNAIL, \
+            FANART, \
+            EPISODENUMBER, \
+            URL, \
+            DESCRIPTION, \
+            SHORTDESCRIPTION, \
+            DATEAIRED, \
+            YEAR, \
+            PARENTALADVISORY, \
+            TYPE, \
+            DURATION, \
+            VIEWS, \
+            RATING, \
+            VOTES \
+            FROM EPISODE"
+
     def _getStructure(self, data):
         logger.logDebug(len(data))
         logger.logDebug(data)
@@ -48,30 +69,7 @@ class Episode(model.Model):
         return {}
     
     def _search(self, search, limit):
-        dbcur = self.getCursor()
-        where = ["%s LIKE '%%%s%%'" % (str(k), str(v)) for k,v in search.items()]
-        first = 'LIMIT %d' % int(limit) if limit != False else ''
-        dbcur.execute(logger.logInfo("SELECT ID, \
-            TITLE, \
-            SHOWID, \
-            SHOWNAME, \
-            THUMBNAIL, \
-            FANART, \
-            EPISODENUMBER, \
-            URL, \
-            DESCRIPTION, \
-            SHORTDESCRIPTION, \
-            DATEAIRED, \
-            YEAR, \
-            PARENTALADVISORY, \
-            TYPE, \
-            DURATION, \
-            VIEWS, \
-            RATING, \
-            VOTES \
-            FROM EPISODE \
-            WHERE %s %s" % (' AND '.join(where), first)))
-        return logger.logDebug(dbcur.fetchall())
+        return logger.logDebug(self._selectLike(self._select, search, limit))
 
     def _retrieveAll(self):
         dbcur = self.getCursor()
@@ -97,30 +95,8 @@ class Episode(model.Model):
         return logger.logDebug(dbcur.fetchall())
          
     def _retrieve(self, mixed, key):
-        dbcur = self.getCursor()
-        dbcur.execute(logger.logDebug("SELECT ID, \
-            TITLE, \
-            SHOWID, \
-            SHOWNAME, \
-            THUMBNAIL, \
-            FANART, \
-            EPISODENUMBER, \
-            URL, \
-            DESCRIPTION, \
-            SHORTDESCRIPTION, \
-            DATEAIRED, \
-            YEAR, \
-            PARENTALADVISORY, \
-            TYPE, \
-            DURATION, \
-            VIEWS, \
-            RATING, \
-            VOTES \
-            FROM EPISODE \
-            WHERE %s IN ('%s')" % (key, "','".join(str(v) for v in mixed))))
-        return logger.logDebug(dbcur.fetchall())
+        return logger.logDebug(self._selectBy(self._select, key, mixed))
 
-        
     def _save(self, mixed):
         logger.logDebug(mixed)
         self.checkIfTableExists()
@@ -132,15 +108,6 @@ class Episode(model.Model):
                 logger.logDebug("Skipping empty data")
                 continue
 
-            # Validate required fields and types
-            required_fields = ['id', 'title', 'parentid', 'show', 'image', 'fanart', 
-                               'episodenumber', 'url', 'description', 'shortdescription', 
-                               'date', 'year', 'parentalAdvisory', 'ltype']
-            for field in required_fields:
-                if field not in data:
-                    logger.logDebug("Skipping data: missing required field '%s'" % field)
-                    continue
-
             # Validate integer fields
             int_fields = ['duration', 'views', 'rating', 'votes']
             for field in int_fields:
@@ -149,62 +116,59 @@ class Episode(model.Model):
                         data[field] = int(data[field])
                     except (ValueError, TypeError):
                         logger.logError("Invalid integer value for field '%s', setting to 0" % field)
-                        #logger.logDebug("Invalid integer value for field '%s', setting to 0" % field)
                         data[field] = 0
             if 'id' in data:
                 dbcur = self.getCursor()
                 dbcur.execute('PRAGMA encoding="UTF-8";')
-                for k, e in data.items():
-                    query = "UPDATE EPISODE SET "
-                    query += "TITLE = '%s', " % data.get('name').replace('\'', '\'\'') if data.get('name', False) else "TITLE = TITLE, "
-                    query += "SHOWID = '%s', " % data.get('parentid') if data.get('parentid', False) else "SHOWID = SHOWID, "
-                    query += "SHOWNAME = '%s', " % data.get('show').replace('\'', '\'\'') if data.get('show', False) else "SHOWNAME = SHOWNAME, "
-                    query += "THUMBNAIL = '%s', " % data.get('image') if data.get('image', False) else "THUMBNAIL = THUMBNAIL, "
-                    query += "FANART = '%s', " % data.get('fanart') if data.get('fanart', False) else "FANART = FANART, "
-                    query += "EPISODENUMBER = '%s', " % data.get('episodenumber') if data.get('episodenumber', False) else "EPISODENUMBER = EPISODENUMBER, "
-                    query += "URL = '%s', " % data.get('url') if data.get('url', False) else "URL = URL, "
-                    query += "DESCRIPTION = '%s', " % data.get('description').replace('\'', '\'\'') if data.get('description', False) else "DESCRIPTION = DESCRIPTION, "
-                    query += "SHORTDESCRIPTION = '%s', " % data.get('shortdescription').replace('\'', '\'\'') if data.get('shortdescription', False) else "SHORTDESCRIPTION = SHORTDESCRIPTION, "
-                    query += "DATEAIRED = '%s', " % data.get('date') if data.get('date', False) else "DATEAIRED = DATEAIRED, "
-                    query += "YEAR = '%s', " % data.get('year') if data.get('year', False) else "YEAR = YEAR, "
-                    query += "PARENTALADVISORY = '%s', " % data.get('parentalAdvisory') if data.get('parentalAdvisory', False) else "PARENTALADVISORY = PARENTALADVISORY, "
-                    query += "TYPE = '%s', " % data.get('ltype') if data.get('ltype', False) else "TYPE = TYPE, "
-                    query += "DURATION = %d, " % data.get('duration') if data.get('duration', False) else "DURATION = DURATION, "
-                    query += "VIEWS = %d, " % data.get('views') if data.get('views', False) else "VIEWS = VIEWS, "
-                    query += "RATING = %d, " % data.get('rating') if data.get('rating', False) else "RATING = RATING, "
-                    query += "VOTES = %d " % data.get('votes') if data.get('votes', False) else "VOTES = VOTES "
-                    query += "WHERE ID = '%s'" % data.get('id')
-                    dbcur.execute(logger.logDebug(query))
+                self._updateRow(dbcur, 'EPISODE', data.get('id'), [
+                    ('TITLE', data.get('title', data.get('name'))),
+                    ('SHOWID', data.get('parentid')),
+                    ('SHOWNAME', data.get('show')),
+                    ('THUMBNAIL', data.get('image')),
+                    ('FANART', data.get('fanart')),
+                    ('EPISODENUMBER', data.get('episodenumber')),
+                    ('URL', data.get('url')),
+                    ('DESCRIPTION', data.get('description')),
+                    ('SHORTDESCRIPTION', data.get('shortdescription')),
+                    ('DATEAIRED', data.get('date')),
+                    ('YEAR', data.get('year')),
+                    ('PARENTALADVISORY', data.get('parentalAdvisory')),
+                    ('TYPE', data.get('ltype')),
+                    ('DURATION', data.get('duration')),
+                    ('VIEWS', data.get('views')),
+                    ('RATING', data.get('rating')),
+                    ('VOTES', data.get('votes'))
+                ])
         self._dbcon.commit()
         return True
-        
+
     def _replace(self, mixed):
         ids = [str(data['id']) for data in mixed if 'id' in data]
         if len(ids) > 0:
             self.checkIfTableExists()
             dbcur = self.getCursor()
             dbcur.execute('PRAGMA encoding="UTF-8";')
-            dbcur.execute(logger.logDebug("DELETE FROM EPISODE WHERE ID in ('%s')" % "','".join(ids)))
+            self._deleteByIds(dbcur, 'EPISODE', ids)
             for data in mixed:
-                dbcur.execute(logger.logDebug("INSERT INTO EPISODE VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d)" % (
-                    data.get('id'), 
-                    data.get('title').replace('\'', '\'\''), 
-                    data.get('parentid'), 
-                    data.get('show').replace('\'', '\'\''), 
-                    data.get('image').replace('&#39;', '\'\''), 
-                    data.get('fanart').replace('&#39;', '\'\''), 
-                    data.get('episodenumber'), 
-                    data.get('url'), 
-                    data.get('description').replace('\'', '\'\''), 
-                    data.get('shortdescription').replace('\'', '\'\''), 
-                    data.get('date'), 
-                    data.get('year'), 
-                    data.get('parentalAdvisory'), 
-                    data.get('ltype'), 
-                    data.get('duration', 0), 
-                    data.get('views', 0), 
-                    data.get('rating', 0), 
-                    data.get('votes', 0))))
+                self._exec(dbcur, "INSERT INTO EPISODE VALUES (%s)" % ','.join('?' * 18), (
+                    data.get('id'),
+                    data.get('title'),
+                    data.get('parentid'),
+                    data.get('show'),
+                    data.get('image'),
+                    data.get('fanart'),
+                    data.get('episodenumber'),
+                    data.get('url'),
+                    data.get('description'),
+                    data.get('shortdescription'),
+                    data.get('date'),
+                    data.get('year'),
+                    data.get('parentalAdvisory'),
+                    data.get('ltype'),
+                    int(data.get('duration', 0)),
+                    int(data.get('views', 0)),
+                    int(data.get('rating', 0)),
+                    int(data.get('votes', 0))))
             self._dbcon.commit()
             return True
         return False
@@ -215,7 +179,7 @@ class Episode(model.Model):
         if len(ids) > 0:
             dbcur = self.getCursor()
             try: 
-                dbcur.execute(logger.logDebug("DELETE FROM EPISODE WHERE ID in ('%s')" % "','".join(ids)))
+                self._deleteByIds(dbcur, 'EPISODE', ids)
                 self._dbcon.commit()
                 return True
             except: pass
