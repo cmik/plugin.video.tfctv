@@ -129,6 +129,8 @@ class LibraryChecker():
         
 if __name__ == "__main__":
     httpPort = int(control.setting('proxyPort'))
+    # let a restarted service rebind the port right away (the old socket may still be in TIME_WAIT)
+    socketserver.TCPServer.allow_reuse_address = True
     server = socketserver.TCPServer(('', httpPort), ProxyHandler)
 
     server_thread = threading.Thread(target=server.serve_forever)
@@ -152,6 +154,7 @@ if __name__ == "__main__":
             break
 
     server.shutdown()
+    server.server_close()
     server_thread.join()
     xbmc.log('[%s] - Service: stopping HTTP proxy server on port %s' % (control.addonInfo('name'), httpPort), level=xbmc.LOGINFO)
     if libActive == True: 
