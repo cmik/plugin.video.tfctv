@@ -269,7 +269,7 @@ def formatToShow(data):
         'genres': data.get('genres', []),
         'type': data.get('assetType', type),
         'ltype': type,
-        'nbSeasons': showDetails.get('totalSeasons', 1),
+        'nbSeasons': len(getSeasonFilters(data)),
         'isPlayable': data.get('isPlayable', True),
     }
 
@@ -353,7 +353,7 @@ def formatAssetToShow(asset, episodes={}):
         'parentalAdvisory': 'true' if asset.get('rating', '') == 'SPG' else 'false',
         'media': False,
         'streamID': False,
-        'nbSeasons': showDetails.get('totalSeasons', 1),
+        'nbSeasons': len(getSeasonFilters(asset)),
         'isPlayable': asset.get('isPlayable', True),
     }
 
@@ -403,29 +403,55 @@ def formatItemsToEpisodes(items, showAsset={}):
         data.append(e)
     return data
 
+def getSeasonFilters(asset):
+    """List the 'seasons' of an asset with the filter to use to get their episodes.
+
+    Most shows have numbered seasons, some (e.g. Pinoy Big Brother) have none and their
+    episodes are split by month: the API then lists them in asset.seasons with a null seasonId."""
+    asset = asset or {}
+    seasons = []
+    for season in asset.get('seasons') or []:
+        f = season.get('filter') or {}
+        seasons.append({
+            'id': season.get('id'),
+            'name': season.get('title') or str(season.get('id')),
+            'seasonId': f.get('seasonId'),
+            'year': f.get('year'),
+            'month': f.get('month')
+        })
+    if not seasons:
+        details = asset.get('tvShowDetails') or {}
+        for i in range(1, (details.get('totalSeasons') or 1) + 1):
+            seasons.append({'id': i, 'name': 'Season %d' % i, 'seasonId': str(i), 'year': None, 'month': None})
+    return seasons
+
 def getSeasons(showId):
     """Get seasons for a show"""
     logger.logInfo('called function with param (%s)' % showId)
     data = []
     asset = getAsset(showId)
-    if asset and 'tvShowDetails' in asset and 'totalSeasons' in asset['tvShowDetails']:
-        for i in range(1, asset['tvShowDetails']['totalSeasons'] + 1):
+    if asset and ('seasons' in asset or 'tvShowDetails' in asset):
+        for season in getSeasonFilters(asset):
             data.append({
-                'id': i,
+                'id': season['id'],
                 'showId': showId,
-                'name': 'Season %d' % i
+                'name': season['name']
             })
     return data
 
-def getShowEpisodeItems(id, season='1'):
-    """Get the episode items of a show for a season.
+def getShowEpisodeItems(id, season='1', asset=None):
+    """Get the episode items of a show for a season (an id of getSeasons()).
 
-    Some shows have no numbered seasons (their episodes are split by month, with a null
-    seasonId): the API then fails for seasonId=1, so retry without any season filter."""
-    items = (getTVShowEpisodes(id, seasonId=season) or {}).get('items') or []
-    if not items and season is not None:
-        logger.logWarning('No episodes for show %s season %s, retrying without season filter' % (id, season))
-        items = (getTVShowEpisodes(id) or {}).get('items') or []
+    The season may also be a month for the shows split by month. When the season is unknown
+    (e.g. the default one) fall back on all the seasons/months of the show."""
+    seasons = getSeasonFilters(asset or getAsset(id))
+    selected = [x for x in seasons if str(x['id']) == str(season)]
+    if not selected:
+        logger.logWarning('Season %s not found for show %s, using all seasons' % (season, id))
+        selected = seasons
+    items = []
+    for x in selected:
+        items += (getTVShowEpisodes(id, year=x['year'], month=x['month'], seasonId=x['seasonId']) or {}).get('items') or []
     return items
 
 def getShow(id, season='1', withEpisodes=False):
@@ -445,7 +471,7 @@ def getShow(id, season='1', withEpisodes=False):
         if asset:
             episodes = []
             if withEpisodes:
-                episodes = getShowEpisodeItems(id, season)
+                episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
         else:
