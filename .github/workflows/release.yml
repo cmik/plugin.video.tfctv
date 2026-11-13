@@ -1,0 +1,75 @@
+name: Release
+
+# Push a tag `vX.Y.Z` matching the version of addon.xml to publish a release:
+# - builds the add-on zip and creates the GitHub release with it
+# - opens a pull request in cmik/cmik.xbmc with the zip, addons.xml and addons.xml.md5
+#   (needs the repository secret CMIK_XBMC_TOKEN: a token that can push and open
+#   pull requests in cmik/cmik.xbmc; without it this last step is skipped)
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      ADDON_ID: plugin.video.tfctv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check the tag and the release files
+        run: |
+          version=$(python -c "import xml.etree.ElementTree as ET; print(ET.parse('addon.xml').getroot().get('version'))")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::the tag is $GITHUB_REF_NAME but addon.xml version is $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          python .github/scripts/check_release.py
+
+      - name: Build the zip and the release notes
+        run: |
+          mkdir dist
+          git archive --prefix="$ADDON_ID/" --format=zip -o "dist/$ADDON_ID-$VERSION.zip" HEAD \
+            ':(exclude).github' ':(exclude)CLAUDE.md' ':(exclude)addon.xml.md5'
+          # notes: the first entry of changelog.txt (up to the next version line)
+          awk 'NR==1{next} /^[0-9]+\.[0-9]+/{exit} {sub(/^[ \t]+/, ""); print "- " $0}' changelog.txt | grep -v '^- $' > notes.md
+          cat notes.md
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/$ADDON_ID-$VERSION.zip" \
+            --title "$GITHUB_REF_NAME" --notes-file notes.md
+
+      - name: Open a pull request in cmik/cmik.xbmc
+        env:
+          GH_TOKEN: ${{ secrets.CMIK_XBMC_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::secret CMIK_XBMC_TOKEN is not set: the cmik.xbmc repository was not updated"
+            exit 0
+          fi
+          gh repo clone cmik/cmik.xbmc repo
+          git -C repo checkout -b "release/$ADDON_ID-$VERSION"
+          python .github/scripts/update_repo.py repo "dist/$ADDON_ID-$VERSION.zip"
+          # the repository's own check (once it exists there): a failure stops before anything is pushed
+          if [ -f repo/.github/scripts/check_repo.py ]; then
+            (cd repo && python .github/scripts/check_repo.py)
+          fi
+          git -C repo config user.name "github-actions[bot]"
+          git -C repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C repo add -A
+          git -C repo commit -m "Update $ADDON_ID to version $VERSION"
+          git -C repo push origin "release/$ADDON_ID-$VERSION"
+          gh pr create --repo cmik/cmik.xbmc --base master --head "release/$ADDON_ID-$VERSION" \
+            --title "Update $ADDON_ID to version $VERSION" \
+            --body "$(printf 'Automated release of %s %s from https://github.com/cmik/plugin.video.tfctv/releases/tag/%s\n\n%s\n' "$ADDON_ID" "$VERSION" "$GITHUB_REF_NAME" "$(cat notes.md)")"
