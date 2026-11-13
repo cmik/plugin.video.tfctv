@@ -77,7 +77,7 @@ def reset_opener():
     global _opener
     _opener = None
 
-def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useCache=True, jsonData=False, returnMessage=True):
+def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useCache=True, jsonData=False, returnMessage=True, _retry=False):
     """Call service API"""
     logger.logInfo('called function with param (%s%s)' % (base_url, path))
     global cookieJar
@@ -177,6 +177,28 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
                 except Exception as e:
                     logger.logError('Failed to save cookies: %s' % e)
             
+        except libRequest.HTTPError as e:
+            if e.code == 401 and not _retry:
+                logger.logWarning('HTTP 401 Unauthorized on %s - attempting re-login' % url)
+                try:
+                    from .auth import login
+                    if login(quiet=True):
+                        logger.logInfo('Re-login successful, retrying request')
+                        new_headers = [
+                            ('Authorization', 'Bearer %s' % control.setting('iWantUserAuthentication')) if h[0] == 'Authorization' else h
+                            for h in headers
+                        ]
+                        return callServiceApi(path, params, new_headers, base_url, useCache, jsonData, returnMessage, _retry=True)
+                except Exception as re_login_err:
+                    logger.logError('Error during re-login: %s' % re_login_err)
+                logger.logWarning('Re-login failed for %s' % url)
+                control.showNotification(control.lang(37012), control.lang(30004))
+            else:
+                logger.logError(e)
+                message = '%s : %s' % (e, url)
+                logger.logSevere(message)
+                control.showNotification(message, control.lang(30004))
+            toCache = False
         except (libRequest.URLError, ssl.SSLError) as e:
             logger.logError(e)
             message = '%s : %s' % (e, url)

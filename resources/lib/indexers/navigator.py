@@ -190,7 +190,7 @@ class navigator:
         logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
         (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, season, page, itemsPerPage)
-        episodes = sorted(episodes, key=lambda item: item['title'], reverse=True)
+        episodes = sorted(episodes, key=lambda item: item['episodenumber'], reverse=True)
         for e in episodes:
             title = e.get('title')
             title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
@@ -514,7 +514,8 @@ class navigator:
     def addDirectoryItem(self, name, url, mode, thumbnail, page=1, isFolder=True, query='', **kwargs):
         u = self.generateActionUrl(url, mode, name, thumbnail, page, query)
         item = control.item(label=name)
-        item.setInfo(type="Video", infoLabels={"Title": name})
+        tag = item.getVideoInfoTag()
+        tag.setTitle(name)
         item.setArt({'icon':"DefaultFolder.png", 'thumb':thumbnail})
         for k, v in kwargs.items():
             if k == 'listProperties':
@@ -522,15 +523,29 @@ class navigator:
                     item.setProperty(listPropertyKey, listPropertyValue)
             if k == 'listInfos':
                 for listInfoKey, listInfoValue in v.items():
-                    item.setInfo(listInfoKey, listInfoValue)
+                    if listInfoKey == 'video':
+                        infoLabels = listInfoValue
+                        if 'title' in infoLabels: tag.setTitle(infoLabels['title'])
+                        if 'plot' in infoLabels: tag.setPlot(infoLabels['plot'])
+                        if 'genre' in infoLabels: tag.setGenres([infoLabels['genre']] if isinstance(infoLabels['genre'], str) else infoLabels['genre'])
+                        if 'year' in infoLabels: tag.setYear(int(infoLabels['year']) if str(infoLabels['year']).isdigit() else 0)
+                        if 'episode' in infoLabels: tag.setEpisode(int(infoLabels['episode']) if str(infoLabels['episode']).isdigit() else 0)
+                        if 'season' in infoLabels: tag.setSeason(int(infoLabels['season']) if str(infoLabels['season']).isdigit() else 0)
+                        if 'tvshowtitle' in infoLabels: tag.setTvShowTitle(infoLabels['tvshowtitle'])
+                        if 'aired' in infoLabels: tag.setFirstAired(infoLabels['aired'])
+                        if 'duration' in infoLabels: tag.setDuration(int(infoLabels['duration']) if str(infoLabels['duration']).isdigit() else 0)
+                        if 'mediatype' in infoLabels: tag.setMediaType(infoLabels['mediatype'])
+                    else:
+                        item.setInfo(listInfoKey, listInfoValue)
             if k == 'listArts':
                 item.setArt(v)
             if k == 'listCasts':
                 try:
-                    item.setCast([(castMember.get('name'), castMember.get('order')) for castMember in v])
-                except (Exception) as e:
+                    import xbmc
+                    tag.setCast([xbmc.Actor(castMember.get('name', ''), order=castMember.get('order', 0)) for castMember in v])
+                except Exception as e:
                     logger.logError('Error occurred while setting cast: %s' % e)
-                    logger.logDebug([(castMember.get('name'), castMember.get('order')) for castMember in v])
+                    logger.logDebug(v)
             if k == 'contextMenu':
                 menuItems = []
                 for label, action in v.items():

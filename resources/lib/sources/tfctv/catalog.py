@@ -400,20 +400,7 @@ def getShowWithEpisodes(showId, season='1'):
         'episodes': []
         }
 
-    show = getShow(showId, season, True)
-    """for e in show.get('episodes', []):
-        logger.logDebug(e)
-        res = episodeDB.get(e.get('id'))
-        if len(res) == 0:
-            data['episodes'].append(getEpisode(e.get('id'), show))
-        else:
-            data['episodes'].append(res[0])
-        data['nbEpisodes'] += 1
-
-    show['episodes'] = data['episodes']
-    show['nbEpisodes'] = data['nbEpisodes']"""
-
-    return show
+    return getShow(showId, season, True)
 
 def getEpisodesPerPage(showId, season='1', page=1, itemsPerPage=8, order='desc'):
     """Get episodes paginated"""
@@ -463,7 +450,7 @@ def getEpisodesPerPage(showId, season='1', page=1, itemsPerPage=8, order='desc')
                 data.append(e)
         else:
             logger.logInfo('show')
-            episodes = sorted(show.get('episodes', []), key=lambda item: item['title'], reverse=True if order == 'desc' else False)
+            episodes = sorted(show.get('episodes', []), key=lambda item: item['episodenumber'], reverse=True if order == 'desc' else False)
 
             # Calculating episode index according to page and items per page
             episodeIndex = (page * 1 - 1) * itemsPerPage
@@ -854,7 +841,7 @@ def getCollection(id):
         return response['collection']
     return {}
 
-def getTVShowEpisodes(id, page=1, itemsPerPage=10, year=None, month=None, seasonId=None):
+def getTVShowEpisodes(id, page=1, itemsPerPage=500, year=None, month=None, seasonId=None):
     """Get TV show details"""
     logger.logInfo('called function with param (%s)' % id)
     response = callGraphQLApi("""

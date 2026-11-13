@@ -30,7 +30,7 @@ class Episode(model.Model):
                 'show' : data[3], 
                 'image' : data[4], 
                 'fanart' : data[5],
-                'episodenumber' : data[6],
+                'episodenumber' : int(data[6]),
                 'url' : data[7], 
                 'description' : data[8],
                 'shortdescription' : data[9],
