@@ -360,6 +360,26 @@ msgctxt "#30171"
 msgid "Login Session"
 msgstr ""
 
+msgctxt "#30172"
+msgid "Geo Location"
+msgstr ""
+
+msgctxt "#30173"
+msgid "User Data"
+msgstr ""
+
+msgctxt "#30174"
+msgid "Last User Data Refresh"
+msgstr ""
+
+msgctxt "#30175"
+msgid "User Subscription"
+msgstr ""
+
+msgctxt "#30176"
+msgid "Service ID"
+msgstr ""
+
 msgctxt "#30199"
 msgid "Other settings"
 msgstr ""

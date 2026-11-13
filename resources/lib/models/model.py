@@ -50,7 +50,7 @@ class Model():
                 for d in results:
                     items.append(self._getStructure(d))
             except (Exception) as e:
-                logger.logError('Exception: %s for data %s' % (str(e), repr(search)))
+                logger.logError('[%s] Exception: %s for data %s' % (self.__class__.__name__, str(e), repr(search)))
                 pass
 
         return items
@@ -85,7 +85,7 @@ class Model():
         try:            
             return self._replace(data)
         except (Exception) as e:
-            logger.logError('Exception: %s for data %s' % (str(e), repr(mixed)))
+            logger.logError('[%s] Exception: %s for data %s' % (self.__class__.__name__, str(e), repr(mixed)))
             return False
         
     def update(self, mixed):
@@ -93,7 +93,7 @@ class Model():
         try:            
             return self._save(data)
         except (Exception) as e:
-            logger.logError('Exception: %s for data %s' % (str(e), repr(mixed)))
+            logger.logError('[%s] Exception: %s for data %s' % (self.__class__.__name__, str(e), repr(mixed)))
             return False
 
     def delete(self, mixed):

@@ -1,3 +1,6 @@
+3.0.0
+    Initial release of version 3.0.0 since last iWantTFC redesign
+    Fixed playback error (need kodi 21.x and last version of widevine) 
 2.0.3
     fixed issue when retrieving catalog URL
 2.0.2

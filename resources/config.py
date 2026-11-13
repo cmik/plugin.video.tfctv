@@ -17,16 +17,23 @@ longCache = {'name' : 'tfctv_db', 'ttl': 24*7}
 urlCachePrefix = 'urlcache_'
 
 # HOSTS / URI
-webserviceUrl = 'https://www.iwanttfc.com'
+webserviceUrl = 'https://api.iwanttfc.com'
 websiteUrl = 'https://www.iwanttfc.com'
 websiteSecuredUrl = 'https://www.iwanttfc.com'
 websiteCDNUrl = 'https://img.tfc.tv'
+geoLocationUrl = 'https://pql-geo.iwanttfc.com/prod/location'
 Facebook = {
     'login' : 'https://graph.facebook.com/v12.0/device/login',
     'status' : 'https://graph.facebook.com/v12.0/device/login_status',
     'info' : 'https://graph.facebook.com/v12.0/me'
 }
 uri = {
+    'login' : '/identity/api/iam/oauth?api-version=1.2',
+    'getUserData' : '/identity/api/iam/get-contact?api-version=1.2',
+    'getSubscriptions' : '/subs/api/subscription/get-active-entitlements',
+    'graphql' : '/consumer/graphql',
+    'video' : '/entitlement/playback/start/%s',
+
     'base' : '/',
     'home' : '/#!/',
     'loginStatus' : '/api/1.0/user/login',
@@ -39,7 +46,6 @@ uri = {
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
     'ssoLogin' : '/sso/api/sso.login?include=profile,loginIDs,data,password',
-    'login' : '/api/1.0/user/auth',
     'socialLogin' : '/api/1.0/user/auth',
     'callback' : '/callback',
     'authSSO' : '/sso/authenticate',
@@ -68,9 +74,9 @@ uri = {
 
 # User-agent
 userAgents = { 
-    webserviceUrl : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
-    websiteUrl : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
-    'default' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
+    webserviceUrl : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0',
+    websiteUrl : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0',
+    'default' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0'
     }
 
 # MODES
@@ -78,25 +84,28 @@ CHECKFORUPDATES = 1
 SUBCATEGORYSHOWS = 2
 SHOWEPISODES = 3
 PLAY = 4
-CHOOSEBANDWIDTH = 5
+PLAYDISABLED = 5
+CHOOSEBANDWIDTH = 6
 CATEGORIES = 10
-SECTIONCONTENT = 11
-MYACCOUNT = 12
-MYINFO = 13
-MYSUBSCRIPTIONS = 14
-MYTRANSACTIONS = 15
-MYDEVICES = 16
-INFODEVICE = 17
-LOGOUT = 18
-MYLISTSHOWLASTEPISODES = 19
-MYLIST = 20
-LISTCATEGORY = 21
-ADDTOLIST = 22
-REMOVEFROMLIST = 23
-ADDTOLIBRARY = 24
-REMOVEFROMLIBRARY = 25
-CHECKLIBRARYUPDATES = 26
-EXPORTEDSHOWS = 27
+COLLECTIONCONTENT = 12
+SECTIONCONTENT = 13
+SEASONS = 11
+MYACCOUNT = 14
+MYINFO = 15
+MYSUBSCRIPTIONS = 16
+MYTRANSACTIONS = 17
+MYDEVICES = 18
+INFODEVICE = 19
+LOGOUT = 20
+MYLISTSHOWLASTEPISODES = 21
+MYLIST = 22
+LISTCATEGORY = 23
+ADDTOLIST = 24
+REMOVEFROMLIST = 25
+ADDTOLIBRARY = 26
+REMOVEFROMLIBRARY = 27
+CHECKLIBRARYUPDATES = 28
+EXPORTEDSHOWS = 29
 SEARCHMENU = 30
 EXECUTESEARCH = 31
 TOOLS = 50

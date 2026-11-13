@@ -23,6 +23,9 @@ def upgradeDB():
         logger.logNotice('Checking installation')
         tools.checkInstallDB(True)
     tools.checkInstallDB()
+    if control.setting('lastVersion')[:1] in ('', '1', '2'):
+        upgradeSettings()
+        control.setSetting('lastVersion', control.addonInfo('version'))
     # episodeDB = episodes.Episode(control.episodesFile)
     # showDB = shows.Show(control.showsFile)
     # showViews = logger.logInfo(episodeDB.execute(['select showid, sum(views) from EPISODE where views > 0 group by showid']))
@@ -34,6 +37,6 @@ def upgradeDB():
         
 
 def upgradeSettings():
-    if control.addonInfo('version') == '1.5.0': 
+    if control.addonInfo('version') == '3.0.0': 
         control.setSetting('proxyStreamingUrl', 'http://%s:%s/?url=%s%s')
         control.showMessage(control.lang(37047), control.lang(30002))

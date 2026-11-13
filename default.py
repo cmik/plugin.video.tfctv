@@ -6,7 +6,8 @@
 '''
 
 from urllib.parse import parse_qsl,unquote_plus
-import sys,time
+import sys
+import time
 from resources import config
 from resources.lib.libraries import control
 from resources.lib.libraries import tools
@@ -16,9 +17,11 @@ logger = control.logger
 if control.setting('debug') == 'true':
     logger.enable(True)
     try:
-        exec('newLevel = logger.LOG%s' %(control.setting('debugLevel')))
+        debug_level = control.setting('debugLevel')
+        newLevel = getattr(logger, f'LOG{debug_level}', logger.LOGINFO)
         logger.setLevel(newLevel)
-    except:
+    except (AttributeError, TypeError) as e:
+        logger.logError(f"Failed to set debug level: {e}")
         pass
 
 exec_start=time.time()
@@ -74,16 +77,24 @@ elif mode == config.SUBCATEGORYSHOWS:
     navigator.navigator().showSubCategoryShows(url)
 elif mode == config.SHOWEPISODES:
     from resources.lib.indexers import navigator
-    navigator.navigator().showEpisodes(url, page)
+    navigator.navigator().showEpisodes(url, params.get('season', '1'), page)
 elif mode == config.CHOOSEBANDWIDTH:
     from resources.lib.indexers import navigator
     navigator.navigator().chooseBandwidth(url, title, params.get('ltype', show), thumbnail)
 elif mode == config.PLAY:
     from resources.lib.sources import tfctv
     tfctv.playEpisode(url, title, params.get('ltype', show), thumbnail, params.get('bandwidth', False))
+elif mode == config.PLAYDISABLED:
+    control.showMessage(control.lang(37032), control.lang(30002))
 elif mode == config.CATEGORIES:
     from resources.lib.indexers import navigator
     navigator.navigator().showCategories()
+elif mode == config.COLLECTIONCONTENT:
+    from resources.lib.indexers import navigator
+    navigator.navigator().showCollectionContent(url)
+elif mode == config.SEASONS:
+    from resources.lib.indexers import navigator
+    navigator.navigator().showSeasons(url)
 elif mode == config.SECTIONCONTENT:
     from resources.lib.indexers import navigator
     navigator.navigator().showWebsiteSectionContent(url, page)
@@ -165,7 +176,7 @@ elif mode == config.RELOADCATALOG:
 elif mode == config.RESETCATALOG:
     from resources.lib.sources import tfctv
     tfctv.resetCatalogCache()
-elif mode == config.CHECKLIBRARYUPDATES and tools.isDBInstalled() == True:
+elif mode == config.CHECKLIBRARYUPDATES and tools.isDBInstalled():
     from resources.lib.sources import tfctv
     tfctv.checkLibraryUpdates(True if caller!='addon' else False)
 elif mode == config.CLEANCOOKIES:

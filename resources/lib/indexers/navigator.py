@@ -19,11 +19,14 @@
 '''
 
 
-import os,sys,xbmc,time,re
+import os
+import sys
+import xbmc
+import time
+import re
 from urllib.parse import parse_qsl,quote_plus,urlencode
 from resources import config
 from resources.lib.libraries import control
-from resources.lib.libraries import cache
 from resources.lib.sources import tfctv
 from operator import itemgetter
 
@@ -31,13 +34,14 @@ artPath = control.artPath()
 addonFanart = control.addonFanart()
 logger = control.logger
 
-try: 
+""" try: 
     action = dict(parse_qsl(sys.argv[2].replace('?','')))['action']
-except:
-    action = None
+except (Exception) as e:
+    logger.logNotice('No corresponding action found: %s' % e)
+    action = None """
 
-sysaddon = sys.argv[0]
-thisPlugin = int(sys.argv[1])
+sysaddon = control.sysaddon
+thisPlugin = control.thisPlugin
 
 class navigator:
 
@@ -55,7 +59,7 @@ class navigator:
         self.addDirectoryItem(control.lang(30204), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30204)), isFolder=True, **self.formatMenu())
 
         # if not logged in, ask to log in
-        if tfctv.isLoggedIn() == False:
+        if not tfctv.isLoggedIn():
             if control.setting('loginType') == 'TFC.tv' and control.setting('emailAddress') != '':
                 if (control.confirm('%s\n%s' % (control.lang(37007), control.lang(37008) % control.setting('emailAddress')))):
                     (account, logged) = tfctv.checkAccountChange(True)
@@ -63,7 +67,7 @@ class navigator:
                 if (control.confirm('%s\n%s' % (control.lang(37007), control.lang(37051)))):
                     tfctv.login()
         
-        if tfctv.isLoggedIn() == True and control.setting('displayMyList') == 'true':
+        if tfctv.isLoggedIn() and control.setting('displayMyList') == 'true':
             self.addDirectoryItem(control.lang(30200), config.uri.get('base'), config.MYLIST, control.addonFolderIcon(control.lang(30200)), isFolder=True, **self.formatMenu())
         
         if control.setting('displayWebsiteSections') == 'true':
@@ -72,11 +76,11 @@ class navigator:
             self.showCategories()
             
         if control.setting('displayWebsiteSections') == 'true':
-            control.showNotification(control.lang(37020), control.lang(30008))
-            sections = tfctv.getWebsiteHomeSections()
-            for s in sections:
-                self.addDirectoryItem(s['name'].title(), str(s['id']), config.SECTIONCONTENT, control.addonFolderIcon(s['name'].title()), isFolder=True, **self.formatMenu())
-            
+            # control.showNotification(control.lang(37020), control.lang(30008))
+            collections = tfctv.getWebsiteCollections()
+            for c in collections:
+                self.addDirectoryItem(c['title'].title(), str(c['collectionId']), config.COLLECTIONCONTENT, control.addonFolderIcon(c['title'].title()), isFolder=True, **self.formatMenu())
+
         if control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != '':
             self.addDirectoryItem(control.lang(30202), config.uri.get('base'), config.MYACCOUNT, control.addonFolderIcon(control.lang(30202)), isFolder=True, **self.formatMenu())
 
@@ -88,9 +92,23 @@ class navigator:
             
         self.endDirectory()
         
-        if tfctv.isLoggedIn() == False:
+        if not tfctv.isLoggedIn():
             control.infoDialog(control.lang(37017), control.lang(30002), time=8000)
-            
+
+    def showCollectionContent(self, url):
+        logger.logInfo('called function')
+        sections = tfctv.getCollectionContent(url)
+        for s in sections:
+            self.addDirectoryItem(s['name'].title(), str(s['id']), config.SECTIONCONTENT, control.addonFolderIcon(s['name'].title()), isFolder=True, **self.formatMenu())
+        self.endDirectory()
+
+    def showSeasons(self, showId):
+        logger.logInfo('called function')
+        seasons = tfctv.getSeasons(showId)
+        for s in seasons:
+            self.addDirectoryItem(s['name'].title(), str(s['showId']), config.SHOWEPISODES, control.addonFolderIcon(s['name'].title()), isFolder=True, query={'season': s['id']}, **self.formatMenu())
+        self.endDirectory()
+
     def showMyList(self):
         logger.logInfo('called function')
         self.addDirectoryItem(control.lang(30213), '/', config.MYLISTSHOWLASTEPISODES, control.addonFolderIcon(control.lang(30213)), isFolder=True, **self.formatMenu())
@@ -140,8 +158,8 @@ class navigator:
         for e in content:
             if e['ltype'] == 'show':
                 image = e.get('logo') if control.setting('useShowLogo') == 'true' else e.get('image')
-                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
-            elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream'):
+                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SEASONS if e.get('nbSeasons', 0) > 1 else config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
+            elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream') and e.get('isPlayable', True):
                 title = e.get('name')
                 title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
                 if title_match:
@@ -168,19 +186,19 @@ class navigator:
                 
         self.endDirectory()
         
-    def showEpisodes(self, showId, page=1):
+    def showEpisodes(self, showId, season='1', page=1):
         logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
-        (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, page, itemsPerPage)
-        episodes = sorted(episodes, key=lambda item: item['title'], reverse=True)
+        (episodes, nextPage) = tfctv.getEpisodesPerPage(showId, season, page, itemsPerPage)
+        episodes = sorted(episodes, key=lambda item: item['episodenumber'], reverse=True)
         for e in episodes:
             title = e.get('title')
             title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
             if title_match:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title')}, **self.formatVideoInfo(e, addToList=False))
-        if len(episodes) == itemsPerPage or nextPage == True:
-            self.addDirectoryItem(control.lang(36008), showId, config.SHOWEPISODES, '', page + 1)
+        if len(episodes) == itemsPerPage or nextPage:
+            self.addDirectoryItem(control.lang(36008), showId, config.SHOWEPISODES, '', page + 1, query={'season': season})
         self.endDirectory()
 
     def chooseBandwidth(self, episodeId, title, type, thumbnail):
@@ -214,7 +232,7 @@ class navigator:
 
     def executeSearch(self, category, type):
         logger.logInfo('called function')
-        if category != False and type != False:
+        if category and type:
             result = tfctv.enterSearch(category, type)
             if len(result) > 0:
                 if category == 'movieshow':
@@ -247,7 +265,7 @@ class navigator:
         logger.logInfo('called function')
         loggedIn = tfctv.isLoggedIn()
         message = control.lang(37002)
-        if loggedIn == True:
+        if loggedIn:
             try:
                 user = tfctv.getUserInfo()
                 message = 'First name: %s\nLast name: %s\nEmail: %s\nState: %s\nCountry: %s\nMember since: %s\n\n' % (
@@ -258,8 +276,9 @@ class navigator:
                     user.get('country', ''), 
                     user.get('memberSince', '')
                     )
-            except:
-                pass
+            except (Exception) as e:
+                logger.logError('Error occurred while fetching user info: %s' % e)
+                
         control.showMessage(message, control.lang(36001))
     
     def showMySubscription(self):
@@ -352,7 +371,7 @@ class navigator:
         
     def enterCredentials(self):
         logger.logInfo('called function')
-        if tfctv.enterCredentials() == True:
+        if tfctv.enterCredentials():
             control.setSetting('showEnterCredentials', 'false')
             self.endSetup()
 
@@ -380,7 +399,8 @@ class navigator:
         self.showMainMenu()
         
     def formatMenu(self, bgImage=''):
-        if bgImage == '': bgImage = control.setting('defaultBG')
+        if bgImage == '':
+            bgImage = control.setting('defaultBG')
         data = { 
             'listArts' : { 'fanart' : bgImage, 'banner' : bgImage }
             }
@@ -391,7 +411,7 @@ class navigator:
         # add to mylist / remove from mylist
         add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
         remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
-        if addToList == True: 
+        if addToList: 
             contextMenu.update(add)
         else:
             contextMenu.update(remove)
@@ -399,7 +419,7 @@ class navigator:
         if control.setting('exportToLibrary') == 'true':
             addToLibrary = { control.lang(30302) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
             removeFromLibrary = { control.lang(30304) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
-            if info.get('inLibrary', False) == True:
+            if info.get('inLibrary', False):
                 contextMenu.update(removeFromLibrary)
             else:
                 contextMenu.update(addToLibrary)
@@ -438,11 +458,11 @@ class navigator:
     def formatVideoInfo(self, info, addToList=True, options = {}):
 
         contextMenu = {}
-        if info.get('bandwidth') == None:
+        if info.get('bandwidth') is None:
             # add to mylist / remove from mylist
             add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
             remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
-            if addToList == True: 
+            if addToList: 
                 contextMenu.update(add)
             else:
                 contextMenu.update(remove)
@@ -493,48 +513,70 @@ class navigator:
             
     def addDirectoryItem(self, name, url, mode, thumbnail, page=1, isFolder=True, query='', **kwargs):
         u = self.generateActionUrl(url, mode, name, thumbnail, page, query)
-        liz = control.item(label=name)
-        liz.setInfo(type="Video", infoLabels={"Title": name})
-        liz.setArt({'icon':"DefaultFolder.png", 'thumb':thumbnail})
+        item = control.item(label=name)
+        tag = item.getVideoInfoTag()
+        tag.setTitle(name)
+        item.setArt({'icon':"DefaultFolder.png", 'thumb':thumbnail})
         for k, v in kwargs.items():
             if k == 'listProperties':
                 for listPropertyKey, listPropertyValue in v.items():
-                    liz.setProperty(listPropertyKey, listPropertyValue)
+                    item.setProperty(listPropertyKey, listPropertyValue)
             if k == 'listInfos':
                 for listInfoKey, listInfoValue in v.items():
-                    liz.setInfo(listInfoKey, listInfoValue)
+                    if listInfoKey == 'video':
+                        infoLabels = listInfoValue
+                        if 'title' in infoLabels: tag.setTitle(infoLabels['title'])
+                        if 'plot' in infoLabels: tag.setPlot(infoLabels['plot'])
+                        if 'genre' in infoLabels: tag.setGenres([infoLabels['genre']] if isinstance(infoLabels['genre'], str) else infoLabels['genre'])
+                        if 'year' in infoLabels: tag.setYear(int(infoLabels['year']) if str(infoLabels['year']).isdigit() else 0)
+                        if 'episode' in infoLabels: tag.setEpisode(int(infoLabels['episode']) if str(infoLabels['episode']).isdigit() else 0)
+                        if 'season' in infoLabels: tag.setSeason(int(infoLabels['season']) if str(infoLabels['season']).isdigit() else 0)
+                        if 'tvshowtitle' in infoLabels: tag.setTvShowTitle(infoLabels['tvshowtitle'])
+                        if 'aired' in infoLabels: tag.setFirstAired(infoLabels['aired'])
+                        if 'duration' in infoLabels: tag.setDuration(int(infoLabels['duration']) if str(infoLabels['duration']).isdigit() else 0)
+                        if 'mediatype' in infoLabels: tag.setMediaType(infoLabels['mediatype'])
+                    else:
+                        item.setInfo(listInfoKey, listInfoValue)
             if k == 'listArts':
-                liz.setArt(v)
+                item.setArt(v)
             if k == 'listCasts':
-                try:liz.setCast(v)
-                except:pass
+                try:
+                    import xbmc
+                    tag.setCast([xbmc.Actor(castMember.get('name', ''), order=castMember.get('order', 0)) for castMember in v])
+                except Exception as e:
+                    logger.logError('Error occurred while setting cast: %s' % e)
+                    logger.logDebug(v)
             if k == 'contextMenu':
                 menuItems = []
                 for label, action in v.items():
                     menuItems.append((label, action))
-                if len(menuItems) > 0: liz.addContextMenuItems(menuItems)
-        return control.addItem(handle=thisPlugin, url=u, listitem=liz, isFolder=isFolder)
+                if len(menuItems) > 0: item.addContextMenuItems(menuItems)
+        return control.addItem(handle=thisPlugin, url=u, listitem=item, isFolder=isFolder)
 
     def generateActionUrl(self, url, mode, name=None, thumbnail='', page=1, query=''):
         url = '%s?url=%s&mode=%s' % (sysaddon, quote_plus(url), str(mode))
         try: 
-            if name != None: url += '&name=%s' % quote_plus(name)
-        except: 
-            pass
+            if name is not None: 
+                url += '&name=%s' % quote_plus(name)
+        except Exception as e: 
+            logger.logError('Error occurred while generating action URL (name): %s' % e)
         try: 
-            if int(page) >= 0: url += '&page=%s' % str(page)
-        except: 
-            pass
+            if int(page) >= 0: 
+                url += '&page=%s' % str(page)
+        except Exception as e: 
+            logger.logError('Error occurred while generating action URL (page): %s' % e)
         try: 
-            if thumbnail != '': url += '&thumbnail=%s' % quote_plus(thumbnail)
-        except: 
-            pass    
+            if thumbnail != '': 
+                url += '&thumbnail=%s' % quote_plus(thumbnail)
+        except Exception as e: 
+            logger.logError('Error occurred while generating action URL (thumbnail): %s' % e)
         try: 
-            if query != '' and query != None: 
-                if isinstance(query, dict): query = urlencode(query)
+            if query != '' and query is not None: 
+                if isinstance(query, dict): 
+                    query = urlencode(query)
                 url += "&" + query
-        except: 
-            pass
+        except Exception as e: 
+            logger.logError('Error occurred while generating action URL (query): %s' % e)
         return logger.logDebug(url)
 
     def endDirectory(self, cacheToDisc=True):
