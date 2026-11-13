@@ -71,6 +71,8 @@ jobs:
             echo "::warning::secret CMIK_XBMC_TOKEN is not set: the cmik.xbmc repository was not updated"
             exit 0
           fi
+          # let git push use the token (gh repo clone only authenticates the clone)
+          gh auth setup-git
           gh repo clone cmik/cmik.xbmc repo
           git -C repo checkout -b "release/$ADDON_ID-$VERSION"
           python .github/scripts/update_repo.py repo "dist/$ADDON_ID-$VERSION.zip"
