@@ -1,0 +1,65 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [master, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python and release files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # the Python used by Kodi 21
+      - name: Compile all the Python files
+        run: python -m compileall -q default.py service.py resources
+      - name: Check version, changelog, md5 and tracked files
+        run: python .github/scripts/check_release.py
+
+  addon-checker:
+    name: kodi-addon-checker
+    runs-on: ubuntu-latest
+    env:
+      # problems that already existed when the check was added (executable bits are fixed):
+      # xbmc.service schema, icon format, fanart size, old language format (2). New ones fail the check.
+      MAX_ERRORS: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin.video.tfctv # the checker expects the folder to be named like the add-on id
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install kodi-addon-checker==0.0.36
+      - name: Run kodi-addon-checker (Kodi 21 Omega)
+        run: |
+          kodi-addon-checker --branch omega plugin.video.tfctv 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | tee checker.log
+          # the last line only summarizes the problems
+          errors=$(grep -c '^ERROR: ' checker.log || true)
+          errors=$((errors - 1))
+          echo "problems found: $errors (allowed: $MAX_ERRORS)"
+          if [ "$errors" -gt "$MAX_ERRORS" ]; then
+            echo "::error::kodi-addon-checker found $errors problems, more than the $MAX_ERRORS that already existed"
+            exit 1
+          fi
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
