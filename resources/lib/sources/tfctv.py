@@ -30,7 +30,7 @@ from resources.lib.sources.tfctv.catalog import (
     getShow, getShows, getShowWithEpisodes, getEpisode,
     getEpisodesPerPage, getCategories, getWebsiteHomeSections,
     getWebsiteSectionContent, getHomeCatalog, getSettings, loadSettings,
-    getItemData, getSiteItems, checkCatalogUpdates,
+    getItemData, checkCatalogUpdates,
     getMyList, getMylistShowLastEpisodes, addToMyList, removeFromMyList,
     enterSearch, episodeDB, showDB, castDB
 )
@@ -72,7 +72,7 @@ __all__ = [
     'getShow', 'getShows', 'getShowWithEpisodes', 'getEpisode',
     'getEpisodesPerPage', 'getCategories', 'getWebsiteHomeSections',
     'getWebsiteSectionContent', 'getHomeCatalog', 'getSettings', 'loadSettings',
-    'getItemData', 'getSiteItems', 'checkCatalogUpdates',
+    'getItemData', 'checkCatalogUpdates',
     
     # Playback functions
     'playEpisode', 'getMediaInfo', 'getMediaInfoFromWebsite',

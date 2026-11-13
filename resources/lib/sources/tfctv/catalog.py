@@ -109,7 +109,11 @@ def getCachedCollection(collectionId, refresh=False):
         lambda: json.dumps(getCollection(collectionId)),
         refresh
     )
-    return {} if catalogJson is None else json.loads(catalogJson)
+    collection = {} if catalogJson is None else json.loads(catalogJson)
+    if not collection:
+        # don't keep a failed call cached for the whole hour
+        cache.shortCache.delete(catalogKey)
+    return collection
 
 def getCollectionContent(id):
     """Get website home sections"""
@@ -127,15 +131,36 @@ def getCollectionContent(id):
                 })
     return data
 
-def getCollectionShowIds(collectionId):
+SHOW_ASSET_TYPES = ('tvshow', 'movie', 'documentary')
+
+def getCollectionShowIds(collectionId, refresh=False):
     """Get the ids of the shows/movies listed in the rails of a collection"""
-    logger.logInfo('called function with param (%s)' % collectionId)
+    logger.logInfo('called function with param (%s, %s)' % (collectionId, refresh))
     ids = []
-    for rail in getCachedCollection(collectionId).get('rails', {}):
+    for rail in getCachedCollection(collectionId, refresh).get('rails', {}):
         for item in (rail.get('assets', {}) or {}).get('items', []) or []:
-            if item.get('id') and item.get('assetType', '') != 'episode':
+            if item.get('id') and item.get('assetType', '') in SHOW_ASSET_TYPES:
                 ids.append(item.get('id'))
     return list(dict.fromkeys(ids))
+
+def getCatalogShowIds(refresh=False):
+    """Get the ids of all the shows listed in the website collections (without duplicates).
+
+    Returns (ids, nbFailedCollections): a collection that can't be read is skipped."""
+    logger.logInfo('called function with param (%s)' % refresh)
+    ids = []
+    failed = 0
+    for collection in getWebsiteCollections():
+        collectionId = collection.get('collectionId', collection.get('id'))
+        try:
+            collectionIds = getCollectionShowIds(collectionId, refresh)
+            if not collectionIds:
+                logger.logWarning('No show found in collection %s' % collectionId)
+            ids += collectionIds
+        except Exception as e:
+            failed += 1
+            logger.logError('Can\'t read collection %s : %s' % (collectionId, str(e)))
+    return list(dict.fromkeys(ids)), failed
 
 def findCollectionRail(sectionId):
     """Find a rail (section) by id.
@@ -144,15 +169,19 @@ def findCollectionRail(sectionId):
     collection then returns another collection whose rails don't contain it (empty
     section). So look in the collection with this id first, then in the website
     collections the rail is listed from (home, movies, shows...)."""
-    candidates = [sectionId]
+    # a rail id that is a title hash can't be a collection id
+    candidates = [] if re.match(r'^[0-9a-f]{32}$', str(sectionId)) else [sectionId]
     try:
         candidates += [c.get('collectionId') for c in getWebsiteCollections() if c.get('collectionId')]
     except Exception as e:
         logger.logError('Unable to list website collections: %s' % str(e))
     for collectionId in dict.fromkeys(candidates):
-        for rail in getCachedCollection(collectionId).get('rails', {}):
-            if sectionId in (rail.get('id'), cache.generateHashKey(rail.get('title', {}))):
-                return rail
+        try:
+            for rail in getCachedCollection(collectionId).get('rails', {}):
+                if sectionId in (rail.get('id'), cache.generateHashKey(rail.get('title', {}))):
+                    return rail
+        except Exception as e:
+            logger.logError('Unable to read collection %s : %s' % (collectionId, str(e)))
     return {}
 
 def getWebsiteSectionContent(sectionId, page=1, itemsPerPage=8):
@@ -180,28 +209,23 @@ def getWebsiteSectionContent(sectionId, page=1, itemsPerPage=8):
         reverse=True if containsShows is False else False
     ))
 
-def getSiteItems():
-    """Get site items"""
-    logger.logInfo('called function')
-    return callJsonApi(config.uri.get('items'), base_url=control.setting('basePath'), useCache=False)
+def refreshCatalogShows(loadEpisodes=True, refresh=False):
+    """Refresh the shows listed in the website collections (and their episodes).
 
-def checkCatalogUpdates(loadEpisodes=True):
-    """Check catalog for updates (shows listed in the website collections)"""
-    logger.logInfo('called function')
-
-    start = time.time()
+    Returns False when nothing could be read from the website collections."""
+    logger.logInfo('called function with param (%s, %s)' % (loadEpisodes, refresh))
     try:
-        showIds = []
-        for collection in getWebsiteCollections():
-            showIds += getCollectionShowIds(collection.get('collectionId', collection.get('id')))
-        showIds = list(dict.fromkeys(showIds))
-        nbItems = len(showIds)
+        showIds, failed = getCatalogShowIds(refresh)
     except Exception as e:
         logger.logError('Can\'t update the catalog : %s' % (str(e)))
         return False
+    if not showIds:
+        return False
 
+    nbItems = len(showIds)
     logger.logInfo(nbItems)
-    for k, showId in enumerate(showIds):
+    start = time.time()
+    for k, showId in enumerate(showIds, 1):
         try:
             if loadEpisodes:
                 getShowWithEpisodes(showId)
@@ -210,13 +234,17 @@ def checkCatalogUpdates(loadEpisodes=True):
         except Exception as se:
             logger.logError('Error updating item %s : %s' % (showId, str(se)))
 
-        if time.time() - start > 5:
+        if time.time() - start > 5 and k < nbItems:
             start = time.time()
-            percent = 100 * k / nbItems
-            logger.logNotice('Updating catalog... %s' % (str(percent)+'%'))
-            control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
-
+            message = 'Updating catalog... %d%%' % (100 * k // nbItems)
+            logger.logNotice(message)
+            control.infoDialog(message, heading=control.lang(30005), icon=control.addonIcon(), time=10000)
     return True
+
+def checkCatalogUpdates(loadEpisodes=True):
+    """Check catalog for updates (shows listed in the website collections)"""
+    logger.logInfo('called function')
+    return refreshCatalogShows(loadEpisodes, refresh=True)
 
 def formatToShow(data):
     """Format show data"""
