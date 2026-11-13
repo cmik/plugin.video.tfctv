@@ -417,6 +417,17 @@ def getSeasons(showId):
             })
     return data
 
+def getShowEpisodeItems(id, season='1'):
+    """Get the episode items of a show for a season.
+
+    Some shows have no numbered seasons (their episodes are split by month, with a null
+    seasonId): the API then fails for seasonId=1, so retry without any season filter."""
+    items = (getTVShowEpisodes(id, seasonId=season) or {}).get('items') or []
+    if not items and season is not None:
+        logger.logWarning('No episodes for show %s season %s, retrying without season filter' % (id, season))
+        items = (getTVShowEpisodes(id) or {}).get('items') or []
+    return items
+
 def getShow(id, season='1', withEpisodes=False):
     """Get show details"""
     logger.logInfo('called function with param (%s, %s, %s)' % (id, season, withEpisodes))
@@ -434,7 +445,7 @@ def getShow(id, season='1', withEpisodes=False):
         if asset:
             episodes = []
             if withEpisodes:
-                episodes = getTVShowEpisodes(id, seasonId=season).get('items', [])
+                episodes = getShowEpisodeItems(id, season)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
         else:
@@ -1026,7 +1037,8 @@ query TvShowEpisodes($tvShowEpisodesId: ID, $filters: TvShowEpisodesFilterInput,
         },
         useCache=False
     )
-    return response.get('tvShowEpisodes', {}) if response else {}
+    # the API answers with a null tvShowEpisodes (and an error) when the filters match nothing
+    return (response.get('tvShowEpisodes') if response else None) or {}
 
 def getAsset(id):
     """Get asset details"""
