@@ -1,3 +1,5 @@
+3.0.2
+    Fixed catalog refresh, shows without numbered seasons, database queries with quotes and proxy service restart
 3.0.1
     Minor bug fixes and improvements 
 3.0.0
