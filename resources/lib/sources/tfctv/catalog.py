@@ -140,8 +140,8 @@ def getCollectionShowIds(collectionId, refresh=False):
     for rail in getCachedCollection(collectionId, refresh).get('rails', {}):
         assets = rail.get('assets', {}) or {}
         items = assets.get('items', []) or []
-        if assets.get('hasNextPage') or assets.get('totalItems', 0) > len(items):
-            # the API call only returns the first page of a rail
+        if (assets.get('totalItems') or 0) > len(items):
+            # the API call only returns the first page of a rail (hasNextPage is also true for complete rails, e.g. Top 10)
             logger.logWarning('Rail %s of collection %s: only %d of %s items read (hasNextPage=%s)' % (
                 rail.get('title', rail.get('id')), collectionId, len(items), assets.get('totalItems'), assets.get('hasNextPage')))
         for item in items:
