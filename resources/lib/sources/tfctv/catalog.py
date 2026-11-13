@@ -127,17 +127,31 @@ def getCollectionContent(id):
                 })
     return data
 
+def findCollectionRail(sectionId):
+    """Find a rail (section) by id.
+
+    The id of a rail can also be a valid collection id on the API side: asking for that
+    collection then returns another collection whose rails don't contain it (empty
+    section). So look in the collection with this id first, then in the website
+    collections the rail is listed from (home, movies, shows...)."""
+    candidates = [sectionId]
+    try:
+        candidates += [c.get('collectionId') for c in getWebsiteCollections() if c.get('collectionId')]
+    except Exception as e:
+        logger.logError('Unable to list website collections: %s' % str(e))
+    for collectionId in dict.fromkeys(candidates):
+        for rail in getCachedCollection(collectionId).get('rails', {}):
+            if sectionId in (rail.get('id'), cache.generateHashKey(rail.get('title', {}))):
+                return rail
+    return {}
+
 def getWebsiteSectionContent(sectionId, page=1, itemsPerPage=8):
     """Get section content"""
     logger.logInfo('called function with param (%s, %s, %s)' % (sectionId, page, itemsPerPage))
     page -= 1
     data = []
-    section = next(
-        (s for s in getCachedCollection(sectionId).get('rails', {})
-         if sectionId in (s.get('id'), cache.generateHashKey(s.get('title', {})))),
-        {}
-    )
-    
+    section = findCollectionRail(sectionId)
+
     logger.logInfo(section)
 
     index = itemsPerPage * page
