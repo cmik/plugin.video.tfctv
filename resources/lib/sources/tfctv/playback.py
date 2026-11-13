@@ -49,18 +49,16 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             logger.logDebug('Final Kodi URL: %s' % kodiurl)
             item = control.item(name, path=kodiurl)
             item.setArt({'thumb': thumbnail, 'icon': "DefaultVideo.png"})
-            item.setInfo(type='video', infoLabels={
-                'title': name,
-                'sorttitle': episodeDetails['data']['dateaired'],
-                'tvshowtitle': episodeDetails['data']['show'],
-                'genre': episodeDetails['data']['parentname'],
-                'episode': episodeDetails['data']['episodenumber'],
-                'tracknumber': episodeDetails['data']['episodenumber'],
-                'plot': episodeDetails['data']['plot'],
-                'aired': episodeDetails['data']['dateaired'],
-                'year': episodeDetails['data']['year'],
-                'mediatype': episodeDetails['data']['type']
-                })
+            tag = item.getVideoInfoTag()
+            tag.setTitle(name)
+            tag.setSortTitle(episodeDetails['data']['dateaired'])
+            tag.setTvShowTitle(episodeDetails['data']['show'])
+            tag.setGenres([episodeDetails['data']['parentname']] if episodeDetails['data']['parentname'] else [])
+            tag.setEpisode(int(episodeDetails['data']['episodenumber']) if str(episodeDetails['data']['episodenumber']).isdigit() else 0)
+            tag.setPlot(episodeDetails['data']['plot'])
+            tag.setFirstAired(episodeDetails['data']['dateaired'])
+            tag.setYear(int(episodeDetails['data']['year']) if str(episodeDetails['data']['year']).isdigit() else 0)
+            tag.setMediaType(episodeDetails['data']['type'])
 
             # Add eventual subtitles
             if 'subtitles' in episodeDetails['data'] and len(episodeDetails['data']['subtitles']) > 0:
@@ -97,11 +95,16 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                     'Sec-Fetch-Site': 'cross-site',
                     'Connection': 'keep-alive'
                 }
+                # EZDRM returns the raw Widevine license (binary), not JSON:
+                # an empty response_data field tells inputstream.adaptive to use it as-is.
+                # 'JBlicense' made it try to parse JSON -> "Unable to find license in JSON string".
+                license_headers = dict(headers)
+                license_headers['Content-Type'] = 'application/octet-stream'
                 license_config = {
                     'license_server_url': license_server,
-                    'headers': urlencode(headers),
+                    'headers': urlencode(license_headers),
                     'post_data': 'R{SSM}',
-                    'response_data': 'JBlicense'
+                    'response_data': ''
                 }
                 logger.logDebug(license_config)
                 inputstream_config = {
@@ -109,7 +112,9 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 }
 
                 is_helper = inputstreamhelper.Helper(protocol, drm=drm)
-                is_helper.check_inputstream()
+                if not is_helper.check_inputstream():
+                    control.showNotification(control.lang(37032), control.lang(30004))
+                    return False
                 item.setProperty('inputstream', 'inputstream.adaptive')
                 item.setProperty('inputstream.adaptive.manifest_type', protocol)
                 item.setProperty('inputstream.adaptive.license_type', drm)
@@ -117,7 +122,7 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 item.setProperty("inputstream.adaptive.manifest_headers", urlencode(manifest_headers))
                 item.setProperty('inputstream.adaptive.license_key', '|'.join(list(license_config.values())))
                 item.setProperty('inputstream.adaptive.config', json.dumps(inputstream_config))
-                item.setMimeType(episodeDetails['data']['type'])
+                item.setMimeType('application/dash+xml')
                 item.setContentLookup(False)
             
             item.setProperty('fanart_image', episodeDetails['data']['fanart'])
@@ -203,6 +208,17 @@ def getEpisodeBandwidthList(episodeId, title, type, thumbnail):
             i += 1
     return data
 
+def getDeviceUUID():
+    """Stable device UUID sent to playback/start (the website sends one; without it
+    the Widevine license token has deviceId 'unknown' and EZDRM answers ACCESS_DENIED).
+    Derived from the add-on fingerprint ID (32 hex chars) so it stays the same across runs."""
+    import uuid
+    from .user import getFingerprintID
+    try:
+        return str(uuid.UUID(getFingerprintID()))
+    except Exception:
+        return control.generateUUID()
+
 def retrieveMediaInfo(episodeId, type, bandwidth=False):
     """Get media info from website"""
     logger.logInfo('called function with param (%s, %s, %s)' % (str(episodeId), type, bandwidth))
@@ -213,9 +229,11 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
         {
             'platform': 'web',
             'subPlatform': 'firefox',
-            'appVersion': '25.12.12-1',
+            'appVersion': '26.10.29-1',
             'appVersionCode': 1,
             'playbackSessionId': control.generateUUID(),
+            'networkType': 'unknown',
+            'deviceId': getDeviceUUID(),
             'playbackCapabilities': {
                 'drm': [
                     'wv'
@@ -234,6 +252,17 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
                 ]
             }
         },
+        headers=[
+            ('Authorization', 'Bearer %s' % control.setting('iWantUserAuthentication')),
+            ('Referer', config.websiteSecuredUrl+'/'),
+            ('Origin', config.websiteSecuredUrl),
+            ('x-country-code', 'FR'),
+            ('x-device-platform', 'web'),
+            ('x-device-subplatform', 'firefox'),
+            ('Sec-Fetch-Dest', 'empty'),
+            ('Sec-Fetch-Mode', 'cors'),
+            ('Sec-Fetch-Site', 'same-site')
+        ],
         useCache=False,
     )
 
