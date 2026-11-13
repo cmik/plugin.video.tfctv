@@ -485,10 +485,23 @@ def getShow(id, season='1', withEpisodes=False):
                 episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
+            if withEpisodes:
+                storeNewEpisodes(data.get('episodes', []))
         else:
             logger.logWarning('Error on show %s: %s' % (id, 'not found'))
     
     return data
+
+def storeNewEpisodes(episodes):
+    """Save in the episodes database the episodes it doesn't know yet (known ones keep their stored data)"""
+    episodes = [e for e in episodes if isinstance(e, dict) and e.get('id')]
+    if not episodes:
+        return 0
+    known = set(e.get('id') for e in episodeDB.get([e.get('id') for e in episodes]))
+    new = [e for e in episodes if e.get('id') not in known]
+    if new:
+        episodeDB.set(new)
+    return len(new)
 
 def getShowWithEpisodes(showId, season='1'):
     """Get show with episodes"""
