@@ -127,6 +127,16 @@ def getCollectionContent(id):
                 })
     return data
 
+def getCollectionShowIds(collectionId):
+    """Get the ids of the shows/movies listed in the rails of a collection"""
+    logger.logInfo('called function with param (%s)' % collectionId)
+    ids = []
+    for rail in getCachedCollection(collectionId).get('rails', {}):
+        for item in (rail.get('assets', {}) or {}).get('items', []) or []:
+            if item.get('id') and item.get('assetType', '') != 'episode':
+                ids.append(item.get('id'))
+    return list(dict.fromkeys(ids))
+
 def findCollectionRail(sectionId):
     """Find a rail (section) by id.
 
@@ -176,37 +186,35 @@ def getSiteItems():
     return callJsonApi(config.uri.get('items'), base_url=control.setting('basePath'), useCache=False)
 
 def checkCatalogUpdates(loadEpisodes=True):
-    """Check catalog for updates"""
+    """Check catalog for updates (shows listed in the website collections)"""
     logger.logInfo('called function')
 
-    elaps = start = time.time()
+    start = time.time()
     try:
-        items = getSiteItems()
-        nbItems = len(items.keys())
+        showIds = []
+        for collection in getWebsiteCollections():
+            showIds += getCollectionShowIds(collection.get('collectionId', collection.get('id')))
+        showIds = list(dict.fromkeys(showIds))
+        nbItems = len(showIds)
     except Exception as e:
         logger.logError('Can\'t update the catalog : %s' % (str(e)))
         return False
 
-    k = 0
     logger.logInfo(nbItems)
-    for id in items.keys():
-        item = items[id]
-        if 'parents' not in item:
-            try:
-                if loadEpisodes:
-                    getShowWithEpisodes(id)
-                else:
-                    getShow(id)
-            except Exception as se:
-                logger.logError('Error updating item %s : %s' % (id, str(se)))
+    for k, showId in enumerate(showIds):
+        try:
+            if loadEpisodes:
+                getShowWithEpisodes(showId)
+            else:
+                getShow(showId)
+        except Exception as se:
+            logger.logError('Error updating item %s : %s' % (showId, str(se)))
 
-        elaps = time.time()-start
-        if elaps > 5:
+        if time.time() - start > 5:
             start = time.time()
             percent = 100 * k / nbItems
             logger.logNotice('Updating catalog... %s' % (str(percent)+'%'))
             control.infoDialog('Updating catalog... %s' % (str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
-        k += 1
 
     return True
 

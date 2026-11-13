@@ -107,46 +107,46 @@ def removeDuplicates(list):
 def updateCatalogCache(loadEpisodes=False):
     """Update catalog cache"""
     logger.logInfo('called function')
-    from .catalog import getWebsiteCollections, getCollectionContent, getShow
+    from .catalog import getWebsiteCollections, getCollectionShowIds, getShow, getShowWithEpisodes
     
     control.showNotification(control.lang(37015), control.lang(30005))
     cache.longCache.cacheClean(True)
     cache.shortCache.cacheClean(True)
     
-    elaps = start = time.time()
+    start = time.time()
     
     try:
         # update categories cache
         control.showNotification(control.lang(37014), control.lang(30005))
         categories = getWebsiteCollections()
-        # nbCat = len(categories)
-        i = 0
     except Exception as e:
         logger.logError('Can\'t update the catalog : %s' % (str(e)))
         return False
 
     for cat in categories:
-        nbItems = 0
+        title = cat.get('title', cat.get('name', ''))
         try:
-            items = getCollectionContent(cat['id'])
-            nbItems = len(items)
+            # the rails of a collection hold shows, not show ids: list the shows they contain
+            showIds = getCollectionShowIds(cat.get('collectionId', cat.get('id')))
         except Exception as ce:
-            logger.logError('Can\'t update category %s : %s' % (cat['name'], str(ce)))
-            
-        j = 0
-        for s in items:
-            if loadEpisodes:
-                from .catalog import getShowWithEpisodes
-                getShowWithEpisodes(s.get('id'))
-            else:
-                getShow(s.get('id'))
-            j += 1
-            if elaps > 5:
-                # start = time.time()
+            logger.logError('Can\'t update category %s : %s' % (title, str(ce)))
+            continue
+
+        nbItems = len(showIds)
+        for j, showId in enumerate(showIds, 1):
+            try:
+                if loadEpisodes:
+                    getShowWithEpisodes(showId)
+                else:
+                    getShow(showId)
+            except Exception as se:
+                logger.logError('Error updating item %s : %s' % (showId, str(se)))
+
+            if time.time() - start > 5:
+                start = time.time()
                 percent = 100 * j / nbItems
-                logger.logNotice('Updating %s... %s' % (cat['title'], str(percent)+'%'))
-                control.infoDialog('Updating %s... %s' % (cat['title'], str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
-        i += 1
+                logger.logNotice('Updating %s... %s' % (title, str(percent)+'%'))
+                control.infoDialog('Updating %s... %s' % (title, str(percent)+'%'), heading=control.lang(30005), icon=control.addonIcon(), time=10000)
         
     return True
 
