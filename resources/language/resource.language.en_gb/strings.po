@@ -811,3 +811,31 @@ msgstr ""
 msgctxt "#37059"
 msgid "These shows of your list could not be found in the new catalog:\n%s"
 msgstr ""
+
+msgctxt "#30216"
+msgid "My View History"
+msgstr ""
+
+msgctxt "#30217"
+msgid "Display my view history"
+msgstr ""
+
+msgctxt "#30305"
+msgid "Remove from view history"
+msgstr ""
+
+msgctxt "#36026"
+msgid "Clear view history"
+msgstr ""
+
+msgctxt "#37060"
+msgid "Clear the whole view history? The episodes will not be flagged as viewed anymore."
+msgstr ""
+
+msgctxt "#37061"
+msgid "The view history has been cleared"
+msgstr ""
+
+msgctxt "#37062"
+msgid "%s has been removed from the view history"
+msgstr ""

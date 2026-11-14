@@ -70,6 +70,9 @@ class navigator:
         if tfctv.isLoggedIn() and control.setting('displayMyList') == 'true':
             self.addDirectoryItem(control.lang(30200), config.uri.get('base'), config.MYLIST, control.addonFolderIcon(control.lang(30200)), isFolder=True, **self.formatMenu())
         
+        if control.setting('displayViewHistory') != 'false':
+            self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
+
         if control.setting('displayWebsiteSections') == 'true':
             self.addDirectoryItem(control.lang(30201), config.uri.get('base'), config.CATEGORIES, control.addonFolderIcon(control.lang(30201)), isFolder=True, **self.formatMenu())
         else:
@@ -134,6 +137,35 @@ class navigator:
             self.addDirectoryItem(item.get('name'), str(item.get('id')), config.SHOWEPISODES, image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
         self.endDirectory()
             
+    def showViewHistory(self, page=1):
+        logger.logInfo('called function')
+        itemsPerPage = int(control.setting('itemsPerPage'))
+        episodes = tfctv.getViewHistory(page, itemsPerPage)
+        for e in episodes:
+            title = e.get('title')
+            title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title') or '')
+            if title_match:
+                title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
+            self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder=False, query={'ltype': e.get('ltype'), 'title': title}, **self.formatVideoInfo(e, options={'history': True}))
+        if tfctv.hasNextViewHistoryPage(page, itemsPerPage):
+            self.addDirectoryItem(control.lang(36008), config.uri.get('base'), config.VIEWHISTORY, '', page + 1)
+        if len(episodes) > 0 and int(page) == 1:
+            self.addDirectoryItem(control.lang(36026), config.uri.get('base'), config.CLEARHISTORY, control.addonFolderIcon(control.lang(36026)), isFolder=False)
+        self.endDirectory()
+
+    def clearViewHistory(self):
+        logger.logInfo('called function')
+        if control.confirm(control.lang(37060), control.lang(36026)):
+            tfctv.clearViewHistory()
+            control.showNotification(control.lang(37061), control.lang(30010))
+            control.refresh()
+
+    def removeFromViewHistory(self, episodeId, name=None):
+        logger.logInfo('called function')
+        tfctv.removeFromViewHistory(episodeId)
+        control.showNotification(control.lang(37062) % (name or ''), control.lang(30010))
+        control.refresh()
+
     def showCategories(self):
         logger.logInfo('called function')
         categories = tfctv.getCategories()
@@ -444,6 +476,8 @@ class navigator:
                 contextMenu.update(add)
             else:
                 contextMenu.update(remove)
+            if options.get('history'):
+                contextMenu.update({ control.lang(30305) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMHISTORY, info.get('title')) })
             # Choose resolution
             contextMenu.update({ control.lang(30303) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.CHOOSEBANDWIDTH, info.get('title'), info.get('image'), query={'ltype': info.get('ltype'), 'title': info.get('title')})})
 
@@ -467,7 +501,10 @@ class navigator:
                     'studio': 'ABS-CBN', 
                     'duration': info.get('duration', 0), 
                     'rating': info.get('rating', 0), 
-                    'votes': info.get('votes', 0)
+                    'votes': info.get('votes', 0),
+                    # what was played is flagged as viewed
+                    'playcount': info['views'] if info.get('views') is not None else tfctv.getEpisodeViews(info.get('id')),
+                    'lastplayed': info.get('dateviewed', '')
                     } 
                 },
             'contextMenu' : contextMenu
@@ -513,6 +550,8 @@ class navigator:
                         if 'aired' in infoLabels: tag.setFirstAired(infoLabels['aired'])
                         if 'duration' in infoLabels: tag.setDuration(int(infoLabels['duration']) if str(infoLabels['duration']).isdigit() else 0)
                         if 'mediatype' in infoLabels: tag.setMediaType(infoLabels['mediatype'])
+                        if 'playcount' in infoLabels: tag.setPlaycount(int(infoLabels['playcount']) if str(infoLabels['playcount']).isdigit() else 0)
+                        if infoLabels.get('lastplayed'): tag.setLastPlayed(infoLabels['lastplayed'])
                     else:
                         item.setInfo(listInfoKey, listInfoValue)
             if k == 'listArts':

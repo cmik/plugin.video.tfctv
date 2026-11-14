@@ -11,6 +11,7 @@ from .catalog import *
 from .playback import *
 from .library import *
 from .user import *
+from .history import *
 from .utils import *
 
 __all__ = [

@@ -35,7 +35,7 @@ class UserData(model.Model):
     """Data that belongs to the user (My List, views...), kept apart from the catalog databases
     (shows, episodes) so that replacing or resetting the catalog never loses it."""
 
-    _columns = ('SHOWID', 'TITLE', 'ADDED', 'KIND', 'ITEMID')
+    _columns = ('SHOWID', 'TITLE', 'ADDED', 'KIND', 'ITEMID', 'EPISODEID')
 
     def __init__(self, databasePath):
         model.Model.__init__(self, databasePath)
@@ -57,7 +57,17 @@ class UserData(model.Model):
                 PRIMARY KEY (KIND, ITEMID))",
             "CREATE TABLE IF NOT EXISTS META (\
                 KEY TEXT PRIMARY KEY, \
-                VALUE TEXT)"
+                VALUE TEXT)",
+            "CREATE TABLE IF NOT EXISTS HISTORY (\
+                ID INTEGER PRIMARY KEY AUTOINCREMENT, \
+                EPISODEID TEXT NOT NULL, \
+                SHOWID TEXT, \
+                TITLE TEXT, \
+                SHOWNAME TEXT, \
+                THUMBNAIL TEXT, \
+                LTYPE TEXT, \
+                VIEWED TEXT)",
+            "CREATE INDEX IF NOT EXISTS HISTORY_EPISODE ON HISTORY (EPISODEID)"
         ):
             self._exec(dbcur, sql)
         self._dbcon.commit()
@@ -141,6 +151,65 @@ class UserData(model.Model):
                        (str(kind), str(itemId), fields.get('VIEWS', 0), fields.get('RATING', 0), fields.get('VOTES', 0)))
         self._dbcon.commit()
         return True
+
+    # --- view history: what the user played, with what is needed to list it even when the catalog is replaced
+
+    # the oldest views are dropped beyond this
+    historyLimit = 2000
+
+    def addToHistory(self, episodeId, showId='', title='', show='', thumbnail='', ltype='', viewed=None):
+        """Record a view of an episode (or a movie)"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'INSERT INTO HISTORY (EPISODEID, SHOWID, TITLE, SHOWNAME, THUMBNAIL, LTYPE, VIEWED) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                   (str(episodeId), str(showId or ''), title or '', show or '', thumbnail or '', ltype or '',
+                    time.strftime('%Y-%m-%d %H:%M:%S') if viewed is None else viewed))
+        self._exec(dbcur, 'DELETE FROM HISTORY WHERE ID <= (SELECT ID FROM HISTORY ORDER BY ID DESC LIMIT 1 OFFSET ?)', (self.historyLimit,))
+        self._dbcon.commit()
+        return True
+
+    def getHistory(self, limit=100, offset=0):
+        """The episodes viewed, the last viewed first; an episode viewed several times is listed once (its last view)"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'SELECT EPISODEID, SHOWID, TITLE, SHOWNAME, THUMBNAIL, LTYPE, VIEWED FROM HISTORY '
+                          'WHERE ID IN (SELECT MAX(ID) FROM HISTORY GROUP BY EPISODEID) '
+                          'ORDER BY VIEWED DESC, ID DESC LIMIT ? OFFSET ?', (int(limit), int(offset)))
+        return [{'episodeid': r[0], 'showid': r[1], 'title': r[2], 'show': r[3], 'thumbnail': r[4], 'ltype': r[5], 'viewed': r[6]}
+                for r in dbcur.fetchall()]
+
+    def countHistory(self):
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'SELECT COUNT(DISTINCT EPISODEID) FROM HISTORY')
+        return dbcur.fetchone()[0]
+
+    def getHistoryIds(self):
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'SELECT DISTINCT EPISODEID FROM HISTORY')
+        return [r[0] for r in dbcur.fetchall()]
+
+    def removeFromHistory(self, episodeId):
+        """Forget an episode: it isn't listed anymore and its viewed flag goes with it"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'DELETE FROM HISTORY WHERE EPISODEID = ?', (str(episodeId),))
+        self._exec(dbcur, 'UPDATE STATS SET VIEWS = 0 WHERE KIND = ? AND ITEMID = ?', (EPISODE, str(episodeId)))
+        self._dbcon.commit()
+        return True
+
+    def clearHistory(self):
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'DELETE FROM HISTORY')
+        self._exec(dbcur, 'UPDATE STATS SET VIEWS = 0 WHERE KIND = ?', (EPISODE,))
+        self._dbcon.commit()
+        return True
+
+    def getViewedEpisodeIds(self):
+        """The episodes that have a view count (played before the view history existed, or whose history was lost)"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'SELECT ITEMID FROM STATS WHERE KIND = ? AND VIEWS > 0', (EPISODE,))
+        return [r[0] for r in dbcur.fetchall()]
+
+    def getViews(self, kind, itemId):
+        """How many times an item was played"""
+        return self.getStats(kind, [itemId]).get(str(itemId), (0, 0, 0))[0]
 
     # --- one-time import of what the old versions stored in the catalog databases
 

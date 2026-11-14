@@ -38,7 +38,7 @@ def load():
     saved = dict((k, sys.modules.get(k)) for k in fakes)
     sys.modules.update(fakes)
     try:
-        return dict((name, importlib.import_module('%s.%s' % (PACKAGE, name))) for name in ('db', 'formatters', 'graphql', 'rails', 'catalog'))
+        return dict((name, importlib.import_module('%s.%s' % (PACKAGE, name))) for name in ('db', 'formatters', 'graphql', 'rails', 'catalog', 'history'))
     finally:
         for key, module in saved.items():
             if module is None:
@@ -57,6 +57,7 @@ PUBLIC = {
     'graphql': ['getAppLaunchDetails', 'searchCatalog', 'getCollection', 'getTVShowEpisodes', 'getAsset'],
     'rails': ['getWebsiteCollections', 'getCachedCollection', 'getCollectionContent', 'getCollectionShowIds', 'getCatalogShowIds',
               'findCollectionRail', 'getWebsiteSectionContent', 'SHOW_ASSET_TYPES'],
+    'history': ['recordView', 'getEpisodeViews', 'getViewHistory', 'hasNextViewHistoryPage', 'removeFromViewHistory', 'clearViewHistory'],
     'catalog': ['getCategories', 'getShows', 'getMyList', 'getMyListShows', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',
                 'getSettings', 'loadSettings', 'refreshCatalogShows', 'checkCatalogUpdates', 'getSeasons', 'getShowEpisodeItems', 'getShow',
                 'getShowWithEpisodes', 'getEpisodesPerPage', 'getEpisode', 'enterSearch', 'storeEpisodes', 'repairShowCategories'],
@@ -75,6 +76,9 @@ class CatalogModulesTest(unittest.TestCase):
     def test_public_names_stay_importable_from_catalog(self):
         for module, names in PUBLIC.items():
             for name in names:
+                if module == 'history':  # separate module: the package exports it, not catalog
+                    self.assertTrue(callable(getattr(MODULES['history'], name)), name)
+                    continue
                 self.assertTrue(hasattr(catalog, name), '%s (from %s) is missing from catalog' % (name, module))
                 self.assertIs(getattr(catalog, name), getattr(MODULES[module], name), name)
 
