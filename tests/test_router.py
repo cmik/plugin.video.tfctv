@@ -57,7 +57,7 @@ EXPECTED = {
     config.CHECKFORUPDATES: [["tfctv.checkCatalogUpdates", [], []]],
     config.SUBCATEGORYSHOWS: [["navigator.showSubCategoryShows", ["U"], []]],
     config.SHOWEPISODES: [["navigator.showEpisodes", ["U", "2", 3], []]],
-    config.PLAY: [["tfctv.playEpisode", ["U", "T", "L", "th/x", "B"], []]],
+    config.PLAY: [["tfctv.playEpisode", ["U", "T", "L", "th/x", "B", False], []]],
     config.PLAYDISABLED: [["control.showMessage", ["lang37032", "lang30002"], []]],
     config.CHOOSEBANDWIDTH: [["navigator.chooseBandwidth", ["U", "T", "L", "th/x"], []]],
     config.CATEGORIES: [["navigator.showCategories", [], []]],
@@ -93,6 +93,7 @@ EXPECTED = {
     config.LOGINWITHFB: [["navigator.loginWithFB", [], []]],
     config.VIEWHISTORY: [["navigator.showViewHistory", [3], []]],
     config.CLEARHISTORY: [["navigator.clearViewHistory", [], []]],
+    config.CONTINUEWATCHING: [["navigator.showContinueWatching", [3], []]],
     config.REMOVEFROMHISTORY: [["navigator.removeFromViewHistory", ["U", "N"], []]],
     config.CATCHUPCATALOG: [["tfctv.catchUpCatalog", [], []]],
     config.FIRSTINSTALL: [["navigator.firstInstall", [], []]],
@@ -130,6 +131,10 @@ class RouterTest(unittest.TestCase):
         self.assertEqual([['navigator.chooseBandwidth', [None, None, 'SS', ''], []]], run('?mode=%d&show=SS' % config.CHOOSEBANDWIDTH))
         self.assertEqual([['navigator.executeSearch', [False, False], []]], run('?mode=%d' % config.EXECUTESEARCH))
         self.assertEqual([['tfctv.addToLibrary', [None, None, -1, ''], []]], run('?mode=%d' % config.ADDTOLIBRARY))
+
+    def test_play_from_the_beginning(self):
+        self.assertEqual([['tfctv.playEpisode', ['U', 'T', 'L', '', False, True], []]],
+                         run('?url=U&title=T&ltype=L&mode=%d&restart=1' % config.PLAY))
 
     def test_library_check(self):
         self.assertEqual([['tfctv.checkLibraryUpdates', [False], []]], run('?mode=%d' % config.CHECKLIBRARYUPDATES))

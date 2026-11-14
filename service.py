@@ -13,6 +13,7 @@ import ssl
 import time
 import xbmc
 import xbmcaddon
+import xbmcgui
 import http.cookiejar as cookielib
 from six.moves import socketserver
 from urllib import request as libRequest
@@ -20,6 +21,49 @@ from urllib.parse import quote, urlencode, urlparse, parse_qsl
 from http.server import SimpleHTTPRequestHandler
 from resources import config
 from resources.lib.libraries import control
+
+class PlaybackMonitor(xbmc.Player):
+    """Keeps where each episode was left (see libraries/playertracker.py)"""
+
+    def __init__(self):
+        xbmc.Player.__init__(self)
+        from resources.lib.libraries import playertracker
+        from resources.lib.models import userdata
+        self._tracker = playertracker
+        self.tracker = playertracker.PlaybackTracker(lambda: userdata.UserData(control.userDataFile))
+        self._window = xbmcgui.Window(10000)
+
+    def onAVStarted(self):
+        info = self._tracker.decode(self._window.getProperty(self._tracker.PROPERTY))
+        if info is None:
+            return  # not played by this add-on
+        self._window.clearProperty(self._tracker.PROPERTY)
+        self.tracker.start(info['id'])
+        threading.Thread(target=self._follow, args=(info['id'],)).start()
+
+    def _follow(self, episodeId):
+        monitor = xbmc.Monitor()
+        while self.tracker.active and self.tracker.episodeId == episodeId and not monitor.abortRequested():
+            self._sample()
+            monitor.waitForAbort(5)
+
+    def _sample(self):
+        try:
+            if self.isPlayingVideo():
+                self.tracker.update(self.getTime(), self.getTotalTime())
+        except RuntimeError:
+            pass  # nothing is playing anymore
+
+    def onPlayBackPaused(self):
+        self._sample()
+
+    def onPlayBackStopped(self):
+        self._sample()
+        self.tracker.finish(False)
+
+    def onPlayBackEnded(self):
+        self.tracker.finish(True)
+
 
 class ProxyHandler(SimpleHTTPRequestHandler):
 
@@ -146,6 +190,7 @@ if __name__ == "__main__":
         xbmc.log('[%s] Service: starting library checker' % control.addonInfo('name'), level=xbmc.LOGINFO)
     
     monitor = xbmc.Monitor()
+    playbackMonitor = PlaybackMonitor()
 
     while not monitor.abortRequested():
         # Sleep/wait for abort for 10 seconds

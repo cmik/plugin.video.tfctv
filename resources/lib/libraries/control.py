@@ -281,6 +281,22 @@ def run(mode, caller='addon'):
 def exit():
     return execute("XBMC.Container.Update(path,replace)")
 
+SORT_METHODS = {
+    'unsorted': 'SORT_METHOD_UNSORTED', 'title': 'SORT_METHOD_TITLE_IGNORE_THE', 'year': 'SORT_METHOD_VIDEO_YEAR',
+    'episode': 'SORT_METHOD_EPISODE', 'lastplayed': 'SORT_METHOD_LASTPLAYED', 'date': 'SORT_METHOD_DATE'
+}
+
+def setListing(handle, content=None, sortMethods=('unsorted',)):
+    """Tell Kodi what a directory holds (tvshows, episodes, movies, videos) and how it can be sorted: the skin
+    then offers its views for that content and the sort choices. The first sort method is the default one."""
+    try:
+        if content:
+            xbmcplugin.setContent(handle, content)
+            for name in sortMethods:
+                xbmcplugin.addSortMethod(handle, getattr(xbmcplugin, SORT_METHODS[name]))
+    except Exception as e:
+        logger.logError('Can\'t set the content of the listing: %s' % str(e))
+
 def refresh():
     return execute("Container.Refresh")
 

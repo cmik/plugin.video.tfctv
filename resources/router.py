@@ -65,6 +65,7 @@ ROUTES = {
     config.MYTRANSACTIONS: lambda r: navigator().showMyTransactions(),
     config.MYLIST: lambda r: navigator().showMyList(),
     config.VIEWHISTORY: lambda r: navigator().showViewHistory(r.page),
+    config.CONTINUEWATCHING: lambda r: navigator().showContinueWatching(r.page),
     config.CLEARHISTORY: lambda r: navigator().clearViewHistory(),
     config.REMOVEFROMHISTORY: lambda r: navigator().removeFromViewHistory(r.url, r.name),
     config.MYLISTSHOWLASTEPISODES: lambda r: navigator().showMyListShowLastEpisodes(),
@@ -75,7 +76,7 @@ ROUTES = {
     config.TOOLS: lambda r: navigator().showTools(),
     # actions
     config.CHECKFORUPDATES: lambda r: tfctv().checkCatalogUpdates(),
-    config.PLAY: lambda r: tfctv().playEpisode(r.url, r.title, r.get('ltype', r.show), r.thumbnail, r.get('bandwidth', False)),
+    config.PLAY: lambda r: tfctv().playEpisode(r.url, r.title, r.get('ltype', r.show), r.thumbnail, r.get('bandwidth', False), r.get('restart') == '1'),
     config.PLAYDISABLED: lambda r: control.showMessage(control.lang(37032), control.lang(30002)),
     config.LOGOUT: lambda r: tfctv().logout(quiet=False),
     config.ADDTOLIST: lambda r: tfctv().addToMyList(r.url, r.name, r.get('ltype'), r.get('type')),

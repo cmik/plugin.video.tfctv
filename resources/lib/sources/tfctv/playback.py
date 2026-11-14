@@ -6,11 +6,13 @@ Media playback module
 
 import re
 import json
+import time
 from urllib.parse import quote, urlencode
 from resources import config
 from resources.lib.libraries import control
 from .catalog import getEpisode, getShow, episodeDB, showDB
 from .history import recordView
+from resources.lib.libraries import playertracker
 from .auth import isLoggedIn, login
 from .utils import checkProxy
 
@@ -21,7 +23,7 @@ try:
 except Exception:
     inputstreamhelper = None
 
-def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
+def playEpisode(episodeId, name, type, thumbnail, bandwidth=False, restart=False):
     """Play an episode"""
     logger.logInfo('called function')
     thisPlugin = control.thisPlugin
@@ -128,6 +130,15 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             
             item.setProperty('fanart_image', episodeDetails['data']['fanart'])
             item.setProperty('IsPlayable', 'true')
+            # resume where it was left, unless asked to start over
+            progress = showDB.getUserData().getProgress([episodeId]).get(str(episodeId))
+            resume = 0 if restart else playertracker.resumePoint(progress)
+            if resume > 0:
+                item.setProperty('StartOffset', str(resume))
+                tag.setResumePoint(float(resume), float(progress[1]))
+                control.showNotification(control.lang(37063) % time.strftime('%H:%M:%S', time.gmtime(resume)), control.lang(30001))
+            # tell the service what is played, it keeps where it stops (libraries/playertracker.py)
+            control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))
             try:
                 return control.resolve(thisPlugin, True, item)
             except Exception:
