@@ -1,3 +1,5 @@
+3.2.1
+    My Devices removed (announced in 3.2.0 but not included)
 3.2.0
     Cast of the shows stored and searchable, legacy actors of the old catalog kept, routing table for the plugin modes, My Devices removed
 3.1.1

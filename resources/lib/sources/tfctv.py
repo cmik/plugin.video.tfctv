@@ -20,7 +20,7 @@ from resources.lib.sources.tfctv.auth import (
 
 from resources.lib.sources.tfctv.user import (
     getUserData, getUserInfo, getUserName, getUserSubscription, getUserId,
-    getUserTransactions, getUserDevices, refreshUserData,
+    getUserTransactions, refreshUserData,
     refreshUserSubscriptions, refreshUserInfo, refreshUserContext,
     getAccount, setAccount, getFingerprintID, getDeviceIP,
     getCountryCode, getGeoLocation, generateNewFingerprintID
@@ -84,7 +84,7 @@ __all__ = [
     
     # User functions
     'getUserData', 'getUserInfo', 'getUserName', 'getUserSubscription', 'getUserId',
-    'getUserTransactions', 'getUserDevices', 'refreshUserData',
+    'getUserTransactions', 'refreshUserData',
     'refreshUserSubscriptions', 'refreshUserInfo', 'refreshUserContext',
     'getAccount', 'setAccount', 'getFingerprintID', 'getDeviceIP',
     'getCountryCode', 'getGeoLocation', 'generateNewFingerprintID',

@@ -34,7 +34,7 @@ __all__ = [
     
     # User
     'getUserData', 'getUserInfo', 'getUserName', 'getUserSubscription', 'getUserId',
-    'getUserTransactions', 'getUserDevices', 'refreshUserData',
+    'getUserTransactions', 'refreshUserData',
     'refreshUserSubscriptions', 'refreshUserInfo', 'refreshUserContext',
     'getAccount', 'setAccount', 'getFingerprintID', 'getDeviceIP',
     'getCountryCode', 'getGeoLocation', 'generateNewFingerprintID',

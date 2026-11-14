@@ -68,8 +68,6 @@ EXPECTED = {
     config.MYINFO: [["navigator.showMyInfo", [], []]],
     config.MYSUBSCRIPTIONS: [["navigator.showMySubscription", [], []]],
     config.MYTRANSACTIONS: [["navigator.showMyTransactions", [], []]],
-    config.MYDEVICES: [["navigator.showMyDevices", [], []]],
-    config.INFODEVICE: [["navigator.showMyDeviceInfo", ["D"], []]],
     config.LOGOUT: [["tfctv.logout", [], [["quiet", False]]]],
     config.MYLISTSHOWLASTEPISODES: [["navigator.showMyListShowLastEpisodes", [], []]],
     config.MYLIST: [["navigator.showMyList", [], []]],

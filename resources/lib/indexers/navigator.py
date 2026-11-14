@@ -251,7 +251,6 @@ class navigator:
         logger.logInfo('called function')
         tfctv.checkAccountChange(False)
         categories = [
-            { 'name' : control.lang(36026), 'url' : config.uri.get('base'), 'mode' : config.MYDEVICES },
             # { 'name' : control.lang(36004), 'url' : config.uri.get('profile'), 'mode' : config.MYINFO },
             # { 'name' : control.lang(36005), 'url' : config.uri.get('base'), 'mode' : config.MYSUBSCRIPTIONS },
             # { 'name' : control.lang(36006), 'url' : config.uri.get('base'), 'mode' : config.MYTRANSACTIONS }
@@ -301,25 +300,6 @@ class navigator:
         else:
             message = control.lang(37002)
         control.showMessage(message, control.lang(36003))
-
-    def showMyDevices(self):
-        logger.logInfo('called function')
-        devices = tfctv.getUserDevices()
-        logger.logInfo(devices)
-        for device in devices:
-            logger.logInfo(device.get('device'))
-            name = '%s | %s' % (device.get('IP'), device.get('user_agent')) if device.get('device') is None else device.get('device')
-            self.addDirectoryItem(name, device.get('deviceID'), config.INFODEVICE, '', isFolder = False)
-        self.endDirectory()
-
-    def showMyDeviceInfo(self, deviceId):
-        logger.logInfo('called function')
-        devices = tfctv.getUserDevices()
-        selected = {}
-        for device in devices:
-            if device.get('deviceID') == deviceId:
-                selected = device
-        control.showMessage('Device Name: %s\nDevice ID: %s\nIP address: %s\nUser-agent: %s\nDRM: %s' % ('' if device.get('device') is None else device.get('device'), device.get('deviceID'), device.get('IP'), device.get('user_agent'), device.get('drm')))
 
     def showExportedShows(self):
         logger.logInfo('called function')
