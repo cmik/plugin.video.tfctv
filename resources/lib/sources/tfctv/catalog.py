@@ -345,9 +345,8 @@ def formatAssetToShow(asset, episodes={}):
         'id': asset.get('id'),
         'name': asset.get('title', ''),
         'parentid': asset.get('assetType', ''),
-        'parentname': '|'.join(
-            asset.get('genreLabels', [])
-        ),
+        # the categories of a show are its genres
+        'parentname': '|'.join(str(g) for g in (asset.get('genres') or asset.get('genreLabels') or [])),
         'logo': image.get('title', '') if image.get('title', '') != '' else image.get('square', ''),
         'image': image.get('portrait', '') if image.get('portrait', '') != '' else image.get('portraitHero', ''),
         'fanart': image.get('landscape', '') if image.get('landscape', '') != '' else image.get('landscapeHero', ''),
@@ -516,6 +515,21 @@ def storeEpisodes(episodes):
     updated = [dict((k, v) for k, v in e.items() if k not in ('views', 'rating', 'votes')) for e in episodes if e.get('id') in known]
     if updated:
         episodeDB.update(updated)
+
+def repairShowCategories():
+    """Load again the details of the shows stored without categories (an older version didn't read them)"""
+    logger.logInfo('called function')
+    repaired = 0
+    for showId in showDB.getWithoutCategory():
+        try:
+            data = formatAssetToShow(getAsset(showId))
+            if data.get('parentname'):
+                showDB.set(data)
+                repaired += 1
+        except Exception as e:
+            logger.logError('Can\'t repair the categories of show %s : %s' % (showId, str(e)))
+    logger.logNotice('Categories repaired for %d shows' % repaired)
+    return repaired
 
 def getShowWithEpisodes(showId, season='1'):
     """Get show with episodes"""
