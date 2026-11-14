@@ -11,6 +11,7 @@ from resources.lib.libraries import tools
 from resources.lib.models import episodes
 from resources.lib.models import shows
 from resources.lib.models import library
+from resources.lib.models import showcast
 
 logger = control.logger
 
@@ -29,6 +30,12 @@ def upgradeDB():
     elif control.setting('lastVersion') == '3.1.0':
         # 3.1.0 stored the shows without categories: load their details again in the background
         control.execute('RunPlugin(plugin://%s/?mode=%d&caller=upgrade)' % (control.addonInfo('id'), config.CATCHUPCATALOG))
+    # keep the actors of the old catalog that can be attached to the shows of the current one
+    from resources.lib.libraries import legacycast
+    try:
+        legacycast.importLegacyCast(showcast.ShowCast(control.celebritiesFile))
+    except Exception as e:
+        logger.logError('Can\'t import the legacy cast: %s' % str(e))
     if control.setting('lastVersion')[:1] in ('', '1', '2'):
         upgradeSettings()
         control.setSetting('lastVersion', control.addonInfo('version'))

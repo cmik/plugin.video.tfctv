@@ -482,10 +482,11 @@ def getShow(id, season='1', withEpisodes=False):
     
     res = showDB.get(id)
     if withEpisodes is False and len(res) == 1:
-        actors = castDB.getByShow(id)
+        actors = castDB.getCast(id)
         for actor in actors:
             actor['castid'] = actor.get('actorid')
         res[0]['actors'] = actors
+        res[0]['casts'] = actors
         data = res[0]
     else:
         asset = getAsset(id)
@@ -495,6 +496,8 @@ def getShow(id, season='1', withEpisodes=False):
                 episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
+            castDB.replaceApiCast(id, data.get('casts', []))
+            data['casts'] = castDB.getCast(id)  # the API cast and the actors only the old catalog knows
             if withEpisodes:
                 storeEpisodes(data.get('episodes', []))
         else:
