@@ -116,6 +116,12 @@ def updateCatalogCache(loadEpisodes=False):
     control.showNotification(control.lang(37014), control.lang(30005))
     return refreshCatalogShows(loadEpisodes)
 
+def catchUpCatalog():
+    """Look for what is new in the website collections since the catalog was installed (known shows aren't loaded again)"""
+    logger.logInfo('called function')
+    from .catalog import refreshCatalogShows
+    return refreshCatalogShows(loadEpisodes=False, refresh=True)
+
 def reloadCatalogCache():
     """Reload catalog cache"""
     logger.logInfo('called function')
@@ -131,6 +137,8 @@ def resetCatalogCache():
     """Reset catalog cache"""
     logger.logInfo('called function')
     from .catalog import episodeDB, showDB
+    from resources.lib.libraries import tools
+    tools.importUserData()  # My List and counters are kept apart from the databases dropped here
     episodeDB.drop()
     showDB.drop()
     control.showNotification(control.lang(37039), control.lang(30010))

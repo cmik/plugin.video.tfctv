@@ -43,17 +43,30 @@ def getShows(categoryId):
     logger.logInfo('called function with param (%s)' % categoryId)
     return showDB.searchByCategory(categoryId)
 
+def getMyListShows():
+    """Get the shows of My List: the ones missing from the catalog database (e.g. after the
+    catalog was replaced) are loaded from the website"""
+    shows = showDB.getMyList(limit=False)
+    known = set(show.get('id') for show in shows)
+    for showId in showDB.getUserData().getMyListIds():
+        if showId not in known:
+            show = getShow(showId)
+            if show:
+                show['mylist'] = 'true'
+                shows.append(show)
+    return shows
+
 def getMyList():
     """Get user's list"""
     logger.logInfo('called function')
-    data = showDB.getMyList()
+    data = getMyListShows()
     return sorted(data, key=lambda item: item['title'] if 'title' in item else item['name'], reverse=False)
 
 def getMylistShowLastEpisodes():
     """Get last episodes from my list shows"""
     logger.logInfo('called function')
     data = []
-    shows = showDB.getMyList()
+    shows = getMyListShows()
     if len(shows) > 0:
         for show in shows:
             (episodes, n) = getEpisodesPerPage(show.get('id'), 1, 1)
@@ -62,25 +75,23 @@ def getMylistShowLastEpisodes():
 
     return sorted(data, key=lambda item: item['title'] if 'title' in item else item['name'], reverse=False)
 
-def addToMyList(id, name, ltype, type):
-    """Add to my list"""
-    logger.logInfo('called function with param (%s, %s, %s, %s)' % (id, name, ltype, type))
+def setMyList(id, name, inList):
+    """Add a show to My List or remove it"""
     show = getShow(id)
-    show['mylist'] = 'true'
-    if showDB.update(show):
+    if showDB.update({'id': id, 'name': show.get('name') or name, 'mylist': 'true' if inList else 'false'}):
         control.showNotification(control.lang(37053) % name)
     else:
         control.showNotification(control.lang(37054) % name)
 
+def addToMyList(id, name, ltype, type):
+    """Add to my list"""
+    logger.logInfo('called function with param (%s, %s, %s, %s)' % (id, name, ltype, type))
+    setMyList(id, name, True)
+
 def removeFromMyList(id, name, ltype, type):
     """Remove from my list"""
     logger.logInfo('called function with param (%s, %s, %s, %s)' % (id, name, ltype, type))
-    show = getShow(id)
-    show['mylist'] = 'false'
-    if showDB.update(show):
-        control.showNotification(control.lang(37053) % name)
-    else:
-        control.showNotification(control.lang(37054) % name)
+    setMyList(id, name, False)
 
 def getSettings(refresh=False):
     """Get settings from website"""
@@ -168,7 +179,7 @@ def getCatalogShowIds(refresh=False):
             logger.logError('Can\'t read collection %s : %s' % (collectionId, str(e)))
     # shows only reachable through search/My List are not in any collection: keep My List ones up to date
     try:
-        ids += [show.get('id') for show in showDB.getMyList(limit=False) if show.get('id')]
+        ids += showDB.getUserData().getMyListIds()
     except Exception as e:
         logger.logError('Can\'t read My List: %s' % str(e))
     return list(dict.fromkeys(ids)), failed
@@ -239,7 +250,7 @@ def refreshCatalogShows(loadEpisodes=True, refresh=False):
     for k, showId in enumerate(showIds, 1):
         try:
             if loadEpisodes:
-                getShowWithEpisodes(showId)
+                getShowWithEpisodes(showId, 'all')
             else:
                 getShow(showId)
         except Exception as se:
@@ -453,10 +464,10 @@ def getSeasons(showId):
 def getShowEpisodeItems(id, season='1', asset=None):
     """Get the episode items of a show for a season (an id of getSeasons()).
 
-    The season may also be a month for the shows split by month. When the season is unknown
+    The season may also be a month for the shows split by month, or 'all'. When the season is unknown
     (e.g. the default one) fall back on all the seasons/months of the show."""
     seasons = getSeasonFilters(asset or getAsset(id))
-    selected = [x for x in seasons if str(x['id']) == str(season)]
+    selected = seasons if season == 'all' else [x for x in seasons if str(x['id']) == str(season)]
     if not selected:
         logger.logWarning('Season %s not found for show %s, using all seasons' % (season, id))
         selected = seasons
@@ -485,10 +496,26 @@ def getShow(id, season='1', withEpisodes=False):
                 episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
+            if withEpisodes:
+                storeEpisodes(data.get('episodes', []))
         else:
             logger.logWarning('Error on show %s: %s' % (id, 'not found'))
     
     return data
+
+def storeEpisodes(episodes):
+    """Save episodes in the episodes database: new ones are inserted, known ones get their
+    content updated (views, rating and votes stored locally are kept)"""
+    episodes = [e for e in episodes if isinstance(e, dict) and e.get('id')]
+    if not episodes:
+        return
+    known = set(e.get('id') for e in episodeDB.get([e.get('id') for e in episodes]))
+    new = [e for e in episodes if e.get('id') not in known]
+    if new:
+        episodeDB.set(new)
+    updated = [dict((k, v) for k, v in e.items() if k not in ('views', 'rating', 'votes')) for e in episodes if e.get('id') in known]
+    if updated:
+        episodeDB.update(updated)
 
 def getShowWithEpisodes(showId, season='1'):
     """Get show with episodes"""

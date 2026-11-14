@@ -6,6 +6,7 @@
 '''
 
 from resources.lib.models import model
+from resources.lib.models import userdata
 from resources.lib.libraries import control
 
 logger = control.logger
@@ -60,6 +61,33 @@ class Show(model.Model):
                 }
         return {}
     
+    def _applyUserData(self, items):
+        """My List and the counters come from the user data database"""
+        if not items:
+            return items
+        ids = [item['id'] for item in items if item.get('id')]
+        ud = self.getUserData()
+        stats = ud.getStats(userdata.SHOW, ids)
+        myList = set(ud.getMyListIds(ids))
+        for item in items:
+            item['views'], item['rating'], item['votes'] = stats.get(item.get('id'), (0, 0, 0))
+            item['mylist'] = 'true' if item.get('id') in myList else 'false'
+        return items
+
+    def _saveUserData(self, data):
+        """Store the user data fields (mylist, views, rating, votes) of an item"""
+        ud = self.getUserData()
+        if data.get('mylist') in ('true', 'false'):
+            if data['mylist'] == 'true':
+                title = data.get('name') or ''
+                if not title:
+                    found = self.get(data['id'])
+                    title = found[0].get('name', '') if found else ''
+                ud.addToMyList(data['id'], title)
+            else:
+                ud.removeFromMyList(data['id'])
+        ud.setStats(userdata.SHOW, data['id'], data.get('views'), data.get('rating'), data.get('votes'))
+
     def _search(self, search, limit):
         return logger.logDebug(self._selectLike(self._select, search, limit))
 
@@ -112,12 +140,9 @@ class Show(model.Model):
                     ('SHORTDESCRIPTION', data.get('shortdescription')),
                     ('YEAR', data.get('year')),
                     ('TYPE', data.get('ltype')),
-                    ('DURATION', data.get('duration')),
-                    ('VIEWS', data.get('views')),
-                    ('RATING', data.get('rating')),
-                    ('VOTES', data.get('votes')),
-                    ('MYLIST', data.get('mylist'))
+                    ('DURATION', data.get('duration'))
                 ])
+                self._saveUserData(data)
         self._dbcon.commit()
         return True
 
@@ -145,10 +170,10 @@ class Show(model.Model):
                     data.get('year'),
                     data.get('ltype'),
                     int(data.get('duration', 0)),
-                    int(data.get('views', 0)),
-                    int(data.get('rating', 0)),
-                    int(data.get('votes', 0)),
-                    data.get('mylist', 'false')))
+                    0,
+                    0,
+                    0,
+                    'false'))  # views, rating, votes, mylist: kept in the user data database
             self._dbcon.commit()
             return True
         return False
@@ -187,7 +212,11 @@ class Show(model.Model):
         return self.search({'YEAR' : year}, limit)
 
     def getMyList(self, limit=100):
-        return self.search({'MYLIST' : 'true'}, limit)
+        """The shows of My List that are in the catalog database"""
+        ids = self.getUserData().getMyListIds()
+        if limit != False:
+            ids = ids[:int(limit)]
+        return self.get(ids) if ids else []
 
     def getAllCategories(self):
         dbcur = self.getCursor()

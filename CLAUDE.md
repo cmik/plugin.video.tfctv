@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Kodi (19+, Python 3) video add-on, `plugin.video.tfctv` ("iWantTFC"), that scrapes/calls the iWantTFC website and API (`api.iwanttfc.com`, `www.iwanttfc.com`). It is unofficial. There is no build system, linter, or test suite: the code only runs inside Kodi (it imports `xbmc`, `xbmcgui`, `xbmcaddon`, etc.), so it cannot be run standalone. Verify changes by reading Kodi's log (`~/Library/Logs/kodi.log` on macOS; enable the add-on's `debug` setting; `logger` in `resources/lib/libraries/logger.py` writes to it). Kodi runs its own installed copy in `~/Library/Application Support/Kodi/addons/plugin.video.tfctv/`, not this folder, so edits here have no effect until copied there (it is a plain copy, not a symlink).
+A Kodi (19+, Python 3) video add-on, `plugin.video.tfctv` ("iWantTFC"), that scrapes/calls the iWantTFC website and API (`api.iwanttfc.com`, `www.iwanttfc.com`). It is unofficial. There is no build system or linter, and the only tests (`tests/`) cover the models, user data and catalog seed with a faked `control` module: the rest of the code only runs inside Kodi (it imports `xbmc`, `xbmcgui`, `xbmcaddon`, etc.), so it cannot be run standalone. Verify changes by reading Kodi's log (`~/Library/Logs/kodi.log` on macOS; enable the add-on's `debug` setting; `logger` in `resources/lib/libraries/logger.py` writes to it). Kodi runs its own installed copy in `~/Library/Application Support/Kodi/addons/plugin.video.tfctv/`, not this folder, so edits here have no effect until copied there (it is a plain copy, not a symlink).
 
 `test_api.py` is a standalone scratch script (plain urllib + cookie file) for poking at the web API outside Kodi; it is gitignored along with `notes2`, `test_cookies.txt`, `API_MAP.md` and `REFACTORING_SUMMARY.md`. The `notes` file and `kodi.log` are untracked scratch files and may contain captured requests with credentials: never copy their contents anywhere.
 
@@ -22,6 +22,16 @@ Source layer, `resources/lib/sources/`:
 - `tfctv.py.backup` is the pre-refactor monolith, kept only for reference.
 
 Persistence: `resources/lib/models/` holds sqlite-backed models (`Model` base class; `shows`, `episodes`, `showcast`, `celebrities`, `history`, `library`) exposed as `showDB`, `episodeDB`, `libraryDB`, `castDB`. Caching goes through `resources/lib/libraries/cache.py`, `executioncache.py` and `resources/lib/cache/SimpleCache.py`. `resources/lib/libraries/control.py` wraps Kodi APIs (settings, dialogs, string lookup via `control.lang(id)`, paths); `trakt.py` is a new, uncommitted Trakt integration. Localized strings are in `resources/language/` and settings UI in `resources/settings.xml`.
+
+User data is kept apart from the catalog: `userdata.db` (`models/userdata.py`: `MYLIST`, `STATS` = views/rating/votes of shows and episodes, `META`). `Show`/`Episode` add these fields to what they read (`_applyUserData`) and route `update()` of `mylist`/`views`/`rating`/`votes` to it; `set()` never writes them in the catalog databases. The catalog databases (shows, episodes, celebrities) are a cache that can be refreshed, reset or replaced. Previous versions stored My List and the counters in the catalog columns: `UserData.importLegacy()` moves them once (upgrade, and before a catalog reset).
+
+Catalog seed (`resources/lib/libraries/seed.py`): on a first installation or an update from a version < 3 (`seedReason`), `tools.importDBFiles()` downloads `catalog-seed.zip` + `manifest.json` from the GitHub release tagged `catalog-seed` (setting `catalogSeedURL`), checks sha256 and the databases, keeps the replaced ones as `.bak`, remaps My List by title if ids changed, then starts `catchUpCatalog` in the background (loads the shows that are new since the seed). Build and publish a seed from a profile whose catalog was loaded (Reload Catalog Cache with episodes):
+
+    python3 .github/scripts/build_seed.py "$HOME/Library/Application Support/Kodi/userdata/addon_data/plugin.video.tfctv" /tmp/seed
+    gh release create catalog-seed /tmp/seed/catalog-seed.zip /tmp/seed/manifest.json --title "Catalog seed" --notes "..."   # first time
+    gh release upload catalog-seed /tmp/seed/catalog-seed.zip /tmp/seed/manifest.json --clobber                              # next ones
+
+Tests (outside Kodi, run in CI): `python -m unittest discover -s tests`.
 
 The branch `nw_adapt_v3` is adapting the add-on to the new iWantTFC website/API (v3.0.0 beta). `API_MAP.md` (local) documents the endpoints used by each `tfctv/` module.
 

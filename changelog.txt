@@ -1,3 +1,5 @@
+3.1.0
+    New catalog seed (ready-made catalog for new installations and major updates), My List and views stored apart from the catalog, catalog refresh loads all seasons
 3.0.2
     Fixed catalog refresh, shows without numbered seasons, database queries with quotes and proxy service restart
 3.0.1

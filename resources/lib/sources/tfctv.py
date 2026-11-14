@@ -47,7 +47,7 @@ from resources.lib.sources.tfctv.library import (
 
 from resources.lib.sources.tfctv.utils import (
     unicodetoascii, checkProxy, cleanCookies,
-    updateCatalogCache, reloadCatalogCache, resetCatalogCache,
+    updateCatalogCache, reloadCatalogCache, resetCatalogCache, catchUpCatalog,
     removeDuplicates, checkIfError
 )
 
@@ -97,7 +97,7 @@ __all__ = [
     
     # Utility functions
     'unicodetoascii', 'checkProxy', 'cleanCookies',
-    'updateCatalogCache', 'reloadCatalogCache', 'resetCatalogCache',
+    'updateCatalogCache', 'reloadCatalogCache', 'resetCatalogCache', 'catchUpCatalog',
     'removeDuplicates', 'checkIfError',
     
     # Cookie functions

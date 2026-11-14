@@ -44,6 +44,8 @@
         <setting id="defaultBG" type="text" label="30131" default="https://img.tfc.tv/assets/img/bg2.jpg" visible="false"/>
         <setting id="appearance" type="labelenum" label="30155" default="DEFAULT" values="-|DEFAULT" visible="false"/>
         <setting id="databaseImportURL" type="text" label="30156" default="https://repo.cmik.me/tfc.tv/databases/" visible="false"/>
+        <setting id="catalogSeedURL" type="text" label="30156" default="https://github.com/cmik/plugin.video.tfctv/releases/download/catalog-seed/" visible="false"/>
+        <setting id="catalogSeedVersion" type="text" label="30156" default="" visible="false"/>
         <setting id="FBAccessToken" type="text" label="30161" default="" visible="false"/>
         <setting id="catalogBasePath" type="text" label="30165" default="" visible="false"/>
         <setting id="basePath" type="text" label="30166" default="" visible="false"/>

@@ -47,7 +47,7 @@ jobs:
         run: |
           mkdir dist
           git archive --prefix="$ADDON_ID/" --format=zip -o "dist/$ADDON_ID-$VERSION.zip" HEAD \
-            ':(exclude).github' ':(exclude)CLAUDE.md' ':(exclude)addon.xml.md5'
+            ':(exclude).github' ':(exclude)tests' ':(exclude)CLAUDE.md' ':(exclude)addon.xml.md5'
           # notes: the first entry of changelog.txt (up to the next version line)
           awk 'NR==1{next} /^[0-9]+\.[0-9]+/{exit} {sub(/^[ \t]+/, ""); print "- " $0}' changelog.txt | grep -v '^- $' > notes.md
           cat notes.md

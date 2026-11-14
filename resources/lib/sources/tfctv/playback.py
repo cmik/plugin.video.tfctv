@@ -174,6 +174,7 @@ def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
                 if stored[0].get(k):
                     e[k] = stored[0][k]
         episodeDB.set(e)
+        episodeDB.update({'id': episodeId, 'views': e['views'], 'rating': e['rating'], 'votes': e['votes']})
 
         s = mediaInfo['data']['showObj']
         showDB.update({'id': s.get('id'), 'views': s.get('views', 0) + 1})

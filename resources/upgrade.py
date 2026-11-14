@@ -18,11 +18,14 @@ def upgradeDB():
 
     logger.logNotice('Updating from version %s to %s' % (control.setting('lastVersion'), control.addonInfo('version')))
 
-    if control.setting('lastVersion') in ('', '1.6.1', '1.6.2'):
-        # Check if installation is complete
-        logger.logNotice('Checking installation')
+    # My List and the counters must leave the catalog databases before anything replaces them
+    tools.importUserData()
+
+    # first installation or update from a version whose catalog can't be used anymore: install the catalog seed
+    from resources.lib.libraries import seed
+    if seed.seedReason(control.setting('lastVersion')):
+        logger.logNotice('Installing the catalog')
         tools.checkInstallDB(True)
-    tools.checkInstallDB()
     if control.setting('lastVersion')[:1] in ('', '1', '2'):
         upgradeSettings()
         control.setSetting('lastVersion', control.addonInfo('version'))

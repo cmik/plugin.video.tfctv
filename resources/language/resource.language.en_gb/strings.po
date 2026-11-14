@@ -815,3 +815,19 @@ msgstr ""
 msgctxt "#37055"
 msgid "No device registered"
 msgstr ""
+
+msgctxt "#37056"
+msgid "Downloading the catalog..."
+msgstr ""
+
+msgctxt "#37057"
+msgid "The catalog has been installed"
+msgstr ""
+
+msgctxt "#37058"
+msgid "The catalog can't be downloaded. Load it with Reload Catalog Cache in the tools."
+msgstr ""
+
+msgctxt "#37059"
+msgid "These shows of your list could not be found in the new catalog:\n%s"
+msgstr ""
