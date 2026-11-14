@@ -37,6 +37,10 @@ class Model():
             self._userdata = userdata.UserData(control.userDataFile)
         return self._userdata
 
+    def applyUserData(self, items):
+        """Add the user data (My List, views...) to items that didn't come from this model's reads"""
+        return self._applyUserData(items)
+
     def _applyUserData(self, items):
         """Add the user data to the items read from the database (models override it)"""
         return items

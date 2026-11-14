@@ -36,6 +36,13 @@ def upgradeDB():
         legacycast.importLegacyCast(showcast.ShowCast(control.celebritiesFile))
     except Exception as e:
         logger.logError('Can\'t import the legacy cast: %s' % str(e))
+    # the episodes played before the view history existed are listed in it
+    from resources.lib.libraries import viewhistory
+    try:
+        episodeDB = episodes.Episode(control.episodesFile)
+        viewhistory.backfill(episodeDB.getUserData(), episodeDB)
+    except Exception as e:
+        logger.logError('Can\'t build the view history: %s' % str(e))
     if control.setting('lastVersion')[:1] in ('', '1', '2'):
         upgradeSettings()
         control.setSetting('lastVersion', control.addonInfo('version'))

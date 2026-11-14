@@ -309,6 +309,7 @@ def getEpisodesPerPage(showId, season='1', page=1, itemsPerPage=8, order='desc')
                     episodeDB.set(episodeData)
                     data.append(episodeData)
 
+    episodeDB.applyUserData(data)  # views of episodes that were just built
     return (data, hasNextPage)
 
 def getEpisode(id, show={}):

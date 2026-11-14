@@ -10,6 +10,7 @@ from urllib.parse import quote, urlencode
 from resources import config
 from resources.lib.libraries import control
 from .catalog import getEpisode, getShow, episodeDB, showDB
+from .history import recordView
 from .auth import isLoggedIn, login
 from .utils import checkProxy
 
@@ -178,6 +179,7 @@ def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
 
         s = mediaInfo['data']['showObj']
         showDB.update({'id': s.get('id'), 'views': s.get('views', 0) + 1})
+        recordView(e)
         
     return mediaInfo
 
