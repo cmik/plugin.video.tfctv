@@ -1,3 +1,5 @@
+3.1.1
+    Fixed the empty By Category menu (genres of the shows)
 3.1.0
     New catalog seed (ready-made catalog for new installations and major updates), My List and views stored apart from the catalog, catalog refresh loads all seasons
 3.0.2

@@ -26,6 +26,9 @@ def upgradeDB():
     if seed.seedReason(control.setting('lastVersion')):
         logger.logNotice('Installing the catalog')
         tools.checkInstallDB(True)
+    elif control.setting('lastVersion') == '3.1.0':
+        # 3.1.0 stored the shows without categories: load their details again in the background
+        control.execute('RunPlugin(plugin://%s/?mode=%d&caller=upgrade)' % (control.addonInfo('id'), config.CATCHUPCATALOG))
     if control.setting('lastVersion')[:1] in ('', '1', '2'):
         upgradeSettings()
         control.setSetting('lastVersion', control.addonInfo('version'))

@@ -92,6 +92,10 @@ class ModelsTest(unittest.TestCase):
         self.assertEqual((4, 5, 0, 'New title'), (found['e1']['views'], found['e1']['rating'], found['e1']['votes'], found['e1']['title']))
         self.assertEqual(0, found['e2']['views'])
 
+    def test_shows_without_category(self):
+        self.shows.set([dict(show(1), parentname=''), dict(show(2), parentname='Drama|Romance'), dict(show(3), parentname=None)])
+        self.assertEqual(['s1', 's3'], sorted(self.shows.getWithoutCategory()))
+
     def test_many_ids(self):
         self.shows.set([show(i) for i in range(1200)])
         for i in range(0, 1200, 3):

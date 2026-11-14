@@ -218,6 +218,12 @@ class Show(model.Model):
             ids = ids[:int(limit)]
         return self.get(ids) if ids else []
 
+    def getWithoutCategory(self):
+        """The ids of the shows stored without categories"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, "SELECT ID FROM SHOW WHERE PARENTNAME IS NULL OR PARENTNAME = ''")
+        return [row[0] for row in dbcur.fetchall()]
+
     def getAllCategories(self):
         dbcur = self.getCursor()
         dbcur.execute(logger.logDebug("SELECT DISTINCT PARENTNAME FROM SHOW"))
