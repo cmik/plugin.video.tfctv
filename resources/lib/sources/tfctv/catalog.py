@@ -484,24 +484,32 @@ def getShow(id, season='1', withEpisodes=False):
             if withEpisodes:
                 episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
+            if res:
+                # showDB.set replaces the row: keep what is stored locally
+                data['mylist'] = res[0].get('mylist') or 'false'
+                for field in ('views', 'rating', 'votes'):
+                    data[field] = res[0].get(field, 0)
             showDB.set(data)
             if withEpisodes:
-                storeNewEpisodes(data.get('episodes', []))
+                storeEpisodes(data.get('episodes', []))
         else:
             logger.logWarning('Error on show %s: %s' % (id, 'not found'))
     
     return data
 
-def storeNewEpisodes(episodes):
-    """Save in the episodes database the episodes it doesn't know yet (known ones keep their stored data)"""
+def storeEpisodes(episodes):
+    """Save episodes in the episodes database: new ones are inserted, known ones get their
+    content updated (views, rating and votes stored locally are kept)"""
     episodes = [e for e in episodes if isinstance(e, dict) and e.get('id')]
     if not episodes:
-        return 0
+        return
     known = set(e.get('id') for e in episodeDB.get([e.get('id') for e in episodes]))
     new = [e for e in episodes if e.get('id') not in known]
     if new:
         episodeDB.set(new)
-    return len(new)
+    updated = [dict((k, v) for k, v in e.items() if k not in ('views', 'rating', 'votes')) for e in episodes if e.get('id') in known]
+    if updated:
+        episodeDB.update(updated)
 
 def getShowWithEpisodes(showId, season='1'):
     """Get show with episodes"""
