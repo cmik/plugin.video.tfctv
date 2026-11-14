@@ -120,7 +120,7 @@ class navigator:
         episodes = tfctv.getMylistShowLastEpisodes()
         for e in episodes:
             title = e.get('title')
-            title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+            title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
             if title_match:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': title}, **self.formatVideoInfo(e, addToList=False))
@@ -161,7 +161,7 @@ class navigator:
                 self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SEASONS if e.get('nbSeasons', 0) > 1 else config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
             elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream') and e.get('isPlayable', True):
                 title = e.get('name')
-                title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
+                title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
                 if title_match:
                     title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
                 self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e['ltype'], 'title': title}, **self.formatVideoInfo(e))
@@ -193,7 +193,7 @@ class navigator:
         episodes = sorted(episodes, key=lambda item: item['episodenumber'], reverse=True)
         for e in episodes:
             title = e.get('title')
-            title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+            title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
             if title_match:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title')}, **self.formatVideoInfo(e, addToList=False))
@@ -206,7 +206,7 @@ class navigator:
         bandwidths = tfctv.getEpisodeBandwidthList(episodeId, title, type, thumbnail)
         for e in bandwidths: # sorted(bandwidths, key = itemgetter('bandwidth')):
             title = e.get('title')
-            title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+            title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
             if title_match:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem('%s | %sp | %s' % (title, e.get('resolution').split('x')[1], e.get('resolution')), str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title'), 'bandwidth': e.get('bandwidth')}, **self.formatVideoInfo(e))
@@ -241,7 +241,7 @@ class navigator:
                 elif category == 'episode':
                     for e in sorted(result, key=lambda episode: episode['show']):
                         title = e.get('title')
-                        title_match = re.compile('S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
+                        title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
                         if title_match:
                             title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
                         self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title' : title}, **self.formatVideoInfo(e, addToList=False))
@@ -314,8 +314,6 @@ class navigator:
     def showTools(self):
         logger.logInfo('called function')
         self.addDirectoryItem(control.lang(36021), config.uri.get('base'), config.IMPORTALLDB, control.addonFolderIcon(control.lang(36021)))
-        self.addDirectoryItem(control.lang(36019), config.uri.get('base'), config.IMPORTSHOWDB, control.addonFolderIcon(control.lang(36019)))
-        self.addDirectoryItem(control.lang(36020), config.uri.get('base'), config.IMPORTEPISODEDB, control.addonFolderIcon(control.lang(36020)))
         self.addDirectoryItem(control.lang(30215), config.uri.get('base'), config.CHECKFORUPDATES, control.addonFolderIcon(control.lang(30215)))
         self.addDirectoryItem(control.lang(36009), config.uri.get('base'), config.RELOADCATALOG, control.addonFolderIcon(control.lang(36009)))
         self.addDirectoryItem(control.lang(36018), config.uri.get('base'), config.RESETCATALOG, control.addonFolderIcon(control.lang(36018)))

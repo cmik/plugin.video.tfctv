@@ -93,8 +93,6 @@ ROUTES = {
     config.RELOADCATALOG: lambda r: tfctv().reloadCatalogCache(),
     config.RESETCATALOG: lambda r: tfctv().resetCatalogCache(),
     config.CATCHUPCATALOG: lambda r: tfctv().catchUpCatalog(),
-    config.IMPORTSHOWDB: lambda r: tools.importShowDB(),
-    config.IMPORTEPISODEDB: lambda r: tools.importEpisodeDB(),
     config.IMPORTALLDB: lambda r: tools.importDBFiles(),
 }
 

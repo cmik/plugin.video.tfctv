@@ -27,7 +27,7 @@ class Actor(model.Model):
     def _getStructure(self, data):
         logger.logDebug(len(data))
         logger.logDebug(data)
-        if len(data) == 13:
+        if len(data) == 9:
             return {
                 'id' : data[0],
                 'name' : data[1],

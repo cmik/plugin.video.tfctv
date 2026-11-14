@@ -88,8 +88,6 @@ EXPECTED = {
     config.PERSONALIZESETTINGS: [["navigator.personalizeSettings", [], []]],
     config.OPTIMIZELIBRARY: [["navigator.optimizeLibrary", [], []]],
     config.RESETCATALOG: [["tfctv.resetCatalogCache", [], []]],
-    config.IMPORTSHOWDB: [["tools.importShowDB", [], []]],
-    config.IMPORTEPISODEDB: [["tools.importEpisodeDB", [], []]],
     config.IMPORTALLDB: [["tools.importDBFiles", [], []]],
     config.LOGINWITHTFC: [["navigator.loginWithTFC", [], []]],
     config.LOGINWITHFB: [["navigator.loginWithFB", [], []]],

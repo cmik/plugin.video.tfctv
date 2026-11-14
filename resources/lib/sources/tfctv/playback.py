@@ -335,7 +335,7 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
                 'Connection': 'keep-alive'
             }
             
-            """
+            r"""
             # choose best stream quality
             defaultQuality = 0
             if bandwidth is False:
@@ -363,7 +363,7 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
                 'key': playback.get('playbackInfo', {}).get('licenseUrl', ''),
                 'headers': headers
             }
-        """
+        r"""
         else:
             # choose best stream quality
             defaultQuality = 0
