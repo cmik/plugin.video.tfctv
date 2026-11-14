@@ -25,6 +25,8 @@
         <source>https://github.com/cmik/cmik.xbmc</source>
         <news>v3.2.0 (14/11/2026)
           [new] The cast of the shows is stored (and used by the search by actor), with the actors of the old catalog that can be attached to the current shows
+          [change] The plugin modes are handled by a routing table instead of a long if/elif chain
+          [remove] My Devices (the website feature doesn't exist anymore)
         </news>
         <assets>
             <icon>resources/icon.png</icon>

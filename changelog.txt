@@ -1,5 +1,5 @@
 3.2.0
-    Cast of the shows stored and searchable, legacy actors of the old catalog kept
+    Cast of the shows stored and searchable, legacy actors of the old catalog kept, routing table for the plugin modes, My Devices removed
 3.1.1
     Fixed the empty By Category menu (genres of the shows)
 3.1.0
