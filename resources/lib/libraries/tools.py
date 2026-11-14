@@ -34,33 +34,28 @@ def importEpisodeDB():
         control.showNotification(control.lang(37040), control.lang(30010))
 
 def importDBFiles():
-    status = True
-    try:
-        dBImportURL = control.setting('databaseImportURL')
-        
-        # Shows DB file
-        fileSource = dBImportURL + 'shows.db' 
-        logger.logInfo('Copying %s to %s' % (fileSource, control.showsFile))
-        status = True if status is True and logger.logInfo(xbmcvfs.copy(fileSource, control.showsFile)) != 0 else False
-
-        # Episodes DB file
-        fileSource = dBImportURL + 'episodes.db' 
-        logger.logInfo('Copying %s to %s' % (fileSource, control.episodesFile))
-        status = True if status is True and logger.logInfo(xbmcvfs.copy(fileSource, control.episodesFile)) != 0 else False
-
-        # Celebrities DB file
-        fileSource = dBImportURL + 'celebrities.db' 
-        logger.logInfo('Copying %s to %s' % (fileSource, control.celebritiesFile))
-        status = True if status is True and logger.logInfo(xbmcvfs.copy(fileSource, control.celebritiesFile)) != 0 else False
-    except:
-        status = False
-        pass
-    if status is True:
-        control.setSetting('showUpdateCatalog', 'false')
-        control.showNotification(control.lang(37003), control.lang(30010))
-    else:
-        control.showNotification(control.lang(37027), control.lang(30004))
-    return status
+    """Install the catalog seed (ready-made shows, episodes and celebrities databases)"""
+    from resources.lib.libraries import seed
+    control.showNotification(control.lang(37056), control.lang(30005))
+    importUserData()  # before the catalog databases are replaced
+    result = seed.installCatalogSeed(
+        control.setting('catalogSeedURL'),
+        {'shows.db': control.showsFile, 'episodes.db': control.episodesFile, 'celebrities.db': control.celebritiesFile},
+        control.userDataFile,
+        lambda percent: control.showNotification('%d%%' % percent, control.lang(37056), time=1000) if percent % 25 == 0 else None
+    )
+    if result is None:
+        control.showNotification(control.lang(37058), control.lang(30004), time=8000)
+        return False
+    notFound, manifest = result
+    control.setSetting('showUpdateCatalog', 'false')
+    control.setSetting('catalogSeedVersion', manifest.get('catalogVersion', ''))
+    control.showNotification(control.lang(37057), control.lang(30010))
+    if notFound:
+        control.showMessage(control.lang(37059) % '\n'.join(notFound), control.lang(30002))
+    # look for what is new since the seed was made, in the background
+    control.execute('RunPlugin(plugin://%s/?mode=%d&caller=seed)' % (control.addonInfo('id'), config.CATCHUPCATALOG))
+    return True
 
 def deleteDBFiles():
     status = True
@@ -83,13 +78,7 @@ def deleteDBFiles():
 
 def checkInstallDB(refresh=False):
     control.showNotification(control.lang(30005))
-    isInstalled = isDBInstalled()
-    
-    if refresh == True and isInstalled == True:
-        deleteDBFiles()
-    
-    if refresh == True or isInstalled == False:
-        # control.run(config.IMPORTALLDB, 'install')
+    if refresh == True or isDBInstalled() == False:
         importDBFiles()
 
 def isDBInstalled():

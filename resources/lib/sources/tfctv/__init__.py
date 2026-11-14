@@ -47,7 +47,7 @@ __all__ = [
     
     # Utils
     'unicodetoascii', 'checkProxy', 'cleanCookies',
-    'updateCatalogCache', 'reloadCatalogCache', 'resetCatalogCache',
+    'updateCatalogCache', 'reloadCatalogCache', 'resetCatalogCache', 'catchUpCatalog',
     'removeDuplicates', 'checkIfError',
     
     # Cookies

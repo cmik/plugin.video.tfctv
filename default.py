@@ -188,6 +188,9 @@ elif mode == config.IMPORTEPISODEDB:
     tools.importEpisodeDB()
 elif mode == config.IMPORTALLDB:
     tools.importDBFiles()
+elif mode == config.CATCHUPCATALOG:
+    from resources.lib.sources import tfctv
+    tfctv.catchUpCatalog()
 elif mode == config.FIRSTINSTALL:
     from resources.lib.indexers import navigator
     navigator.navigator().firstInstall()

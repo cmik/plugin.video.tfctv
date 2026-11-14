@@ -22,6 +22,7 @@ control = types.ModuleType('resources.lib.libraries.control')
 control.logger = _Logger()
 libraries = types.ModuleType('resources.lib.libraries')
 libraries.control = control
+libraries.__path__ = [os.path.join(ROOT, 'resources', 'lib', 'libraries')]  # the other modules are the real ones
 sys.modules['resources.lib.libraries'] = libraries
 sys.modules['resources.lib.libraries.control'] = control
 

@@ -116,6 +116,12 @@ def updateCatalogCache(loadEpisodes=False):
     control.showNotification(control.lang(37014), control.lang(30005))
     return refreshCatalogShows(loadEpisodes)
 
+def catchUpCatalog():
+    """Look for what is new in the website collections since the catalog was installed (known shows aren't loaded again)"""
+    logger.logInfo('called function')
+    from .catalog import refreshCatalogShows
+    return refreshCatalogShows(loadEpisodes=False, refresh=True)
+
 def reloadCatalogCache():
     """Reload catalog cache"""
     logger.logInfo('called function')
