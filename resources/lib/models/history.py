@@ -120,7 +120,7 @@ class ViewedHistory(model.Model):
             ID TEXT PRIMARY KEY, \
             EPISODEID TEXT, \
             SHOWID TEXT, \
-            DATEVIEWED TEXT \)"))
+            DATEVIEWED TEXT)"))
         self._dbcon.commit()
         return True
     
