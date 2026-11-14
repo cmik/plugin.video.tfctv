@@ -5,7 +5,7 @@
     Copyright (C) 2018 cmik
 '''
 
-import os,xbmcvfs
+import os
 from resources import config
 from resources.lib.libraries import control
 
@@ -20,18 +20,6 @@ def importUserData():
     except Exception as e:
         logger.logError('Can\'t import the user data: %s' % str(e))
         return 0
-
-def importShowDB():
-    fileSource = logger.logInfo(control.browse(1, 'Select your shows DB file', 'files', '.db'))
-    if (fileSource != ''):
-        logger.logInfo(xbmcvfs.copy(fileSource, control.showsFile))
-        control.showNotification(control.lang(37040), control.lang(30010))
-
-def importEpisodeDB():
-    fileSource = logger.logInfo(control.browse(1, 'Select your episodes DB file', 'files', '.db'))
-    if (fileSource != ''):
-        logger.logInfo(xbmcvfs.copy(fileSource, control.episodesFile))
-        control.showNotification(control.lang(37040), control.lang(30010))
 
 def importDBFiles():
     """Install the catalog seed (ready-made shows, episodes and celebrities databases)"""
@@ -56,25 +44,6 @@ def importDBFiles():
     # look for what is new since the seed was made, in the background
     control.execute('RunPlugin(plugin://%s/?mode=%d&caller=seed)' % (control.addonInfo('id'), config.CATCHUPCATALOG))
     return True
-
-def deleteDBFiles():
-    status = True
-    try:
-        if control.pathExists(control.showsFile):
-            logger.logInfo('Deleting %s' % control.showsFile)
-            status = True if status is True and logger.logInfo(xbmcvfs.delete(control.showsFile)) != 0 else False
-
-        if control.pathExists(control.episodesFile):
-            logger.logInfo('Deleting %s' % control.episodesFile)
-            status = True if status is True and logger.logInfo(xbmcvfs.delete(control.episodesFile)) != 0 else False
-
-        if control.pathExists(control.celebritiesFile):
-            logger.logInfo('Deleting %s' % control.celebritiesFile)
-            status = True if status is True and logger.logInfo(xbmcvfs.delete(control.celebritiesFile)) != 0 else False
-    except:
-        status = False
-        pass
-    return status
 
 def checkInstallDB(refresh=False):
     control.showNotification(control.lang(30005))
