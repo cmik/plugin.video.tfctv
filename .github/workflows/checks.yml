@@ -30,9 +30,8 @@ jobs:
     name: kodi-addon-checker
     runs-on: ubuntu-latest
     env:
-      # problems that already existed when the check was added (executable bits are fixed):
-      # xbmc.service schema, icon format, fanart size, old language format (2). New ones fail the check.
-      MAX_ERRORS: 5
+      # any problem reported by kodi-addon-checker fails the check
+      MAX_ERRORS: 0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,7 +48,7 @@ jobs:
           errors=$((errors - 1))
           echo "problems found: $errors (allowed: $MAX_ERRORS)"
           if [ "$errors" -gt "$MAX_ERRORS" ]; then
-            echo "::error::kodi-addon-checker found $errors problems, more than the $MAX_ERRORS that already existed"
+            echo "::error::kodi-addon-checker found $errors problems, more than the $MAX_ERRORS allowed"
             exit 1
           fi
 

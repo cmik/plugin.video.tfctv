@@ -138,7 +138,13 @@ def getCollectionShowIds(collectionId, refresh=False):
     logger.logInfo('called function with param (%s, %s)' % (collectionId, refresh))
     ids = []
     for rail in getCachedCollection(collectionId, refresh).get('rails', {}):
-        for item in (rail.get('assets', {}) or {}).get('items', []) or []:
+        assets = rail.get('assets', {}) or {}
+        items = assets.get('items', []) or []
+        if (assets.get('totalItems') or 0) > len(items):
+            # the API call only returns the first page of a rail (hasNextPage is also true for complete rails, e.g. Top 10)
+            logger.logWarning('Rail %s of collection %s: only %d of %s items read (hasNextPage=%s)' % (
+                rail.get('title', rail.get('id')), collectionId, len(items), assets.get('totalItems'), assets.get('hasNextPage')))
+        for item in items:
             if item.get('id') and item.get('assetType', '') in SHOW_ASSET_TYPES:
                 ids.append(item.get('id'))
     return list(dict.fromkeys(ids))
@@ -160,6 +166,11 @@ def getCatalogShowIds(refresh=False):
         except Exception as e:
             failed += 1
             logger.logError('Can\'t read collection %s : %s' % (collectionId, str(e)))
+    # shows only reachable through search/My List are not in any collection: keep My List ones up to date
+    try:
+        ids += [show.get('id') for show in showDB.getMyList(limit=False) if show.get('id')]
+    except Exception as e:
+        logger.logError('Can\'t read My List: %s' % str(e))
     return list(dict.fromkeys(ids)), failed
 
 def findCollectionRail(sectionId):
