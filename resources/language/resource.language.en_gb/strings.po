@@ -558,16 +558,8 @@ msgctxt "#36018"
 msgid "Reset Catalog Cache"
 msgstr ""
 
-msgctxt "#36019"
-msgid "Select shows database file to import"
-msgstr ""
-
-msgctxt "#36020"
-msgid "Select episodes database file to import"
-msgstr ""
-
 msgctxt "#36021"
-msgid "Import automatically all database files"
+msgid "Install the catalog (quick)"
 msgstr ""
 
 msgctxt "#36022"
@@ -746,10 +738,6 @@ msgstr ""
 
 msgctxt "#37039"
 msgid "Catalog cache is now empty"
-msgstr ""
-
-msgctxt "#37040"
-msgid "The file was loaded successfully"
 msgstr ""
 
 msgctxt "#37041"
