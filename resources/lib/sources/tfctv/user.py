@@ -215,27 +215,6 @@ def getUserTransactions():
                 
     return data
 
-def getUserDevices():
-    """Get registered devices"""
-    logger.logInfo('called function')
-    data = callJsonApi(
-        config.uri.get('devices'),
-        headers=[
-            ('Cookie', 'UserAuthentication='+control.setting('iWantUserAuthentication')),
-            ('UserAuthentication', control.setting('iWantUserAuthentication')),
-            ('Referer', config.websiteSecuredUrl+'/'),
-            ('Origin', config.websiteSecuredUrl),
-            ('Pragma', 'no-cache'),
-            ('Sec-Fetch-Dest', 'empty'),
-            ('Sec-Fetch-Mode', 'cors'),
-            ('Sec-Fetch-Site', 'same-orig')
-            ],
-        useCache=False
-        )
-    if len(data) == 0:
-        control.showNotification(control.lang(37055))
-    return data
-
 def getAccount():
     """Get account data"""
     logger.logInfo('called function')

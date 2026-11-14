@@ -63,8 +63,6 @@ ROUTES = {
     config.MYINFO: lambda r: navigator().showMyInfo(),
     config.MYSUBSCRIPTIONS: lambda r: navigator().showMySubscription(),
     config.MYTRANSACTIONS: lambda r: navigator().showMyTransactions(),
-    config.MYDEVICES: lambda r: navigator().showMyDevices(),
-    config.INFODEVICE: lambda r: navigator().showMyDeviceInfo(r.get('deviceId')),
     config.MYLIST: lambda r: navigator().showMyList(),
     config.MYLISTSHOWLASTEPISODES: lambda r: navigator().showMyListShowLastEpisodes(),
     config.LISTCATEGORY: lambda r: navigator().showMyListCategory(r.url),

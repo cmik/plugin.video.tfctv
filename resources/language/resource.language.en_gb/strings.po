@@ -586,10 +586,6 @@ msgctxt "#36025"
 msgid "Login with iWantTFC"
 msgstr ""
 
-msgctxt "#36026"
-msgid "My Devices"
-msgstr ""
-
 # notifications / messages
 
 msgctxt "#37000"
@@ -810,10 +806,6 @@ msgstr ""
 
 msgctxt "#37054"
 msgid "%s has been removed from my lis"
-msgstr ""
-
-msgctxt "#37055"
-msgid "No device registered"
 msgstr ""
 
 msgctxt "#37056"

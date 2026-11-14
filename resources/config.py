@@ -40,8 +40,6 @@ uri = {
     'profile' : 'https://purchase.iwanttfc.com/proxy',
     'licence' : '/api/1.0/license?itemID=%s',
     'livestream' : '/api/1.0/stream?streamID=%s',
-    'devices' : '/api/1.0/user/devices',
-    'deleteDevice' : '/api/1.0/user/devices?action=delete&deviceID=%s',
     'profileDetails' : '/profile/details',
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',
@@ -94,8 +92,6 @@ MYACCOUNT = 14
 MYINFO = 15
 MYSUBSCRIPTIONS = 16
 MYTRANSACTIONS = 17
-MYDEVICES = 18
-INFODEVICE = 19
 LOGOUT = 20
 MYLISTSHOWLASTEPISODES = 21
 MYLIST = 22
