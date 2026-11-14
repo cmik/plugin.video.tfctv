@@ -26,7 +26,7 @@ libraries.__path__ = [os.path.join(ROOT, 'resources', 'lib', 'libraries')]  # th
 sys.modules['resources.lib.libraries'] = libraries
 sys.modules['resources.lib.libraries.control'] = control
 
-from resources.lib.models import episodes, shows, userdata  # noqa: E402
+from resources.lib.models import celebrities, episodes, shows, userdata  # noqa: E402
 
 
 def show(i, name=None):
@@ -95,6 +95,13 @@ class ModelsTest(unittest.TestCase):
     def test_shows_without_category(self):
         self.shows.set([dict(show(1), parentname=''), dict(show(2), parentname='Drama|Romance'), dict(show(3), parentname=None)])
         self.assertEqual(['s1', 's3'], sorted(self.shows.getWithoutCategory()))
+
+    def test_actor_model(self):
+        actors = celebrities.Actor(os.path.join(self.dir, 'actors.db'))
+        self.assertTrue(actors.set([{'id': 'a1', 'name': "D'Arc", 'thumbnail': 't', 'fanart': 'f', 'banner': 'b', 'url': 'u',
+                                     'description': "it's", 'birthday': '1990', 'birthplace': 'Manila'}]))
+        found = actors.get('a1')
+        self.assertEqual([("D'Arc", 'Manila')], [(a['name'], a['birthplace']) for a in found])
 
     def test_many_ids(self):
         self.shows.set([show(i) for i in range(1200)])
