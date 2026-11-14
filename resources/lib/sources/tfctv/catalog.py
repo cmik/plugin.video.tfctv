@@ -239,7 +239,7 @@ def refreshCatalogShows(loadEpisodes=True, refresh=False):
     for k, showId in enumerate(showIds, 1):
         try:
             if loadEpisodes:
-                getShowWithEpisodes(showId)
+                getShowWithEpisodes(showId, 'all')
             else:
                 getShow(showId)
         except Exception as se:
@@ -453,10 +453,10 @@ def getSeasons(showId):
 def getShowEpisodeItems(id, season='1', asset=None):
     """Get the episode items of a show for a season (an id of getSeasons()).
 
-    The season may also be a month for the shows split by month. When the season is unknown
+    The season may also be a month for the shows split by month, or 'all'. When the season is unknown
     (e.g. the default one) fall back on all the seasons/months of the show."""
     seasons = getSeasonFilters(asset or getAsset(id))
-    selected = [x for x in seasons if str(x['id']) == str(season)]
+    selected = seasons if season == 'all' else [x for x in seasons if str(x['id']) == str(season)]
     if not selected:
         logger.logWarning('Season %s not found for show %s, using all seasons' % (season, id))
         selected = seasons
