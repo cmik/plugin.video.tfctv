@@ -345,9 +345,8 @@ def formatAssetToShow(asset, episodes={}):
         'id': asset.get('id'),
         'name': asset.get('title', ''),
         'parentid': asset.get('assetType', ''),
-        'parentname': '|'.join(
-            asset.get('genreLabels', [])
-        ),
+        # the categories of a show are its genres
+        'parentname': '|'.join(str(g) for g in (asset.get('genres') or asset.get('genreLabels') or [])),
         'logo': image.get('title', '') if image.get('title', '') != '' else image.get('square', ''),
         'image': image.get('portrait', '') if image.get('portrait', '') != '' else image.get('portraitHero', ''),
         'fanart': image.get('landscape', '') if image.get('landscape', '') != '' else image.get('landscapeHero', ''),
@@ -483,10 +482,11 @@ def getShow(id, season='1', withEpisodes=False):
     
     res = showDB.get(id)
     if withEpisodes is False and len(res) == 1:
-        actors = castDB.getByShow(id)
+        actors = castDB.getCast(id)
         for actor in actors:
             actor['castid'] = actor.get('actorid')
         res[0]['actors'] = actors
+        res[0]['casts'] = actors
         data = res[0]
     else:
         asset = getAsset(id)
@@ -496,6 +496,8 @@ def getShow(id, season='1', withEpisodes=False):
                 episodes = getShowEpisodeItems(id, season, asset)
             data = formatAssetToShow(asset, formatItemsToEpisodes(episodes, asset))
             showDB.set(data)
+            castDB.replaceApiCast(id, data.get('casts', []))
+            data['casts'] = castDB.getCast(id)  # the API cast and the actors only the old catalog knows
             if withEpisodes:
                 storeEpisodes(data.get('episodes', []))
         else:
@@ -516,6 +518,21 @@ def storeEpisodes(episodes):
     updated = [dict((k, v) for k, v in e.items() if k not in ('views', 'rating', 'votes')) for e in episodes if e.get('id') in known]
     if updated:
         episodeDB.update(updated)
+
+def repairShowCategories():
+    """Load again the details of the shows stored without categories (an older version didn't read them)"""
+    logger.logInfo('called function')
+    repaired = 0
+    for showId in showDB.getWithoutCategory():
+        try:
+            data = formatAssetToShow(getAsset(showId))
+            if data.get('parentname'):
+                showDB.set(data)
+                repaired += 1
+        except Exception as e:
+            logger.logError('Can\'t repair the categories of show %s : %s' % (showId, str(e)))
+    logger.logNotice('Categories repaired for %d shows' % repaired)
+    return repaired
 
 def getShowWithEpisodes(showId, season='1'):
     """Get show with episodes"""
