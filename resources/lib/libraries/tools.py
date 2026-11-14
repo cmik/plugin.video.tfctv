@@ -11,6 +11,16 @@ from resources.lib.libraries import control
 
 logger = control.logger
 
+def importUserData():
+    """Move My List and the counters of the previous versions out of the catalog databases
+    (once). Call it before anything that replaces or drops these databases."""
+    from resources.lib.models import userdata
+    try:
+        return userdata.UserData(control.userDataFile).importLegacy(control.showsFile, control.episodesFile)
+    except Exception as e:
+        logger.logError('Can\'t import the user data: %s' % str(e))
+        return 0
+
 def importShowDB():
     fileSource = logger.logInfo(control.browse(1, 'Select your shows DB file', 'files', '.db'))
     if (fileSource != ''):

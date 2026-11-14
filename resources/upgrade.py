@@ -18,6 +18,9 @@ def upgradeDB():
 
     logger.logNotice('Updating from version %s to %s' % (control.setting('lastVersion'), control.addonInfo('version')))
 
+    # My List and the counters must leave the catalog databases before anything replaces them
+    tools.importUserData()
+
     if control.setting('lastVersion') in ('', '1.6.1', '1.6.2'):
         # Check if installation is complete
         logger.logNotice('Checking installation')

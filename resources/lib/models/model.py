@@ -20,6 +20,8 @@ class Model():
     _columns = ()
     # max values per "IN (...)" (SQLite older than 3.32 accepts 999 variables)
     _chunkSize = 500
+    # user data (My List, views...) lives in a separate database
+    _userdata = None
 
     def __init__(self, databasePath):
         self._dbcon = database.connect(logger.logDebug(databasePath))
@@ -28,6 +30,17 @@ class Model():
     def _getStructure(self, data):
         return {}
         
+    def getUserData(self):
+        """The user data database (created on first use)"""
+        if self._userdata is None:
+            from resources.lib.models import userdata
+            self._userdata = userdata.UserData(control.userDataFile)
+        return self._userdata
+
+    def _applyUserData(self, items):
+        """Add the user data to the items read from the database (models override it)"""
+        return items
+
     def _search(self, limit):
         return []
 
@@ -59,15 +72,20 @@ class Model():
             raise ValueError('Unknown column %s' % name)
         return name
 
-    def _selectBy(self, select, key, values):
-        """Run `select` (a SELECT ... FROM table query) filtered by `key IN (values)`"""
+    def _selectBy(self, select, key, values, where='', params=()):
+        """Run `select` (a SELECT ... FROM table query) filtered by `key IN (values)`,
+        and by the optional condition `where` (with its `params`)"""
         key = self._column(key)
         values = [str(v) for v in values]
         dbcur = self.getCursor()
         rows = []
         for i in range(0, len(values), self._chunkSize):
             chunk = values[i:i + self._chunkSize]
-            self._exec(dbcur, '%s WHERE %s IN (%s)' % (select, key, ','.join('?' * len(chunk))), chunk)
+            self._exec(
+                dbcur,
+                '%s WHERE %s%s IN (%s)' % (select, where + ' AND ' if where else '', key, ','.join('?' * len(chunk))),
+                list(params) + chunk
+            )
             rows += dbcur.fetchall()
         return rows
 
@@ -109,6 +127,7 @@ class Model():
                 results = self._search(search, limit)
                 for d in results:
                     items.append(self._getStructure(d))
+                items = self._applyUserData(items)
             except (Exception) as e:
                 logger.logError('[%s] Exception: %s for data %s' % (self.__class__.__name__, str(e), repr(search)))
                 pass
@@ -121,6 +140,7 @@ class Model():
             results = self._retrieveAll()
             for d in results:
                 items.append(self._getStructure(d))
+            items = self._applyUserData(items)
         except (Exception) as e:
             logger.logError('Exception: %s' % str(e))
             pass
@@ -134,6 +154,7 @@ class Model():
             results = self._retrieve(search, key)
             for d in results:
                 items.append(self._getStructure(d))
+            items = self._applyUserData(items)
         except (Exception) as e:
             logger.logError('Exception: %s for data %s' % (str(e), repr(mixed)))
             pass

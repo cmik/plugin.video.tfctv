@@ -6,6 +6,7 @@
 '''
 
 from resources.lib.models import model
+from resources.lib.models import userdata
 from resources.lib.libraries import control
 from datetime import datetime
 import time
@@ -68,6 +69,15 @@ class Episode(model.Model):
                 }
         return {}
     
+    def _applyUserData(self, items):
+        """The counters come from the user data database"""
+        if not items:
+            return items
+        stats = self.getUserData().getStats(userdata.EPISODE, [item['id'] for item in items if item.get('id')])
+        for item in items:
+            item['views'], item['rating'], item['votes'] = stats.get(item.get('id'), (0, 0, 0))
+        return items
+
     def _search(self, search, limit):
         return logger.logDebug(self._selectLike(self._select, search, limit))
 
@@ -134,11 +144,9 @@ class Episode(model.Model):
                     ('YEAR', data.get('year')),
                     ('PARENTALADVISORY', data.get('parentalAdvisory')),
                     ('TYPE', data.get('ltype')),
-                    ('DURATION', data.get('duration')),
-                    ('VIEWS', data.get('views')),
-                    ('RATING', data.get('rating')),
-                    ('VOTES', data.get('votes'))
+                    ('DURATION', data.get('duration'))
                 ])
+                self.getUserData().setStats(userdata.EPISODE, data.get('id'), data.get('views'), data.get('rating'), data.get('votes'))
         self._dbcon.commit()
         return True
 
@@ -166,9 +174,9 @@ class Episode(model.Model):
                     data.get('parentalAdvisory'),
                     data.get('ltype'),
                     int(data.get('duration', 0)),
-                    int(data.get('views', 0)),
-                    int(data.get('rating', 0)),
-                    int(data.get('votes', 0))))
+                    0,
+                    0,
+                    0))  # views, rating, votes: kept in the user data database
             self._dbcon.commit()
             return True
         return False
