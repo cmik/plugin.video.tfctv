@@ -61,12 +61,6 @@ class DecisionTest(unittest.TestCase):
         self.assertIsNone(playertracker.decide(10, 1800))  # not worth resuming
         self.assertIsNone(playertracker.decide(600, 0))  # unknown length
 
-    def test_resume_point(self):
-        self.assertEqual(600, playertracker.resumePoint((600, 1800)))
-        self.assertEqual(0, playertracker.resumePoint((1750, 1800)))  # finished
-        self.assertEqual(0, playertracker.resumePoint((5, 1800)))
-        self.assertEqual(0, playertracker.resumePoint(None))
-
     def test_what_the_plugin_hands_to_the_service(self):
         raw = playertracker.encode('e1', now=1000)
         self.assertEqual('e1', playertracker.decode(raw, now=1050)['id'])

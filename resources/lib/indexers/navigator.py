@@ -463,7 +463,7 @@ class navigator:
             'listInfos' : { 
                 'video' : { 
                     'sorttitle': info.get('name'),
-                    'plot' : plot, 
+                    'plot' : info.get('description'), 
                     'year' : info.get('year'),
                     'mediatype' : 'tvshow',
                     'studio': 'ABS-CBN', 
@@ -491,18 +491,10 @@ class navigator:
                 contextMenu.update(add)
             else:
                 contextMenu.update(remove)
-            if (info.get('resumeposition') or 0) > 0:
-                contextMenu.update({ control.lang(30306) : 'PlayMedia(%s)' % self.generateActionUrl(str(info.get('id')), config.PLAY, info.get('title'), info.get('image') or '', query={'ltype': info.get('ltype'), 'title': info.get('title'), 'restart': 1}) })
             if options.get('history'):
                 contextMenu.update({ control.lang(30305) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMHISTORY, info.get('title')) })
             # Choose resolution
             contextMenu.update({ control.lang(30303) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.CHOOSEBANDWIDTH, info.get('title'), info.get('image'), query={'ltype': info.get('ltype'), 'title': info.get('title')})})
-
-        # where it resumes is told in the plot: a resume point on the item would make Kodi add its own
-        # "Resume" / "Play from beginning" entries, which play the same URL as a normal play
-        plot = info.get('description')
-        if (info.get('resumeposition') or 0) > 0:
-            plot = '%s\n\n%s' % (control.lang(30307) % time.strftime('%H:%M:%S', time.gmtime(int(info.get('resumeposition')))), plot or '')
 
         data = { 
             'listArts' : { 
@@ -527,7 +519,9 @@ class navigator:
                     'votes': info.get('votes', 0),
                     # what was played is flagged as viewed
                     'playcount': info['views'] if info.get('views') is not None else tfctv.getEpisodeViews(info.get('id')),
-                    'lastplayed': info.get('dateviewed', '')
+                    'lastplayed': info.get('dateviewed', ''),
+                    'resumetime': info.get('resumeposition', 0),
+                    'totaltime': info.get('totaltime', 0)
                     } 
                 },
             'contextMenu' : contextMenu
@@ -575,6 +569,8 @@ class navigator:
                         if 'mediatype' in infoLabels: tag.setMediaType(infoLabels['mediatype'])
                         if 'playcount' in infoLabels: tag.setPlaycount(int(infoLabels['playcount']) if str(infoLabels['playcount']).isdigit() else 0)
                         if infoLabels.get('lastplayed'): tag.setLastPlayed(infoLabels['lastplayed'])
+                        # Kodi shows the progress bar and offers its own Resume / Play from beginning, and applies them
+                        if infoLabels.get('resumetime'): tag.setResumePoint(float(infoLabels['resumetime']), float(infoLabels.get('totaltime') or 0))
                     else:
                         item.setInfo(listInfoKey, listInfoValue)
             if k == 'listArts':

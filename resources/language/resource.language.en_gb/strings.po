@@ -847,15 +847,3 @@ msgstr ""
 msgctxt "#30219"
 msgid "Display continue watching"
 msgstr ""
-
-msgctxt "#30306"
-msgid "Play from the beginning"
-msgstr ""
-
-msgctxt "#37063"
-msgid "Resuming at %s"
-msgstr ""
-
-msgctxt "#30307"
-msgid "Resume at %s"
-msgstr ""

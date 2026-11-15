@@ -23,7 +23,7 @@ try:
 except Exception:
     inputstreamhelper = None
 
-def playEpisode(episodeId, name, type, thumbnail, bandwidth=False, restart=False):
+def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
     """Play an episode"""
     logger.logInfo('called function')
     thisPlugin = control.thisPlugin
@@ -130,12 +130,6 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False, restart=False
             
             item.setProperty('fanart_image', episodeDetails['data']['fanart'])
             item.setProperty('IsPlayable', 'true')
-            # resume where it was left, unless asked to start over
-            progress = showDB.getUserData().getProgress([episodeId]).get(str(episodeId))
-            resume = 0 if restart else playertracker.resumePoint(progress)
-            if resume > 0:
-                item.setProperty('StartOffset', str(resume))
-                control.showNotification(control.lang(37063) % time.strftime('%H:%M:%S', time.gmtime(resume)), control.lang(30001))
             # tell the service what is played, it keeps where it stops (libraries/playertracker.py)
             item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))
             control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))

@@ -50,14 +50,6 @@ def decide(position, total, ended=False):
     return None
 
 
-def resumePoint(progress):
-    """The position to resume from for a stored (position, total), or 0"""
-    if not progress:
-        return 0
-    position, total = progress
-    return position if decide(position, total) == 'progress' else 0
-
-
 class PlaybackTracker(object):
     """Keeps the last known position of what is played and stores the outcome when it stops.
     `userDataFactory` gives a user data database (one per call: callers run on several threads)."""
