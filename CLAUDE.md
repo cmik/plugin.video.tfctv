@@ -8,7 +8,7 @@ A Kodi (19+, Python 3) video add-on, `plugin.video.tfctv` ("iWantTFC"), that scr
 
 `test_api.py` is a standalone scratch script (plain urllib + cookie file) for poking at the web API outside Kodi; it is gitignored along with `notes2`, `test_cookies.txt`, `API_MAP.md` and `REFACTORING_SUMMARY.md`. The `notes` file and `kodi.log` are untracked scratch files and may contain captured requests with credentials: never copy their contents anywhere.
 
-Releases: bump `version` and `<news>` in `addon.xml`, add to `changelog.txt`, and regenerate `addon.xml.md5`.
+Versions: between two releases `master` carries a development version `X.Y.0~devN` (Kodi compares versions like Debian: `~` sorts before the same version without it, so `3.5.0 < 3.6.0~dev1 < 3.6.0`: a development build never replaces a release and the release upgrades it). `changelog.txt` has one entry for `X.Y.0` that collects the changes of the cycle, and `<news>` starts with it. Raise N when a change needs the upgrade step (`upgradeDB` runs when the version changes) or to tell builds apart. Only the version without suffix is released: the release PR removes the suffix, writes the final `<news>`, and the tag `vX.Y.0` (a tag can not contain `~`, so a development version can not be tagged by mistake). A release: set `version` and `<news>` in `addon.xml`, `changelog.txt`, and regenerate `addon.xml.md5`.
 
 ## Architecture
 
