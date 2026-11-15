@@ -12,6 +12,7 @@ from .playback import *
 from .library import *
 from .user import *
 from .history import *
+from .trakt import *
 from .utils import *
 
 __all__ = [
@@ -51,6 +52,9 @@ __all__ = [
     'updateCatalogCache', 'reloadCatalogCache', 'resetCatalogCache', 'catchUpCatalog',
     'removeDuplicates', 'checkIfError',
     
+    # Trakt
+    'connectTrakt', 'disconnectTrakt', 'getTraktClient',
+
     # Cookies
     'getFromCookieByName', 'getCookieContent',
     
