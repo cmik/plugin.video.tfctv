@@ -137,7 +137,7 @@ class navigator:
         items = tfctv.getMyList()
         for item in items:
             image = item.get('logo') if control.setting('useShowLogo') == 'true' else item.get('image')
-            self.addDirectoryItem(item.get('name'), str(item.get('id')), config.SHOWEPISODES, image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
+            self.addDirectoryItem(item.get('name'), str(item.get('id')), self.showMode(item), image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
         self.endDirectory(content='tvshows', sortMethods=('unsorted', 'title', 'year'))
             
     def addPlayableEpisodes(self, episodes, options={}):
@@ -153,7 +153,7 @@ class navigator:
         logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
         episodes = tfctv.getViewHistory(page, itemsPerPage)
-        self.addPlayableEpisodes(episodes, {'history': True})
+        self.addPlayableEpisodes(episodes, {'history': True, 'goToShow': True})
         if tfctv.hasNextViewHistoryPage(page, itemsPerPage):
             self.addDirectoryItem(control.lang(36008), config.uri.get('base'), config.VIEWHISTORY, '', page + 1)
         if len(episodes) > 0 and int(page) == 1:
@@ -163,7 +163,7 @@ class navigator:
     def showContinueWatching(self, page=1):
         logger.logInfo('called function')
         itemsPerPage = int(control.setting('itemsPerPage'))
-        self.addPlayableEpisodes(tfctv.getContinueWatching(page, itemsPerPage))
+        self.addPlayableEpisodes(tfctv.getContinueWatching(page, itemsPerPage), {'goToShow': True})
         if tfctv.hasNextContinueWatchingPage(page, itemsPerPage):
             self.addDirectoryItem(control.lang(36008), config.uri.get('base'), config.CONTINUEWATCHING, '', page + 1)
         self.endDirectory(content='episodes', sortMethods=('unsorted', 'lastplayed'))
@@ -205,7 +205,7 @@ class navigator:
         for e in content:
             if e['ltype'] == 'show':
                 image = e.get('logo') if control.setting('useShowLogo') == 'true' else e.get('image')
-                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SEASONS if e.get('nbSeasons', 0) > 1 else config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
+                self.addDirectoryItem(e.get('name'), str(e.get('id')), self.showMode(e), image, isFolder=True, **self.formatShowInfo(e))
             elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream') and e.get('isPlayable', True):
                 title = e.get('name')
                 title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
@@ -216,13 +216,28 @@ class navigator:
             self.addDirectoryItem(control.lang(36008), section, config.SECTIONCONTENT, '', page + 1)
         self.endDirectory(content='videos', sortMethods=('unsorted', 'title', 'year'))
 
+    def showMode(self, show):
+        """A show with several seasons offers the choice of the season before its episodes"""
+        return config.SEASONS if (show.get('nbSeasons') or 0) > 1 else config.SHOWEPISODES
+
+    def showTarget(self, info):
+        """The URL that opens the show of an episode: its seasons when it has several, else its episodes
+        (None for movies and when the show is not known)"""
+        showId = info.get('parentid')
+        if not showId or str(showId) == str(info.get('id')) or info.get('ltype') in ('movie', 'documentary', 'livestream', 'channel'):
+            return None
+        show = info.get('showObj') or {}
+        mode = self.showMode(show)
+        query = {'parentid': str(show.get('parentid', '')), 'year': show.get('year', '')} if mode == config.SHOWEPISODES else ''
+        return self.generateActionUrl(str(showId), mode, info.get('show') or show.get('name') or '', show.get('image') or '', query=query)
+
     def displayShows(self, shows):
         logger.logInfo('called function')
         sortedShowInfos = []
         for show in shows:
             image = show['logo'] if control.setting('useShowLogo') == 'true' else show['image']
             if show['ltype'] == 'show':
-                sortedShowInfos.append((show.get('name').lower(), show.get('name'), str(show.get('id')), config.SHOWEPISODES, image, True, {'parentid' : str(show.get('parentid')), 'year' : show.get('year')}, self.formatShowInfo(show)))
+                sortedShowInfos.append((show.get('name').lower(), show.get('name'), str(show.get('id')), self.showMode(show), image, True, {'parentid' : str(show.get('parentid')), 'year' : show.get('year')}, self.formatShowInfo(show)))
             elif show['ltype'] in ('movie', 'episode', 'documentary', 'livestream'):
                 title = show.get('name')
                 sortedShowInfos.append((title.lower(), title, str(show.get('id')), config.PLAY, show.get('image'), False, {'ltype': show['ltype'], 'title': title}, self.formatVideoInfo(show)))
@@ -491,6 +506,8 @@ class navigator:
                 contextMenu.update(add)
             else:
                 contextMenu.update(remove)
+            if options.get('goToShow') and self.showTarget(info):
+                contextMenu.update({ control.lang(30306) : 'Container.Update(%s)' % self.showTarget(info) })
             if options.get('history'):
                 contextMenu.update({ control.lang(30305) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMHISTORY, info.get('title')) })
             # Choose resolution

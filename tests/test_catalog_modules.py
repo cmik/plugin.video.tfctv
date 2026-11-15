@@ -60,7 +60,7 @@ PUBLIC = {
     'history': ['recordView', 'getEpisodeViews', 'getViewHistory', 'hasNextViewHistoryPage', 'removeFromViewHistory', 'clearViewHistory'],
     'catalog': ['getCategories', 'getShows', 'getMyList', 'getMyListShows', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',
                 'getSettings', 'loadSettings', 'refreshCatalogShows', 'checkCatalogUpdates', 'getSeasons', 'getShowEpisodeItems', 'getShow',
-                'getShowWithEpisodes', 'getEpisodesPerPage', 'getEpisode', 'enterSearch', 'storeEpisodes', 'repairShowCategories'],
+                'getShowWithEpisodes', 'getEpisodesPerPage', 'getEpisode', 'enterSearch', 'storeEpisodes', 'repairShowDetails'],
 }
 
 ASSET = {

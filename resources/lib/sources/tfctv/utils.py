@@ -119,9 +119,9 @@ def updateCatalogCache(loadEpisodes=False):
 def catchUpCatalog():
     """Look for what is new in the website collections since the catalog was installed (known shows aren't loaded again)"""
     logger.logInfo('called function')
-    from .catalog import refreshCatalogShows, repairShowCategories
+    from .catalog import refreshCatalogShows, repairShowDetails
     result = refreshCatalogShows(loadEpisodes=False, refresh=True)
-    repairShowCategories()
+    repairShowDetails()
     return result
 
 def reloadCatalogCache():

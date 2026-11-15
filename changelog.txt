@@ -1,3 +1,7 @@
+3.5.0
+    Go to the show from Continue Watching and My View History; choice of the season in every list
+3.4.1
+    Fixed the missing choice of the season in the category, search and My List lists
 3.4.0
     Resume playback, Continue Watching menu, content types and sort methods for the lists
 3.3.0
