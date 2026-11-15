@@ -45,6 +45,9 @@ SHORT LINK: https://cmik.me/dDfuhJMwAt
 **LATEST VERSION:** 
 The latest working version can be found here : https://cmik.me/tfctvlastzip 
 
+**DOCUMENTATION:**
+The [wiki](https://github.com/cmik/plugin.video.tfctv/wiki) describes the [menus](https://github.com/cmik/plugin.video.tfctv/wiki/Menus), the [catalog](https://github.com/cmik/plugin.video.tfctv/wiki/Catalog), the [settings](https://github.com/cmik/plugin.video.tfctv/wiki/Settings), [Trakt](https://github.com/cmik/plugin.video.tfctv/wiki/Trakt) and [playback troubleshooting](https://github.com/cmik/plugin.video.tfctv/wiki/Playback-troubleshooting).
+
 **SOURCE CODE:**
 The source code is published on Github.
 Find the source code here: https://cmik.me/tfctvSourceCode 
@@ -123,7 +126,7 @@ To simply export and share your log file, I recommend you to use the Kodi Logfil
 
 
 
-Find more info at https://addons.cmik.me
+Find more info in the [wiki](https://github.com/cmik/plugin.video.tfctv/wiki) and at https://addons.cmik.me
 
 Enjoy!
 
