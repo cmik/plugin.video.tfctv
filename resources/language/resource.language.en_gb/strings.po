@@ -464,10 +464,6 @@ msgctxt "#30302"
 msgid "Add to library"
 msgstr ""
 
-msgctxt "#30303"
-msgid "Choose resolution"
-msgstr ""
-
 msgctxt "#30304"
 msgid "Remove from library"
 msgstr ""
@@ -878,4 +874,28 @@ msgstr ""
 
 msgctxt "#37065"
 msgid "%d new shows in the catalog"
+msgstr ""
+
+msgctxt "#30225"
+msgid "Video quality"
+msgstr ""
+
+msgctxt "#30226"
+msgid "Stream selection"
+msgstr ""
+
+msgctxt "#30227"
+msgid "Use the settings of inputstream.adaptive"
+msgstr ""
+
+msgctxt "#30228"
+msgid "Ask the quality when playback starts"
+msgstr ""
+
+msgctxt "#30229"
+msgid "Choose in the player (stream selection)"
+msgstr ""
+
+msgctxt "#30230"
+msgid "Maximum resolution"
 msgstr ""

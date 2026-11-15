@@ -263,17 +263,6 @@ class navigator:
             self.addDirectoryItem(control.lang(36008), showId, config.SHOWEPISODES, '', page + 1, query={'season': season})
         self.endDirectory(content='episodes', sortMethods=('unsorted', 'episode', 'title', 'lastplayed'))
 
-    def chooseBandwidth(self, episodeId, title, type, thumbnail):
-        logger.logInfo('called function')
-        bandwidths = tfctv.getEpisodeBandwidthList(episodeId, title, type, thumbnail)
-        for e in bandwidths: # sorted(bandwidths, key = itemgetter('bandwidth')):
-            title = e.get('title')
-            title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title'))
-            if title_match:
-                title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
-            self.addDirectoryItem('%s | %sp | %s' % (title, e.get('resolution').split('x')[1], e.get('resolution')), str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title'), 'bandwidth': e.get('bandwidth')}, **self.formatVideoInfo(e))
-        self.endDirectory()
-
     def showSearchMenu(self, category):    
         logger.logInfo('called function')
         if category == 'movieshow':
@@ -498,20 +487,17 @@ class navigator:
     def formatVideoInfo(self, info, addToList=True, options = {}):
 
         contextMenu = {}
-        if info.get('bandwidth') is None:
-            # add to mylist / remove from mylist
-            add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
-            remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
-            if addToList: 
-                contextMenu.update(add)
-            else:
-                contextMenu.update(remove)
-            if options.get('goToShow') and self.showTarget(info):
-                contextMenu.update({ control.lang(30306) : 'Container.Update(%s)' % self.showTarget(info) })
-            if options.get('history'):
-                contextMenu.update({ control.lang(30305) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMHISTORY, info.get('title')) })
-            # Choose resolution
-            contextMenu.update({ control.lang(30303) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.CHOOSEBANDWIDTH, info.get('title'), info.get('image'), query={'ltype': info.get('ltype'), 'title': info.get('title')})})
+        # add to mylist / remove from mylist
+        add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
+        remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
+        if addToList: 
+            contextMenu.update(add)
+        else:
+            contextMenu.update(remove)
+        if options.get('goToShow') and self.showTarget(info):
+            contextMenu.update({ control.lang(30306) : 'Container.Update(%s)' % self.showTarget(info) })
+        if options.get('history'):
+            contextMenu.update({ control.lang(30305) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMHISTORY, info.get('title')) })
 
         data = { 
             'listArts' : { 
