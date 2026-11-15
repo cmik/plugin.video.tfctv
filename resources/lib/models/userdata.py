@@ -181,6 +181,15 @@ class UserData(model.Model):
         return [{'episodeid': r[0], 'showid': r[1], 'title': r[2], 'show': r[3], 'thumbnail': r[4], 'ltype': r[5], 'viewed': r[6]}
                 for r in dbcur.fetchall()]
 
+    def getLastViewed(self, ids):
+        """{episode id: date of its last view} for the episodes that were viewed on a known date"""
+        rows = self._selectBy('SELECT EPISODEID, VIEWED FROM HISTORY', 'EPISODEID', ids, where="VIEWED <> ''") if ids else []
+        last = {}
+        for episodeId, viewed in rows:
+            if viewed and viewed > last.get(episodeId, ''):
+                last[episodeId] = viewed
+        return last
+
     def countHistory(self):
         dbcur = self.getCursor()
         self._exec(dbcur, 'SELECT COUNT(DISTINCT EPISODEID) FROM HISTORY')

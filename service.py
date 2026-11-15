@@ -33,13 +33,31 @@ class PlaybackMonitor(xbmc.Player):
         self.tracker = playertracker.PlaybackTracker(lambda: userdata.UserData(control.userDataFile))
         self._window = xbmcgui.Window(10000)
 
-    def onAVStarted(self):
+    def _log(self, message, level=xbmc.LOGINFO):
+        xbmc.log('[%s] Playback tracking: %s' % (control.addonInfo('name'), message), level=level)
+
+    def _playedEpisode(self):
+        """The id of the episode the plugin started: the property of the played item, else what the plugin left in the window"""
+        try:
+            episodeId = self.getPlayingItem().getProperty(self._tracker.ITEM_PROPERTY)
+            if episodeId:
+                return episodeId
+        except Exception as e:
+            self._log('can\'t read the played item: %s' % e, xbmc.LOGDEBUG)
         info = self._tracker.decode(self._window.getProperty(self._tracker.PROPERTY))
-        if info is None:
-            return  # not played by this add-on
-        self._window.clearProperty(self._tracker.PROPERTY)
-        self.tracker.start(info['id'])
-        threading.Thread(target=self._follow, args=(info['id'],)).start()
+        return info['id'] if info else None
+
+    def onAVStarted(self):
+        try:
+            episodeId = self._playedEpisode()
+            if not episodeId:
+                return  # not played by this add-on
+            self._window.clearProperty(self._tracker.PROPERTY)
+            self.tracker.start(episodeId)
+            self._log('following %s' % episodeId)
+            threading.Thread(target=self._follow, args=(episodeId,)).start()
+        except Exception as e:
+            self._log('start failed: %s' % e, xbmc.LOGERROR)
 
     def _follow(self, episodeId):
         monitor = xbmc.Monitor()
@@ -50,19 +68,31 @@ class PlaybackMonitor(xbmc.Player):
     def _sample(self):
         try:
             if self.isPlayingVideo():
-                self.tracker.update(self.getTime(), self.getTotalTime())
-        except RuntimeError:
+                position, total = self.getTime(), self.getTotalTime()
+                if not total:  # the player answers with the info labels when it doesn't with its methods
+                    position, total = float(xbmc.getInfoLabel('Player.Time(secs)') or 0), float(xbmc.getInfoLabel('Player.Duration(secs)') or 0)
+                self.tracker.update(position, total)
+        except (RuntimeError, ValueError):
             pass  # nothing is playing anymore
+
+    def _finish(self, ended):
+        try:
+            episodeId, position, total = self.tracker.episodeId, self.tracker.position, self.tracker.total
+            outcome = self.tracker.finish(ended)
+            if episodeId:
+                self._log('%s %s at %d/%d s -> %s' % (episodeId, 'ended' if ended else 'stopped', position, total, outcome))
+        except Exception as e:
+            self._log('stop failed: %s' % e, xbmc.LOGERROR)
 
     def onPlayBackPaused(self):
         self._sample()
 
     def onPlayBackStopped(self):
         self._sample()
-        self.tracker.finish(False)
+        self._finish(False)
 
     def onPlayBackEnded(self):
-        self.tracker.finish(True)
+        self._finish(True)
 
 
 class ProxyHandler(SimpleHTTPRequestHandler):

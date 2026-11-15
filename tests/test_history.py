@@ -60,6 +60,14 @@ class UserDataHistoryTest(unittest.TestCase):
             self.add('e%d' % i, i + 1)
         self.assertEqual(['e5', 'e4', 'e3'], [r['episodeid'] for r in self.ud.getHistory()])
 
+    def test_last_viewed_dates(self):
+        self.add('e1', 1)
+        self.add('e1', 5)
+        self.add('e2', 3)
+        self.ud.addToHistory('e3', 's1', 't', 's', '', 'episode', viewed='')  # backfilled: no date
+        self.assertEqual({'e1': '2026-01-05 10:00:00', 'e2': '2026-01-03 10:00:00'}, self.ud.getLastViewed(['e1', 'e2', 'e3', 'e4']))
+        self.assertEqual({}, self.ud.getLastViewed([]))
+
     def test_titles_with_quotes(self):
         self.ud.addToHistory('e1', 's1', "O'Brien's \"show\"; DROP TABLE HISTORY;--", 'S', '', 'movie')
         self.assertEqual("O'Brien's \"show\"; DROP TABLE HISTORY;--", self.ud.getHistory()[0]['title'])
@@ -85,6 +93,14 @@ class ViewHistoryTest(unittest.TestCase):
         self.assertEqual(('e1', 'From the catalog', 2), (item['id'], item['title'], item['views']))
         self.assertEqual('s1', item['showObj']['id'])
         self.assertTrue(item['dateviewed'])
+
+    def test_episodes_carry_the_date_of_their_last_view(self):
+        # what the skin sorts "last played" on, in every list and not only in the history
+        db.episodeDB.set([episode(1), episode(2), episode(3)])
+        self.ud.addToHistory('e1', 's1', 't', 's', '', 'episode', viewed='2026-01-01 10:00:00')
+        self.ud.addToHistory('e2', 's1', 't', 's', '', 'episode', viewed='2026-01-03 10:00:00')
+        found = dict((e['id'], e['dateviewed']) for e in db.episodeDB.getAll())
+        self.assertEqual({'e1': '2026-01-01 10:00:00', 'e2': '2026-01-03 10:00:00', 'e3': ''}, found)
 
     def test_list_survives_a_catalog_reset(self):
         history.recordView({'id': 'e9', 'parentid': 'gone', 'title': 'Kept title', 'show': 'Kept show', 'image': 'thumb', 'ltype': 'movie'})

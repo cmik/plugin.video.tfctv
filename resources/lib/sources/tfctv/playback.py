@@ -138,6 +138,7 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False, restart=False
                 tag.setResumePoint(float(resume), float(progress[1]))
                 control.showNotification(control.lang(37063) % time.strftime('%H:%M:%S', time.gmtime(resume)), control.lang(30001))
             # tell the service what is played, it keeps where it stops (libraries/playertracker.py)
+            item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))
             control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))
             try:
                 return control.resolve(thisPlugin, True, item)

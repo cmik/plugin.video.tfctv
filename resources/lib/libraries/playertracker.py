@@ -16,6 +16,8 @@ from resources.lib.libraries import control
 logger = control.logger
 
 PROPERTY = 'tfctv.nowplaying'
+# the played item carries the episode id too: nothing to expire, nothing to clear
+ITEM_PROPERTY = 'tfctv.episodeid'
 # a started playback is only taken into account if it starts within this delay (seconds)
 MAX_DELAY = 120
 # below this position (seconds) there is nothing worth resuming
