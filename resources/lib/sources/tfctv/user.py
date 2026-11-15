@@ -5,6 +5,7 @@ User data and account management
 """
 
 import json
+import time
 import datetime
 import hashlib
 from resources import config
@@ -272,11 +273,19 @@ def getCountryCode():
     logger.logInfo('Device country code is %s' % countryCode)
     return countryCode
 
+# when the geo location can't be read (the service refuses some networks), don't ask again at each request
+GEO_RETRY_DELAY = 600
+_geoFailedAt = [0]
+
 def getGeoLocation():
     """Get geo location"""
+    if time.time() - _geoFailedAt[0] < GEO_RETRY_DELAY:
+        return {}
     location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False)
     if 'status' in location and location.get('status') == 200 and 'data' in location and len(location.get('data')) > 0:
         data = location.get('data')[0]
         control.setSetting('geoLocation', json.dumps(data))
+        _geoFailedAt[0] = 0
         return data
+    _geoFailedAt[0] = time.time()
     return {}
