@@ -1,6 +1,7 @@
 3.6.0
     (in development) Development versions carry a ~devN suffix until the release
     Up Next: the next episode is offered at the end of an episode (needs the Up Next add-on)
+    Scheduled look for new shows and new episodes of My List, with a notification
 3.5.0
     Go to the show from Continue Watching and My View History; choice of the season in every list
 3.4.1

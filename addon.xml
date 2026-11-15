@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tfctv" name="iWantTFC" version="3.6.0~dev2" provider-name="cmik">
+<addon id="plugin.video.tfctv" name="iWantTFC" version="3.6.0~dev3" provider-name="cmik">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.six"/>
@@ -27,6 +27,7 @@
         <news>v3.6.0 (in development)
           [change] Development versions carry a ~devN suffix until the release
           [new] Up Next: the next episode is offered at the end of an episode (needs the Up Next add-on)
+          [new] The catalog is looked at on a schedule: new shows are loaded and the new episodes of the shows of My List are announced
         </news>
         <assets>
             <icon>resources/icon.png</icon>

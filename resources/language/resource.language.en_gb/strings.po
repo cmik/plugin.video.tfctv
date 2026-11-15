@@ -859,3 +859,23 @@ msgstr ""
 msgctxt "#30221"
 msgid "Offer the next episode at the end (needs the Up Next add-on)"
 msgstr ""
+
+msgctxt "#30222"
+msgid "Catalog"
+msgstr ""
+
+msgctxt "#30223"
+msgid "Look for new shows and new episodes of my list every (hours, 0 = never)"
+msgstr ""
+
+msgctxt "#30224"
+msgid "Notify the new episodes"
+msgstr ""
+
+msgctxt "#37064"
+msgid "New episodes in your list: %s"
+msgstr ""
+
+msgctxt "#37065"
+msgid "%d new shows in the catalog"
+msgstr ""
