@@ -1,6 +1,7 @@
 3.7.0
     (in development) Development versions carry a ~devN suffix until the release
     Live channels can be played again; the catalog is read for the country of the user
+    Settings in the Kodi 18+ format (same settings and values)
 3.6.0
     Up Next: the next episode is offered at the end of an episode (needs the Up Next add-on)
     Scheduled look for new shows and new episodes of My List, with a notification
