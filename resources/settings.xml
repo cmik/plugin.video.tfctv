@@ -72,6 +72,7 @@
         <setting id="upNext" type="bool" label="30221" default="true" visible="true"/>
         <setting type="sep"/>
         <setting type="lsep" label="30231"/>
+        <setting type="lsep" label="30244"/>
         <setting id="traktScrobble" type="bool" label="30232" default="false" visible="true"/>
         <setting id="traktClientId" type="text" label="30233" default="" enable="eq(-1,true)" visible="true"/>
         <setting id="traktClientSecret" type="text" label="30234" option="hidden" default="" enable="eq(-2,true)" visible="true"/>
