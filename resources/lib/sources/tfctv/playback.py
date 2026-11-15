@@ -11,8 +11,10 @@ from urllib.parse import quote, urlencode
 from resources import config
 from resources.lib.libraries import control
 from .catalog import getEpisode, getShow, episodeDB, showDB
+from .graphql import getAsset
+from .formatters import formatAssetToEpisode
 from .history import recordView
-from resources.lib.libraries import playertracker
+from resources.lib.libraries import playertracker, liveplayback
 from .auth import isLoggedIn, login
 from .utils import checkProxy
 
@@ -133,8 +135,10 @@ def playEpisode(episodeId, name, type, thumbnail):
             item.setProperty('fanart_image', episodeDetails['data']['fanart'])
             item.setProperty('IsPlayable', 'true')
             # tell the service what is played, it keeps where it stops (libraries/playertracker.py)
-            item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))
-            control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))
+            # (not for a live channel: nothing to resume, to scrobble or to follow with Up Next)
+            if not liveplayback.isLive(type):
+                item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))
+                control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))
             try:
                 return control.resolve(thisPlugin, True, item)
             except Exception:
@@ -174,19 +178,21 @@ def getMediaInfo(episodeId, title, type, thumbnail):
             'rating': mediaInfo['data']['rating'],
             'votes': mediaInfo['data']['votes']
             }
-        # keep what is already stored (artwork, description): the values above can be
-        # empty or show-level when playing from a list without thumbnail
-        stored = episodeDB.get(episodeId)
-        if len(stored) == 1:
-            for k in ('image', 'fanart', 'description', 'shortdescription'):
-                if stored[0].get(k):
-                    e[k] = stored[0][k]
-        episodeDB.set(e)
-        episodeDB.update({'id': episodeId, 'views': e['views'], 'rating': e['rating'], 'votes': e['votes']})
+        if not liveplayback.isLive(type):
+            # keep what is already stored (artwork, description): the values above can be
+            # empty or show-level when playing from a list without thumbnail
+            stored = episodeDB.get(episodeId)
+            if len(stored) == 1:
+                for k in ('image', 'fanart', 'description', 'shortdescription'):
+                    if stored[0].get(k):
+                        e[k] = stored[0][k]
+            episodeDB.set(e)
+            episodeDB.update({'id': episodeId, 'views': e['views'], 'rating': e['rating'], 'votes': e['votes']})
 
-        s = mediaInfo['data']['showObj']
-        showDB.update({'id': s.get('id'), 'views': s.get('views', 0) + 1})
-        recordView(e)
+            s = mediaInfo['data']['showObj']
+            showDB.update({'id': s.get('id'), 'views': s.get('views', 0) + 1})
+            recordView(e)
+        # a live channel is not an episode of the catalog: no stored views, no history
         
     return mediaInfo
 
@@ -226,9 +232,12 @@ def retrieveMediaInfo(episodeId, type):
     logger.logInfo('called function with param (%s, %s)' % (str(episodeId), type))
     from .api import callJsonApi
 
+    live = liveplayback.isLive(type)
+    from .user import getCountryCode
+    country = getCountryCode() or 'FR'
     playback = callJsonApi(
-        config.uri.get('video') % episodeId,
-        {
+        liveplayback.startPath(config.uri.get('video') % episodeId, episodeId, type, country),
+        liveplayback.withReferral({
             'platform': 'web',
             'subPlatform': 'firefox',
             'appVersion': '26.10.29-1',
@@ -253,12 +262,12 @@ def retrieveMediaInfo(episodeId, type):
                     'hdr10'
                 ]
             }
-        },
+        }, type),
         headers=[
             ('Authorization', 'Bearer %s' % control.setting('iWantUserAuthentication')),
             ('Referer', config.websiteSecuredUrl+'/'),
             ('Origin', config.websiteSecuredUrl),
-            ('x-country-code', 'FR'),
+            ('x-country-code', country),
             ('x-device-platform', 'web'),
             ('x-device-subplatform', 'firefox'),
             ('Sec-Fetch-Dest', 'empty'),
@@ -290,7 +299,8 @@ def retrieveMediaInfo(episodeId, type):
         }
 
     logger.logInfo('episode')
-    episode = logger.logDebug(getEpisode(episodeId))
+    # a channel is shown from its asset: it is not stored in the episodes of the catalog
+    episode = logger.logDebug(formatAssetToEpisode(getAsset(episodeId), {}) if live else getEpisode(episodeId))
 
     if episode.get('id', True) is True or 'playbackInfo' not in playback or 'url' not in playback.get('playbackInfo', {}):
         mediaInfo['StatusMessage'] = control.lang(37032)

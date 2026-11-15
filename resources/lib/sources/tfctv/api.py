@@ -195,6 +195,11 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
                 control.showNotification(control.lang(37012), control.lang(30004))
             else:
                 logger.logError(e)
+                try:
+                    # what the server says about the error (it explains a 400 or a 403)
+                    logger.logError('HTTP %s answer of %s: %s' % (e.code, url, e.read()[:600].decode('utf-8', 'replace')))
+                except Exception:
+                    pass
                 message = '%s : %s' % (e, url)
                 logger.logSevere(message)
                 control.showNotification(message, control.lang(30004))
@@ -238,8 +243,15 @@ def callJsonApi(path, params={}, headers=[], base_url=config.webserviceUrl, useC
 def callGraphQLApi(query, variables={}, headers=[], base_url=config.webserviceUrl, useCache=True):
     """Call GraphQL API"""
     logger.logInfo('called function with query %s...' % query[:20])
+    headers = list(headers)  # not the default list, shared by every call
     headers.append(('Accept', 'application/graphql-response+json, application/json'))
     headers.append(('Content-Type', 'application/json'))
+    if not any(h[0].lower() == 'x-country-code' for h in headers):
+        # what the catalog lists (rails, channels) depends on the country, as on the website
+        from .user import getCountryCode
+        countryCode = getCountryCode()
+        if countryCode:
+            headers.append(('x-country-code', countryCode))
     params = {
         'query': query,
         'variables': variables
