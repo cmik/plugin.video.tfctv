@@ -27,8 +27,8 @@ def upgradeDB():
     if seed.seedReason(control.setting('lastVersion')):
         logger.logNotice('Installing the catalog')
         tools.checkInstallDB(True)
-    elif control.setting('lastVersion') == '3.1.0':
-        # 3.1.0 stored the shows without categories: load their details again in the background
+    elif shows.Show(control.showsFile).getWithoutSeasonCount():
+        # shows stored by an older version lack their number of seasons (and maybe their categories): load their details again in the background
         control.execute('RunPlugin(plugin://%s/?mode=%d&caller=upgrade)' % (control.addonInfo('id'), config.CATCHUPCATALOG))
     # keep the actors of the old catalog that can be attached to the shows of the current one
     from resources.lib.libraries import legacycast

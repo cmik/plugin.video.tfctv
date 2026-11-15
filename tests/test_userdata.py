@@ -92,16 +92,26 @@ class ModelsTest(unittest.TestCase):
         self.assertEqual((4, 5, 0, 'New title'), (found['e1']['views'], found['e1']['rating'], found['e1']['votes'], found['e1']['title']))
         self.assertEqual(0, found['e2']['views'])
 
-    def test_shows_without_category(self):
-        self.shows.set([dict(show(1), parentname=''), dict(show(2), parentname='Drama|Romance'), dict(show(3), parentname=None)])
-        self.assertEqual(['s1', 's3'], sorted(self.shows.getWithoutCategory()))
+    def test_number_of_seasons(self):
+        self.shows.set([dict(show(1), nbSeasons=3), dict(show(2)), dict(show(3), nbSeasons=1)])
+        self.assertEqual({'s1': 3, 's2': 0, 's3': 1}, dict((s['id'], s['nbSeasons']) for s in self.shows.getAll()))
+        self.assertEqual(['s2'], self.shows.getWithoutSeasonCount())  # a show has at least one season: 0 means unknown
+        self.shows.set([dict(show(2), nbSeasons=2)])  # loaded again
+        self.assertEqual([], self.shows.getWithoutSeasonCount())
 
-    def test_actor_model(self):
-        actors = celebrities.Actor(os.path.join(self.dir, 'actors.db'))
-        self.assertTrue(actors.set([{'id': 'a1', 'name': "D'Arc", 'thumbnail': 't', 'fanart': 'f', 'banner': 'b', 'url': 'u',
-                                     'description': "it's", 'birthday': '1990', 'birthplace': 'Manila'}]))
-        found = actors.get('a1')
-        self.assertEqual([("D'Arc", 'Manila')], [(a['name'], a['birthplace']) for a in found])
+    def test_database_of_a_previous_version_gets_the_column(self):
+        path = os.path.join(self.dir, 'old_shows.db')
+        db = sqlite3.connect(path)
+        db.execute('CREATE TABLE SHOW (ID TEXT PRIMARY KEY, TITLE TEXT, PARENTID TEXT, PARENTNAME TEXT, THUMBNAIL TEXT, IMAGE TEXT, FANART TEXT, BANNER TEXT, URL TEXT, '
+                   'DESCRIPTION TEXT, SHORTDESCRIPTION TEXT, YEAR TEXT, TYPE TEXT, DURATION INTEGER NOT NULL DEFAULT 0, VIEWS INTEGER NOT NULL DEFAULT 0, '
+                   'RATING INTEGER NOT NULL DEFAULT 0, VOTES INTEGER NOT NULL DEFAULT 0, MYLIST TEXT)')
+        db.execute("INSERT INTO SHOW VALUES ('old', 'Old show', 'p', 'Drama', '', '', '', '', '', '', '', '2020', 'show', 0, 0, 0, 0, 'false')")
+        db.commit()
+        db.close()
+        old = shows.Show(path)
+        old._userdata = self.ud
+        self.assertEqual([('old', 0)], [(s['id'], s['nbSeasons']) for s in old.getAll()])
+        self.assertEqual(['old'], old.getWithoutSeasonCount())
 
     def test_many_ids(self):
         self.shows.set([show(i) for i in range(1200)])

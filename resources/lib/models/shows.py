@@ -13,7 +13,7 @@ logger = control.logger
 
 class Show(model.Model):
     
-    _columns = ('ID', 'TITLE', 'PARENTID', 'PARENTNAME', 'THUMBNAIL', 'IMAGE', 'FANART', 'BANNER', 'URL', 'DESCRIPTION', 'SHORTDESCRIPTION', 'YEAR', 'TYPE', 'DURATION', 'VIEWS', 'RATING', 'VOTES', 'MYLIST')
+    _columns = ('ID', 'TITLE', 'PARENTID', 'PARENTNAME', 'THUMBNAIL', 'IMAGE', 'FANART', 'BANNER', 'URL', 'DESCRIPTION', 'SHORTDESCRIPTION', 'YEAR', 'TYPE', 'DURATION', 'VIEWS', 'RATING', 'VOTES', 'MYLIST', 'NBSEASONS')
     _select = "SELECT ID, \
             TITLE, \
             PARENTID, \
@@ -31,13 +31,14 @@ class Show(model.Model):
             VIEWS, \
             RATING, \
             VOTES, \
-            MYLIST \
+            MYLIST, \
+            NBSEASONS \
             FROM SHOW"
 
     def _getStructure(self, data):
         logger.logDebug(len(data))
         logger.logDebug(data)
-        if len(data) == 18:
+        if len(data) == 19:
             return {
                 'id' : data[0],
                 'name' : data[1],
@@ -57,6 +58,7 @@ class Show(model.Model):
                 'rating' : int(data[15]),
                 'votes' : int(data[16]),
                 'mylist' : data[17],
+                'nbSeasons' : int(data[18] or 0),
                 'type' : 'show'
                 }
         return {}
@@ -110,7 +112,8 @@ class Show(model.Model):
             VIEWS, \
             RATING, \
             VOTES, \
-            MYLIST \
+            MYLIST, \
+            NBSEASONS \
             FROM SHOW"))
         return logger.logDebug(dbcur.fetchall())
          
@@ -136,6 +139,7 @@ class Show(model.Model):
                     ('FANART', data.get('fanart')),
                     ('BANNER', data.get('banner')),
                     ('URL', data.get('url')),
+                    ('NBSEASONS', data.get('nbSeasons')),
                     ('DESCRIPTION', data.get('description')),
                     ('SHORTDESCRIPTION', data.get('shortdescription')),
                     ('YEAR', data.get('year')),
@@ -155,7 +159,7 @@ class Show(model.Model):
             dbcur.execute('PRAGMA encoding="UTF-8";')
             self._deleteByIds(dbcur, 'SHOW', ids)
             for data in mixed:
-                self._exec(dbcur, "INSERT INTO SHOW VALUES (%s)" % ','.join('?' * 18), (
+                self._exec(dbcur, "INSERT INTO SHOW (ID, TITLE, PARENTID, PARENTNAME, THUMBNAIL, IMAGE, FANART, BANNER, URL, DESCRIPTION, SHORTDESCRIPTION, YEAR, TYPE, DURATION, VIEWS, RATING, VOTES, MYLIST, NBSEASONS) VALUES (%s)" % ','.join('?' * 19), (
                     data.get('id'),
                     data.get('name'),
                     data.get('parentid'),
@@ -173,7 +177,8 @@ class Show(model.Model):
                     0,
                     0,
                     0,
-                    'false'))  # views, rating, votes, mylist: kept in the user data database
+                    'false',  # views, rating, votes, mylist: kept in the user data database
+                    int(data.get('nbSeasons') or 0)))
             self._dbcon.commit()
             return True
         return False
@@ -218,10 +223,14 @@ class Show(model.Model):
             ids = ids[:int(limit)]
         return self.get(ids) if ids else []
 
-    def getWithoutCategory(self):
-        """The ids of the shows stored without categories"""
+    def __init__(self, databasePath):
+        model.Model.__init__(self, databasePath)
+        self.checkIfTableExists()
+
+    def getWithoutSeasonCount(self):
+        """The ids of the shows stored before the number of seasons was (a show has at least one): their details must be loaded again"""
         dbcur = self.getCursor()
-        self._exec(dbcur, "SELECT ID FROM SHOW WHERE PARENTNAME IS NULL OR PARENTNAME = ''")
+        self._exec(dbcur, "SELECT ID FROM SHOW WHERE NBSEASONS = 0")
         return [row[0] for row in dbcur.fetchall()]
 
     def getAllCategories(self):
@@ -252,7 +261,10 @@ class Show(model.Model):
             VIEWS INTEGER NOT NULL DEFAULT 0, \
             RATING INTEGER NOT NULL DEFAULT 0, \
             VOTES INTEGER NOT NULL DEFAULT 0, \
-            MYLIST TEXT)"))
+            MYLIST TEXT, \
+            NBSEASONS INTEGER NOT NULL DEFAULT 0)"))
+        if 'NBSEASONS' not in [row[1].upper() for row in dbcur.execute('PRAGMA table_info(SHOW)').fetchall()]:
+            dbcur.execute('ALTER TABLE SHOW ADD COLUMN NBSEASONS INTEGER NOT NULL DEFAULT 0')  # databases of the previous versions
         self._dbcon.commit()
         return True
             

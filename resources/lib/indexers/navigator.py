@@ -137,7 +137,7 @@ class navigator:
         items = tfctv.getMyList()
         for item in items:
             image = item.get('logo') if control.setting('useShowLogo') == 'true' else item.get('image')
-            self.addDirectoryItem(item.get('name'), str(item.get('id')), config.SHOWEPISODES, image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
+            self.addDirectoryItem(item.get('name'), str(item.get('id')), self.showMode(item), image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
         self.endDirectory(content='tvshows', sortMethods=('unsorted', 'title', 'year'))
             
     def addPlayableEpisodes(self, episodes, options={}):
@@ -205,7 +205,7 @@ class navigator:
         for e in content:
             if e['ltype'] == 'show':
                 image = e.get('logo') if control.setting('useShowLogo') == 'true' else e.get('image')
-                self.addDirectoryItem(e.get('name'), str(e.get('id')), config.SEASONS if e.get('nbSeasons', 0) > 1 else config.SHOWEPISODES, image, isFolder=True, **self.formatShowInfo(e))
+                self.addDirectoryItem(e.get('name'), str(e.get('id')), self.showMode(e), image, isFolder=True, **self.formatShowInfo(e))
             elif e['ltype'] in ('movie', 'episode', 'documentary', 'livestream') and e.get('isPlayable', True):
                 title = e.get('name')
                 title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('name'))
@@ -216,13 +216,17 @@ class navigator:
             self.addDirectoryItem(control.lang(36008), section, config.SECTIONCONTENT, '', page + 1)
         self.endDirectory(content='videos', sortMethods=('unsorted', 'title', 'year'))
 
+    def showMode(self, show):
+        """A show with several seasons offers the choice of the season before its episodes"""
+        return config.SEASONS if (show.get('nbSeasons') or 0) > 1 else config.SHOWEPISODES
+
     def displayShows(self, shows):
         logger.logInfo('called function')
         sortedShowInfos = []
         for show in shows:
             image = show['logo'] if control.setting('useShowLogo') == 'true' else show['image']
             if show['ltype'] == 'show':
-                sortedShowInfos.append((show.get('name').lower(), show.get('name'), str(show.get('id')), config.SHOWEPISODES, image, True, {'parentid' : str(show.get('parentid')), 'year' : show.get('year')}, self.formatShowInfo(show)))
+                sortedShowInfos.append((show.get('name').lower(), show.get('name'), str(show.get('id')), self.showMode(show), image, True, {'parentid' : str(show.get('parentid')), 'year' : show.get('year')}, self.formatShowInfo(show)))
             elif show['ltype'] in ('movie', 'episode', 'documentary', 'livestream'):
                 title = show.get('name')
                 sortedShowInfos.append((title.lower(), title, str(show.get('id')), config.PLAY, show.get('image'), False, {'ltype': show['ltype'], 'title': title}, self.formatVideoInfo(show)))

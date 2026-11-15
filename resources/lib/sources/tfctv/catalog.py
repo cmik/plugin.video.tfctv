@@ -215,19 +215,20 @@ def storeEpisodes(episodes):
     if updated:
         episodeDB.update(updated)
 
-def repairShowCategories():
-    """Load again the details of the shows stored without categories (an older version didn't read them)"""
+def repairShowDetails():
+    """Load again the details of the shows stored before the number of their seasons was (older versions
+    didn't store it, nor read their categories)"""
     logger.logInfo('called function')
     repaired = 0
-    for showId in showDB.getWithoutCategory():
+    for showId in showDB.getWithoutSeasonCount():
         try:
             data = formatAssetToShow(getAsset(showId))
-            if data.get('parentname'):
+            if data.get('id'):
                 showDB.set(data)
                 repaired += 1
         except Exception as e:
-            logger.logError('Can\'t repair the categories of show %s : %s' % (showId, str(e)))
-    logger.logNotice('Categories repaired for %d shows' % repaired)
+            logger.logError('Can\'t repair the details of show %s : %s' % (showId, str(e)))
+    logger.logNotice('Details repaired for %d shows' % repaired)
     return repaired
 
 def getShowWithEpisodes(showId, season='1'):
