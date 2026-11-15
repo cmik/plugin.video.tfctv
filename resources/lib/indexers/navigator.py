@@ -70,6 +70,9 @@ class navigator:
         if tfctv.isLoggedIn() and control.setting('displayMyList') == 'true':
             self.addDirectoryItem(control.lang(30200), config.uri.get('base'), config.MYLIST, control.addonFolderIcon(control.lang(30200)), isFolder=True, **self.formatMenu())
         
+        if control.setting('displayContinueWatching') != 'false':
+            self.addDirectoryItem(control.lang(30218), config.uri.get('base'), config.CONTINUEWATCHING, control.addonFolderIcon(control.lang(30218)), isFolder=True, **self.formatMenu())
+
         if control.setting('displayViewHistory') != 'false':
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
 
@@ -127,7 +130,7 @@ class navigator:
             if title_match:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'title': title}, **self.formatVideoInfo(e, addToList=False))
-        self.endDirectory()
+        self.endDirectory(content='episodes', sortMethods=('unsorted', 'lastplayed'))
 
     def showMyListCategory(self, url):   
         logger.logInfo('called function')
@@ -135,23 +138,35 @@ class navigator:
         for item in items:
             image = item.get('logo') if control.setting('useShowLogo') == 'true' else item.get('image')
             self.addDirectoryItem(item.get('name'), str(item.get('id')), config.SHOWEPISODES, image, isFolder=True, query={'parentid' : str(item.get('parentid')), 'year' : item.get('year')}, **self.formatShowInfo(item, addToList=False))
-        self.endDirectory()
+        self.endDirectory(content='tvshows', sortMethods=('unsorted', 'title', 'year'))
             
-    def showViewHistory(self, page=1):
-        logger.logInfo('called function')
-        itemsPerPage = int(control.setting('itemsPerPage'))
-        episodes = tfctv.getViewHistory(page, itemsPerPage)
+    def addPlayableEpisodes(self, episodes, options={}):
+        """List episodes (or movies) that can be played, with the same title format as the episode lists"""
         for e in episodes:
             title = e.get('title')
             title_match = re.compile(r'S(\d+)E(\d+) (.+)', re.IGNORECASE).search(e.get('title') or '')
             if title_match:
                 title = '%s | Episode %s | %s' % (e.get('show'), title_match.group(2), title_match.group(3))
-            self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder=False, query={'ltype': e.get('ltype'), 'title': title}, **self.formatVideoInfo(e, options={'history': True}))
+            self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder=False, query={'ltype': e.get('ltype'), 'title': title}, **self.formatVideoInfo(e, options=options))
+
+    def showViewHistory(self, page=1):
+        logger.logInfo('called function')
+        itemsPerPage = int(control.setting('itemsPerPage'))
+        episodes = tfctv.getViewHistory(page, itemsPerPage)
+        self.addPlayableEpisodes(episodes, {'history': True})
         if tfctv.hasNextViewHistoryPage(page, itemsPerPage):
             self.addDirectoryItem(control.lang(36008), config.uri.get('base'), config.VIEWHISTORY, '', page + 1)
         if len(episodes) > 0 and int(page) == 1:
             self.addDirectoryItem(control.lang(36026), config.uri.get('base'), config.CLEARHISTORY, control.addonFolderIcon(control.lang(36026)), isFolder=False)
-        self.endDirectory()
+        self.endDirectory(content='episodes', sortMethods=('unsorted', 'lastplayed'))
+
+    def showContinueWatching(self, page=1):
+        logger.logInfo('called function')
+        itemsPerPage = int(control.setting('itemsPerPage'))
+        self.addPlayableEpisodes(tfctv.getContinueWatching(page, itemsPerPage))
+        if tfctv.hasNextContinueWatchingPage(page, itemsPerPage):
+            self.addDirectoryItem(control.lang(36008), config.uri.get('base'), config.CONTINUEWATCHING, '', page + 1)
+        self.endDirectory(content='episodes', sortMethods=('unsorted', 'lastplayed'))
 
     def clearViewHistory(self):
         logger.logInfo('called function')
@@ -199,7 +214,7 @@ class navigator:
                 self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e['ltype'], 'title': title}, **self.formatVideoInfo(e))
         if len(content) == itemsPerPage:
             self.addDirectoryItem(control.lang(36008), section, config.SECTIONCONTENT, '', page + 1)
-        self.endDirectory()
+        self.endDirectory(content='videos', sortMethods=('unsorted', 'title', 'year'))
 
     def displayShows(self, shows):
         logger.logInfo('called function')
@@ -216,7 +231,7 @@ class navigator:
         for info in sortedShowInfos:
             self.addDirectoryItem(info[1], info[2], info[3], info[4], isFolder=info[5], query=info[6], **info[7])
                 
-        self.endDirectory()
+        self.endDirectory(content='tvshows', sortMethods=('unsorted', 'title', 'year'))
         
     def showEpisodes(self, showId, season='1', page=1):
         logger.logInfo('called function')
@@ -231,7 +246,7 @@ class navigator:
             self.addDirectoryItem(title, str(e.get('id')), config.PLAY, e.get('image'), isFolder = False, query={'ltype': e.get('ltype'), 'title': e.get('title')}, **self.formatVideoInfo(e, addToList=False))
         if len(episodes) == itemsPerPage or nextPage:
             self.addDirectoryItem(control.lang(36008), showId, config.SHOWEPISODES, '', page + 1, query={'season': season})
-        self.endDirectory()
+        self.endDirectory(content='episodes', sortMethods=('unsorted', 'episode', 'title', 'lastplayed'))
 
     def chooseBandwidth(self, episodeId, title, type, thumbnail):
         logger.logInfo('called function')
@@ -504,7 +519,9 @@ class navigator:
                     'votes': info.get('votes', 0),
                     # what was played is flagged as viewed
                     'playcount': info['views'] if info.get('views') is not None else tfctv.getEpisodeViews(info.get('id')),
-                    'lastplayed': info.get('dateviewed', '')
+                    'lastplayed': info.get('dateviewed', ''),
+                    'resumetime': info.get('resumeposition', 0),
+                    'totaltime': info.get('totaltime', 0)
                     } 
                 },
             'contextMenu' : contextMenu
@@ -552,6 +569,8 @@ class navigator:
                         if 'mediatype' in infoLabels: tag.setMediaType(infoLabels['mediatype'])
                         if 'playcount' in infoLabels: tag.setPlaycount(int(infoLabels['playcount']) if str(infoLabels['playcount']).isdigit() else 0)
                         if infoLabels.get('lastplayed'): tag.setLastPlayed(infoLabels['lastplayed'])
+                        # Kodi shows the progress bar and offers its own Resume / Play from beginning, and applies them
+                        if infoLabels.get('resumetime'): tag.setResumePoint(float(infoLabels['resumetime']), float(infoLabels.get('totaltime') or 0))
                     else:
                         item.setInfo(listInfoKey, listInfoValue)
             if k == 'listArts':
@@ -596,7 +615,8 @@ class navigator:
             logger.logError('Error occurred while generating action URL (query): %s' % e)
         return logger.logDebug(url)
 
-    def endDirectory(self, cacheToDisc=True):
+    def endDirectory(self, cacheToDisc=True, content=None, sortMethods=('unsorted',)):
+        control.setListing(int(sys.argv[1]), content, sortMethods)
         control.directory(int(sys.argv[1]), cacheToDisc=cacheToDisc)
 
 

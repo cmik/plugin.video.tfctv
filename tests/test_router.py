@@ -93,6 +93,7 @@ EXPECTED = {
     config.LOGINWITHFB: [["navigator.loginWithFB", [], []]],
     config.VIEWHISTORY: [["navigator.showViewHistory", [3], []]],
     config.CLEARHISTORY: [["navigator.clearViewHistory", [], []]],
+    config.CONTINUEWATCHING: [["navigator.showContinueWatching", [3], []]],
     config.REMOVEFROMHISTORY: [["navigator.removeFromViewHistory", ["U", "N"], []]],
     config.CATCHUPCATALOG: [["tfctv.catchUpCatalog", [], []]],
     config.FIRSTINSTALL: [["navigator.firstInstall", [], []]],

@@ -65,6 +65,7 @@ ROUTES = {
     config.MYTRANSACTIONS: lambda r: navigator().showMyTransactions(),
     config.MYLIST: lambda r: navigator().showMyList(),
     config.VIEWHISTORY: lambda r: navigator().showViewHistory(r.page),
+    config.CONTINUEWATCHING: lambda r: navigator().showContinueWatching(r.page),
     config.CLEARHISTORY: lambda r: navigator().clearViewHistory(),
     config.REMOVEFROMHISTORY: lambda r: navigator().removeFromViewHistory(r.url, r.name),
     config.MYLISTSHOWLASTEPISODES: lambda r: navigator().showMyListShowLastEpisodes(),

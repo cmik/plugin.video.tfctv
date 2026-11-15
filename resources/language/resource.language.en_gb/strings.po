@@ -839,3 +839,11 @@ msgstr ""
 msgctxt "#37062"
 msgid "%s has been removed from the view history"
 msgstr ""
+
+msgctxt "#30218"
+msgid "Continue Watching"
+msgstr ""
+
+msgctxt "#30219"
+msgid "Display continue watching"
+msgstr ""

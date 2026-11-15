@@ -1,3 +1,5 @@
+3.4.0
+    Resume playback, Continue Watching menu, content types and sort methods for the lists
 3.3.0
     My View History menu, played episodes flagged as viewed
 3.2.1

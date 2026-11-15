@@ -13,6 +13,7 @@ import ssl
 import time
 import xbmc
 import xbmcaddon
+import xbmcgui
 import http.cookiejar as cookielib
 from six.moves import socketserver
 from urllib import request as libRequest
@@ -20,6 +21,79 @@ from urllib.parse import quote, urlencode, urlparse, parse_qsl
 from http.server import SimpleHTTPRequestHandler
 from resources import config
 from resources.lib.libraries import control
+
+class PlaybackMonitor(xbmc.Player):
+    """Keeps where each episode was left (see libraries/playertracker.py)"""
+
+    def __init__(self):
+        xbmc.Player.__init__(self)
+        from resources.lib.libraries import playertracker
+        from resources.lib.models import userdata
+        self._tracker = playertracker
+        self.tracker = playertracker.PlaybackTracker(lambda: userdata.UserData(control.userDataFile))
+        self._window = xbmcgui.Window(10000)
+
+    def _log(self, message, level=xbmc.LOGINFO):
+        xbmc.log('[%s] Playback tracking: %s' % (control.addonInfo('name'), message), level=level)
+
+    def _playedEpisode(self):
+        """The id of the episode the plugin started: the property of the played item, else what the plugin left in the window"""
+        try:
+            episodeId = self.getPlayingItem().getProperty(self._tracker.ITEM_PROPERTY)
+            if episodeId:
+                return episodeId
+        except Exception as e:
+            self._log('can\'t read the played item: %s' % e, xbmc.LOGDEBUG)
+        info = self._tracker.decode(self._window.getProperty(self._tracker.PROPERTY))
+        return info['id'] if info else None
+
+    def onAVStarted(self):
+        try:
+            episodeId = self._playedEpisode()
+            if not episodeId:
+                return  # not played by this add-on
+            self._window.clearProperty(self._tracker.PROPERTY)
+            self.tracker.start(episodeId)
+            self._log('following %s' % episodeId)
+            threading.Thread(target=self._follow, args=(episodeId,)).start()
+        except Exception as e:
+            self._log('start failed: %s' % e, xbmc.LOGERROR)
+
+    def _follow(self, episodeId):
+        monitor = xbmc.Monitor()
+        while self.tracker.active and self.tracker.episodeId == episodeId and not monitor.abortRequested():
+            self._sample()
+            monitor.waitForAbort(5)
+
+    def _sample(self):
+        try:
+            if self.isPlayingVideo():
+                position, total = self.getTime(), self.getTotalTime()
+                if not total:  # the player answers with the info labels when it doesn't with its methods
+                    position, total = float(xbmc.getInfoLabel('Player.Time(secs)') or 0), float(xbmc.getInfoLabel('Player.Duration(secs)') or 0)
+                self.tracker.update(position, total)
+        except (RuntimeError, ValueError):
+            pass  # nothing is playing anymore
+
+    def _finish(self, ended):
+        try:
+            episodeId, position, total = self.tracker.episodeId, self.tracker.position, self.tracker.total
+            outcome = self.tracker.finish(ended)
+            if episodeId:
+                self._log('%s %s at %d/%d s -> %s' % (episodeId, 'ended' if ended else 'stopped', position, total, outcome))
+        except Exception as e:
+            self._log('stop failed: %s' % e, xbmc.LOGERROR)
+
+    def onPlayBackPaused(self):
+        self._sample()
+
+    def onPlayBackStopped(self):
+        self._sample()
+        self._finish(False)
+
+    def onPlayBackEnded(self):
+        self._finish(True)
+
 
 class ProxyHandler(SimpleHTTPRequestHandler):
 
@@ -146,6 +220,7 @@ if __name__ == "__main__":
         xbmc.log('[%s] Service: starting library checker' % control.addonInfo('name'), level=xbmc.LOGINFO)
     
     monitor = xbmc.Monitor()
+    playbackMonitor = PlaybackMonitor()
 
     while not monitor.abortRequested():
         # Sleep/wait for abort for 10 seconds

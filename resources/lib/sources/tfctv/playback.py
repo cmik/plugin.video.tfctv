@@ -6,11 +6,13 @@ Media playback module
 
 import re
 import json
+import time
 from urllib.parse import quote, urlencode
 from resources import config
 from resources.lib.libraries import control
 from .catalog import getEpisode, getShow, episodeDB, showDB
 from .history import recordView
+from resources.lib.libraries import playertracker
 from .auth import isLoggedIn, login
 from .utils import checkProxy
 
@@ -128,6 +130,9 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             
             item.setProperty('fanart_image', episodeDetails['data']['fanart'])
             item.setProperty('IsPlayable', 'true')
+            # tell the service what is played, it keeps where it stops (libraries/playertracker.py)
+            item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))
+            control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))
             try:
                 return control.resolve(thisPlugin, True, item)
             except Exception:

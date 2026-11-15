@@ -28,6 +28,19 @@ jobs:
       - name: Check version, changelog, md5 and tracked files
         run: python .github/scripts/check_release.py
 
+  python-kodi22:
+    name: Python 3.14 (Kodi 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14' # the Python of Kodi 22
+      - name: Compile all the Python files
+        run: python -W error::SyntaxWarning -W error::DeprecationWarning -m compileall -q -f default.py service.py resources
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+
   addon-checker:
     name: kodi-addon-checker
     runs-on: ubuntu-latest

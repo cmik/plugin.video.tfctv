@@ -73,9 +73,15 @@ class Episode(model.Model):
         """The counters come from the user data database"""
         if not items:
             return items
-        stats = self.getUserData().getStats(userdata.EPISODE, [item['id'] for item in items if item.get('id')])
+        ids = [item['id'] for item in items if item.get('id')]
+        ud = self.getUserData()
+        stats = ud.getStats(userdata.EPISODE, ids)
+        progress = ud.getProgress(ids)
+        lastViewed = ud.getLastViewed(ids)  # what the skin sorts "last played" on
         for item in items:
+            item['dateviewed'] = lastViewed.get(item.get('id'), '')
             item['views'], item['rating'], item['votes'] = stats.get(item.get('id'), (0, 0, 0))
+            item['resumeposition'], item['totaltime'] = progress.get(item.get('id'), (0, 0))
         return items
 
     def _search(self, search, limit):

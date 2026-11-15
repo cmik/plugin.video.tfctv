@@ -67,7 +67,12 @@ class UserData(model.Model):
                 THUMBNAIL TEXT, \
                 LTYPE TEXT, \
                 VIEWED TEXT)",
-            "CREATE INDEX IF NOT EXISTS HISTORY_EPISODE ON HISTORY (EPISODEID)"
+            "CREATE INDEX IF NOT EXISTS HISTORY_EPISODE ON HISTORY (EPISODEID)",
+            "CREATE TABLE IF NOT EXISTS PROGRESS (\
+                EPISODEID TEXT PRIMARY KEY, \
+                POSITION INTEGER NOT NULL DEFAULT 0, \
+                TOTAL INTEGER NOT NULL DEFAULT 0, \
+                UPDATED TEXT)"
         ):
             self._exec(dbcur, sql)
         self._dbcon.commit()
@@ -176,6 +181,15 @@ class UserData(model.Model):
         return [{'episodeid': r[0], 'showid': r[1], 'title': r[2], 'show': r[3], 'thumbnail': r[4], 'ltype': r[5], 'viewed': r[6]}
                 for r in dbcur.fetchall()]
 
+    def getLastViewed(self, ids):
+        """{episode id: date of its last view} for the episodes that were viewed on a known date"""
+        rows = self._selectBy('SELECT EPISODEID, VIEWED FROM HISTORY', 'EPISODEID', ids, where="VIEWED <> ''") if ids else []
+        last = {}
+        for episodeId, viewed in rows:
+            if viewed and viewed > last.get(episodeId, ''):
+                last[episodeId] = viewed
+        return last
+
     def countHistory(self):
         dbcur = self.getCursor()
         self._exec(dbcur, 'SELECT COUNT(DISTINCT EPISODEID) FROM HISTORY')
@@ -190,6 +204,7 @@ class UserData(model.Model):
         """Forget an episode: it isn't listed anymore and its viewed flag goes with it"""
         dbcur = self.getCursor()
         self._exec(dbcur, 'DELETE FROM HISTORY WHERE EPISODEID = ?', (str(episodeId),))
+        self._exec(dbcur, 'DELETE FROM PROGRESS WHERE EPISODEID = ?', (str(episodeId),))
         self._exec(dbcur, 'UPDATE STATS SET VIEWS = 0 WHERE KIND = ? AND ITEMID = ?', (EPISODE, str(episodeId)))
         self._dbcon.commit()
         return True
@@ -197,9 +212,45 @@ class UserData(model.Model):
     def clearHistory(self):
         dbcur = self.getCursor()
         self._exec(dbcur, 'DELETE FROM HISTORY')
+        self._exec(dbcur, 'DELETE FROM PROGRESS')
         self._exec(dbcur, 'UPDATE STATS SET VIEWS = 0 WHERE KIND = ?', (EPISODE,))
         self._dbcon.commit()
         return True
+
+    # --- playback progress: where to resume an episode that wasn't finished
+
+    def setProgress(self, episodeId, position, total):
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'DELETE FROM PROGRESS WHERE EPISODEID = ?', (str(episodeId),))
+        self._exec(dbcur, 'INSERT INTO PROGRESS (EPISODEID, POSITION, TOTAL, UPDATED) VALUES (?, ?, ?, ?)',
+                   (str(episodeId), int(position), int(total), time.strftime('%Y-%m-%d %H:%M:%S')))
+        self._dbcon.commit()
+        return True
+
+    def clearProgress(self, episodeId):
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'DELETE FROM PROGRESS WHERE EPISODEID = ?', (str(episodeId),))
+        self._dbcon.commit()
+        return True
+
+    def getProgress(self, ids):
+        """{episode id: (position, total)} in seconds, for the episodes that can be resumed"""
+        rows = self._selectBy('SELECT EPISODEID, POSITION, TOTAL FROM PROGRESS', 'EPISODEID', ids) if ids else []
+        return dict((r[0], (int(r[1]), int(r[2]))) for r in rows)
+
+    def getProgressList(self, limit=100, offset=0):
+        """The episodes that can be resumed, the last played first, with what was kept of the last view"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'SELECT p.EPISODEID, p.POSITION, p.TOTAL, p.UPDATED, h.SHOWID, h.TITLE, h.SHOWNAME, h.THUMBNAIL, h.LTYPE '
+                          'FROM PROGRESS p LEFT JOIN HISTORY h ON h.ID = (SELECT MAX(ID) FROM HISTORY WHERE EPISODEID = p.EPISODEID) '
+                          'ORDER BY p.UPDATED DESC, p.EPISODEID LIMIT ? OFFSET ?', (int(limit), int(offset)))
+        return [{'episodeid': r[0], 'position': r[1], 'total': r[2], 'viewed': r[3], 'showid': r[4] or '', 'title': r[5] or '',
+                 'show': r[6] or '', 'thumbnail': r[7] or '', 'ltype': r[8] or ''} for r in dbcur.fetchall()]
+
+    def countProgress(self):
+        dbcur = self.getCursor()
+        self._exec(dbcur, 'SELECT COUNT(*) FROM PROGRESS')
+        return dbcur.fetchone()[0]
 
     def getViewedEpisodeIds(self):
         """The episodes that have a view count (played before the view history existed, or whose history was lost)"""
