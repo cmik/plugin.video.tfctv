@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tfctv" name="iWantTFC" version="3.6.0~dev1" provider-name="cmik">
+<addon id="plugin.video.tfctv" name="iWantTFC" version="3.6.0~dev2" provider-name="cmik">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.six"/>
@@ -8,6 +8,7 @@
         <import addon="script.module.inputstreamhelper" version="0.2.2"/>
         <import addon="script.module.requests" version="2.22.0"/>
         <import addon="script.module.unidecode" version="1.1.1"/>
+        <import addon="service.upnext" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="default.py">
         <provides>video</provides>
@@ -25,6 +26,7 @@
         <source>https://github.com/cmik/cmik.xbmc</source>
         <news>v3.6.0 (in development)
           [change] Development versions carry a ~devN suffix until the release
+          [new] Up Next: the next episode is offered at the end of an episode (needs the Up Next add-on)
         </news>
         <assets>
             <icon>resources/icon.png</icon>
