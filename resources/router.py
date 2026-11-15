@@ -96,6 +96,8 @@ ROUTES = {
     config.RELOADCATALOG: lambda r: tfctv().reloadCatalogCache(),
     config.RESETCATALOG: lambda r: tfctv().resetCatalogCache(),
     config.CATCHUPCATALOG: lambda r: tfctv().catchUpCatalog(r.caller == 'service'),
+    config.TRAKTCONNECT: lambda r: tfctv().connectTrakt(),
+    config.TRAKTDISCONNECT: lambda r: tfctv().disconnectTrakt(),
     config.IMPORTALLDB: lambda r: tools.importDBFiles(),
 }
 

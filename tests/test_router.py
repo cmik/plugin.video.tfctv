@@ -57,6 +57,8 @@ EXPECTED = {
     config.CHECKFORUPDATES: [["tfctv.checkCatalogUpdates", [], []]],
     config.SUBCATEGORYSHOWS: [["navigator.showSubCategoryShows", ["U"], []]],
     config.SHOWEPISODES: [["navigator.showEpisodes", ["U", "2", 3], []]],
+    config.TRAKTCONNECT: [["tfctv.connectTrakt", [], []]],
+    config.TRAKTDISCONNECT: [["tfctv.disconnectTrakt", [], []]],
     config.PLAY: [["tfctv.playEpisode", ["U", "T", "L", "th/x"], []]],
     config.PLAYDISABLED: [["control.showMessage", ["lang37032", "lang30002"], []]],
     config.CATEGORIES: [["navigator.showCategories", [], []]],

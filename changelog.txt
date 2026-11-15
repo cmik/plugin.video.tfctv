@@ -3,6 +3,7 @@
     Up Next: the next episode is offered at the end of an episode (needs the Up Next add-on)
     Scheduled look for new shows and new episodes of My List, with a notification
     Video quality: native stream selection of inputstream.adaptive and maximum resolution, instead of the Choose resolution menu
+    Trakt: scrobbling of what is watched (episodes named SxEy and movies)
 3.5.0
     Go to the show from Continue Watching and My View History; choice of the season in every list
 3.4.1

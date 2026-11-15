@@ -32,6 +32,7 @@ class PlaybackMonitor(xbmc.Player):
         self._tracker = playertracker
         self.tracker = playertracker.PlaybackTracker(lambda: userdata.UserData(control.userDataFile))
         self._window = xbmcgui.Window(10000)
+        self._trakt = None  # (scrobble body of what is played) while it is scrobbled
 
     def _log(self, message, level=xbmc.LOGINFO):
         xbmc.log('[%s] Playback tracking: %s' % (control.addonInfo('name'), message), level=level)
@@ -57,8 +58,59 @@ class PlaybackMonitor(xbmc.Player):
             self._log('following %s' % episodeId)
             threading.Thread(target=self._follow, args=(episodeId,)).start()
             self._upNext(episodeId)
+            threading.Thread(target=self._traktStart, args=(episodeId,)).start()
         except Exception as e:
             self._log('start failed: %s' % e, xbmc.LOGERROR)
+
+    def _traktStart(self, episodeId):
+        """Prepare the scrobbling of what starts (see libraries/trakt.py) and tell Trakt"""
+        self._trakt = None
+        if control.getAddonSetting('traktScrobble') != 'true':
+            return
+        try:
+            from resources.lib.libraries import trakt
+            from resources.lib.models import episodes, shows, userdata
+            client = trakt.fromSettings(userdata.UserData(control.userDataFile))
+            if not client.isConnected():
+                return
+            found = episodes.Episode(control.episodesFile).get(episodeId)
+            current = found[0] if found else None
+            parent = shows.Show(control.showsFile).get(current.get('parentid')) if current and current.get('parentid') else None
+            show = parent[0] if parent else None
+            traktId = None
+            if current and current.get('ltype') != 'movie' and current.get('parentid'):
+                # Trakt knows the show by its own title, find it once (in a thread: it is a network call)
+                traktId = client.resolveShow(current.get('parentid'), (show or {}).get('name') or current.get('show'))
+            body = trakt.scrobbleBody(current, show, 0, traktId)
+            if not body:
+                self._log('Trakt: %s can\'t be identified, not scrobbled' % episodeId)
+                return
+            self._trakt = body
+            self._traktSend('start', 0.0)
+        except Exception as e:
+            self._log('Trakt start failed: %s' % e, xbmc.LOGERROR)
+
+    def _traktSend(self, action, progress):
+        """Tell Trakt in the background (a slow answer must not hold the player)"""
+        if not self._trakt:
+            return
+        body = self._trakt
+
+        def send():
+            try:
+                # a database connection can't change thread: the client is made in the one that sends
+                from resources.lib.libraries import trakt
+                from resources.lib.models import userdata
+                client = trakt.fromSettings(userdata.UserData(control.userDataFile))
+                status = client.scrobble(action, dict(body, progress=round(progress, 2)))
+                self._log('Trakt: %s at %d%% -> HTTP %s' % (action, progress, status))
+            except Exception as e:
+                self._log('Trakt %s failed: %s' % (action, e), xbmc.LOGERROR)
+        threading.Thread(target=send).start()
+
+    def _traktProgress(self):
+        from resources.lib.libraries import trakt
+        return trakt.progressOf(self.tracker.position, self.tracker.total)
 
     def _upNext(self, episodeId):
         """Tell the Up Next add-on which episode follows the one that starts (see libraries/upnext.py)"""
@@ -96,6 +148,9 @@ class PlaybackMonitor(xbmc.Player):
     def _finish(self, ended):
         try:
             episodeId, position, total = self.tracker.episodeId, self.tracker.position, self.tracker.total
+            if self._trakt:
+                self._traktSend('stop', 100.0 if ended else self._traktProgress())
+                self._trakt = None
             outcome = self.tracker.finish(ended)
             if episodeId:
                 self._log('%s %s at %d/%d s -> %s' % (episodeId, 'ended' if ended else 'stopped', position, total, outcome))
@@ -104,6 +159,12 @@ class PlaybackMonitor(xbmc.Player):
 
     def onPlayBackPaused(self):
         self._sample()
+        if self._trakt:
+            self._traktSend('pause', self._traktProgress())
+
+    def onPlayBackResumed(self):
+        if self._trakt:
+            self._traktSend('start', self._traktProgress())
 
     def onPlayBackStopped(self):
         self._sample()

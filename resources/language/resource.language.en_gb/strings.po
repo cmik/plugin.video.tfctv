@@ -899,3 +899,51 @@ msgstr ""
 msgctxt "#30230"
 msgid "Maximum resolution"
 msgstr ""
+
+msgctxt "#30231"
+msgid "Trakt"
+msgstr ""
+
+msgctxt "#30232"
+msgid "Scrobble what I watch to Trakt"
+msgstr ""
+
+msgctxt "#30233"
+msgid "Client ID of your own Trakt application (optional)"
+msgstr ""
+
+msgctxt "#30234"
+msgid "Client secret of your own application (if it has one)"
+msgstr ""
+
+msgctxt "#30235"
+msgid "Connect to Trakt"
+msgstr ""
+
+msgctxt "#30236"
+msgid "Disconnect from Trakt"
+msgstr ""
+
+msgctxt "#30238"
+msgid "Trakt can't be reached"
+msgstr ""
+
+msgctxt "#30239"
+msgid "Go to %s and enter the code [B]%s[/B]"
+msgstr ""
+
+msgctxt "#30240"
+msgid "Connected to Trakt"
+msgstr ""
+
+msgctxt "#30241"
+msgid "The connection to Trakt failed or the code expired"
+msgstr ""
+
+msgctxt "#30242"
+msgid "Not connected to Trakt"
+msgstr ""
+
+msgctxt "#30243"
+msgid "Disconnected from Trakt"
+msgstr ""
