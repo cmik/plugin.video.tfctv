@@ -2,7 +2,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/cmik/plugin.video.tfctv.svg)](https://github.com/cmik/plugin.video.tfctv/releases)
 
 ## TFC.tv add-on
-Watch your favorite online Pinoy shows, movies, news and live channels directly from your TV with the TFC.tv add-on for Kodi! This add-on works with your TFC.tv account and TFC.tv website. Media contents are all properties of TFC Online and is for personal private and domestic use only. 
+Watch your favorite online Pinoy shows, movies and news directly from your TV with the TFC.tv add-on for Kodi! This add-on works with your TFC.tv account and TFC.tv website. Media contents are all properties of TFC Online and is for personal private and domestic use only. 
 **This is not an official TFC.tv add-on nor released by TFC / ABS-CBN.**
 
 
@@ -90,7 +90,7 @@ See also:
 >[How to update your add-on (wiki)](http://kodi.wiki/view/Add-on_manager#Updating)
 
 
-### I can't play a movie, episode or a live stream
+### I can't play a movie or an episode
 >- Check your internet connection
 >- Check your Kodi version and the Widevine CDM: playback needs Kodi 21 (Omega) or later with the current CDM (see *Requirements*)
 >- Check that your subscription is active and that you are signed in (add-on settings)
