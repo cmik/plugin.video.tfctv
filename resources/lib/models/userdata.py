@@ -85,6 +85,12 @@ class UserData(model.Model):
         row = dbcur.fetchone()
         return default if row is None else row[0]
 
+    def deleteMeta(self, prefix):
+        """Forget the META entries whose key starts with `prefix`"""
+        dbcur = self.getCursor()
+        self._exec(dbcur, "DELETE FROM META WHERE KEY LIKE ? ESCAPE '\\'", (prefix.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%',))
+        self._dbcon.commit()
+
     def setMeta(self, key, value):
         dbcur = self.getCursor()
         self._exec(dbcur, 'DELETE FROM META WHERE KEY = ?', (key,))
