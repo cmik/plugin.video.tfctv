@@ -124,6 +124,6 @@ TRAKTDISCONNECT = 69
 FIRSTINSTALL = 98
 ENDSETUP = 99
 
-# Trakt: client id of the application of the add-on (public client: it has no secret, and the account of each
+# Trakt: client id of the production application of the add-on (public client: it has no secret, and the account of each
 # user is identified by the token they get when they connect). The settings can replace it by the user's own.
-TRAKT_CLIENT_ID = 'ps9-3LpcHDEIqvEd4j9LwoL1YxcsHpi_j3h7tw_JxGg'
+TRAKT_CLIENT_ID = 'lV5NGnVpsqx9i54jlPGXGZjZ-quHQ64dUKjYtdaVgio'
