@@ -122,7 +122,13 @@ class Trakt(object):
         return bool(self.store.getMeta(ACCESS) and self.store.getMeta(REFRESH))
 
     def _call(self, path, body=None, token=None):
-        """(HTTP status, decoded JSON or None); 0 when Trakt can't be reached"""
+        """(HTTP status, decoded JSON or None); 0 when Trakt can't be reached. Nothing is sent while the
+        delay of a 429 is running (every request counts, the refresh and the searches too): 429 is answered."""
+        with _stateLock:
+            blocked = self.clock() < _state['blockedUntil']
+        if blocked:
+            self.lastStatus = 429
+            return 429, None
         # Trakt (behind Cloudflare) refuses the default user agent of urllib (error 1010)
         headers = {'Content-Type': 'application/json', 'trakt-api-version': '2', 'trakt-api-key': self.clientId,
                    'User-Agent': 'plugin.video.tfctv/%s Kodi' % control.addonInfo('version')}
@@ -138,6 +144,7 @@ class Trakt(object):
                 self._rateLimited(e.headers.get('Retry-After') if e.headers else None)
         except (URLError, OSError, ValueError) as e:
             logger.logError('Trakt: %s unreachable: %s' % (path, e))
+            self.lastStatus = 0  # not the status of an earlier answer: the refresh uses it to tell a refusal from an outage
             return 0, None
         try:
             data = json.loads(raw.decode('utf-8')) if raw else None

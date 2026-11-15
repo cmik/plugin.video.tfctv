@@ -198,9 +198,14 @@ class DeviceFlowTest(unittest.TestCase):
         self.assertIsNone(client((500, None))[0].deviceCode())
 
     def test_polling_until_entered(self):
-        c, store, _ = client((400, None), (429, None), (200, TOKENS))
+        now = [1000]
+        opener = Opener((400, None), (429, None), (200, TOKENS))
+        store = Store()
+        trakt._state.update(lastPost=0.0, blockedUntil=0.0)
+        c = trakt.Trakt('id', 'secret', store, opener, clock=lambda: now[0], sleep=lambda s: None)
         self.assertEqual('pending', c.pollToken('D'))
         self.assertEqual('slow', c.pollToken('D'))
+        now[0] += 11  # the delay of the 429 has passed
         self.assertFalse(c.isConnected())
         self.assertEqual('connected', c.pollToken('D'))
         self.assertTrue(c.isConnected())
@@ -284,6 +289,33 @@ class ScrobbleTest(unittest.TestCase):
         c, store, opener = connected((401, None), (500, None))
         c.scrobble('start', self.BODY)
         self.assertTrue(c.isConnected())
+
+    def test_a_refresh_that_hits_a_network_error_keeps_the_tokens(self):
+        # the 401 of the scrobble stays the last status unless the outage resets it
+        c, store, opener = connected((401, None))
+
+        def down_after_first(req, timeout=None, first=[True]):
+            if first[0]:
+                first[0] = False
+                return opener(req, timeout)
+            raise OSError('no network')
+        c.opener = down_after_first
+        c.scrobble('start', self.BODY)
+        self.assertEqual(0, c.lastStatus)
+        self.assertTrue(c.isConnected())
+
+    def test_a_429_blocks_every_request_not_only_the_scrobbles(self):
+        c, store, opener = connected((429, {'error': 'rate'}), expires=1000 + 60)
+        # the token is close to expiry: the refresh itself is the request that gets the 429
+        self.assertEqual(429, c.scrobble('start', self.BODY))
+        self.assertEqual(1, len(opener.requests))
+        self.assertTrue(c.isConnected())  # a 429 is not a refusal
+        before = len(opener.requests)
+        self.assertEqual('slow', c.pollToken('D'))
+        self.assertIsNone(c.findShow('Batang Quiapo'))
+        self.assertIsNone(c.deviceCode())
+        self.assertFalse(c.refresh())
+        self.assertEqual(before, len(opener.requests))  # nothing went out during the delay
 
     def test_an_expired_token_refused_at_refresh_is_forgotten(self):
         c, store, opener = connected((401, {'error': 'invalid_grant'}), expires=1000 + 60)
