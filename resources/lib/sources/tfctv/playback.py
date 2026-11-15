@@ -206,6 +206,8 @@ def streamQualityProperties():
     maxResolution = control.setting('streamMaxResolution')
     if maxResolution and maxResolution != 'auto':
         properties['inputstream.adaptive.chooser_resolution_max'] = maxResolution
+        # the streams protected by Widevine are limited by their own property
+        properties['inputstream.adaptive.chooser_resolution_secure_max'] = maxResolution
     return properties
 
 def getDeviceUUID():
