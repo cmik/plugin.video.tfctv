@@ -8,6 +8,7 @@ Watch your favorite online Pinoy shows, movies, news and live channels directly 
 
 ## Features
 - **Catalog**: browse by category, search shows and movies, and your My List. A ready-made catalog is downloaded on a first installation, then new shows are loaded as they appear.
+- **Live channels**: the channels of your country are in the *Live Channels* rail of the *Home* section. What the website offers depends on your country and your subscription.
 - **Continue Watching**: episodes you stopped in the middle, with a progress bar; Kodi offers *Resume from* or *Play from beginning*.
 - **My View History**: what you played, last viewed first. Played episodes are flagged as watched in every list.
 - **Seasons**: shows with several seasons let you choose the season.
