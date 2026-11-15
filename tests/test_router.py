@@ -95,7 +95,7 @@ EXPECTED = {
     config.CLEARHISTORY: [["navigator.clearViewHistory", [], []]],
     config.CONTINUEWATCHING: [["navigator.showContinueWatching", [3], []]],
     config.REMOVEFROMHISTORY: [["navigator.removeFromViewHistory", ["U", "N"], []]],
-    config.CATCHUPCATALOG: [["tfctv.catchUpCatalog", [], []]],
+    config.CATCHUPCATALOG: [["tfctv.catchUpCatalog", [False], []]],
     config.FIRSTINSTALL: [["navigator.firstInstall", [], []]],
     config.ENDSETUP: [["navigator.endSetup", [], []]],
 }
@@ -131,6 +131,9 @@ class RouterTest(unittest.TestCase):
         self.assertEqual([['navigator.chooseBandwidth', [None, None, 'SS', ''], []]], run('?mode=%d&show=SS' % config.CHOOSEBANDWIDTH))
         self.assertEqual([['navigator.executeSearch', [False, False], []]], run('?mode=%d' % config.EXECUTESEARCH))
         self.assertEqual([['tfctv.addToLibrary', [None, None, -1, ''], []]], run('?mode=%d' % config.ADDTOLIBRARY))
+
+    def test_catch_up_notifies_when_the_service_asks(self):
+        self.assertEqual([['tfctv.catchUpCatalog', [True], []]], run('?mode=%d&caller=service' % config.CATCHUPCATALOG))
 
     def test_library_check(self):
         self.assertEqual([['tfctv.checkLibraryUpdates', [False], []]], run('?mode=%d' % config.CHECKLIBRARYUPDATES))

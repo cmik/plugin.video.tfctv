@@ -116,12 +116,31 @@ def updateCatalogCache(loadEpisodes=False):
     control.showNotification(control.lang(37014), control.lang(30005))
     return refreshCatalogShows(loadEpisodes)
 
-def catchUpCatalog():
-    """Look for what is new in the website collections since the catalog was installed (known shows aren't loaded again)"""
+def catchUpCatalog(notify=False):
+    """Look for what is new: the shows of the website collections that aren't known yet and the new episodes of
+    the shows of My List (the other known shows aren't loaded again). With `notify`, tell what was found."""
     logger.logInfo('called function')
-    from .catalog import refreshCatalogShows, repairShowDetails
+    from .catalog import showDB, refreshCatalogShows, repairShowDetails, getShowWithEpisodes
+    from resources.lib.libraries import catchup
+    showDB.getUserData().setMeta(catchup.META, int(time.time()))  # the schedule counts every look
+    known = set(show['id'] for show in showDB.getAll())
     result = refreshCatalogShows(loadEpisodes=False, refresh=True)
     repairShowDetails()
+    newShows = len(set(show['id'] for show in showDB.getAll()) - known)
+    newEpisodes = {}
+    for show in showDB.getMyList(limit=False):
+        try:
+            count = getShowWithEpisodes(show['id'], 'all').get('newEpisodes', 0)
+        except Exception as e:
+            logger.logError('Can\'t look for the new episodes of %s : %s' % (show.get('name'), str(e)))
+            continue
+        if count > 0:
+            newEpisodes[show.get('name') or show['id']] = count
+    logger.logNotice('Catch-up: %d new shows, new episodes: %s' % (newShows, newEpisodes))
+    if notify and newEpisodes and control.setting('notifyNewEpisodes') != 'false':
+        control.showNotification(control.lang(37064) % catchup.episodesSummary(newEpisodes), control.lang(30001), time=8000)
+    elif notify and newShows and control.setting('notifyNewEpisodes') != 'false':
+        control.showNotification(control.lang(37065) % newShows, control.lang(30001), time=8000)
     return result
 
 def reloadCatalogCache():

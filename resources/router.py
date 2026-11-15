@@ -96,7 +96,7 @@ ROUTES = {
     # catalog and databases
     config.RELOADCATALOG: lambda r: tfctv().reloadCatalogCache(),
     config.RESETCATALOG: lambda r: tfctv().resetCatalogCache(),
-    config.CATCHUPCATALOG: lambda r: tfctv().catchUpCatalog(),
+    config.CATCHUPCATALOG: lambda r: tfctv().catchUpCatalog(r.caller == 'service'),
     config.IMPORTALLDB: lambda r: tools.importDBFiles(),
 }
 

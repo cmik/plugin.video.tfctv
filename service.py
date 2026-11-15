@@ -240,11 +240,24 @@ if __name__ == "__main__":
     monitor = xbmc.Monitor()
     playbackMonitor = PlaybackMonitor()
 
+    from resources.lib.libraries import catchup
+    from resources.lib.models import userdata
+    ticks = 0
     while not monitor.abortRequested():
         # Sleep/wait for abort for 10 seconds
         if monitor.waitForAbort(10):
             # Abort was requested while waiting. We should exit
             break
+        ticks += 1
+        # look for what is new in the catalog when it is time (not while something is played)
+        if ticks * 10 >= catchup.START_DELAY and ticks % (catchup.CHECK_EVERY // 10) == catchup.START_DELAY // 10:
+            try:
+                hours = control.setting('catalogCheckHours')
+                if not playbackMonitor.isPlaying() and catchup.due(userdata.UserData(control.userDataFile).getMeta(catchup.META), time.time(), 24 if hours == '' else hours):
+                    xbmc.log('[%s] Service: looking for what is new in the catalog' % control.addonInfo('name'), level=xbmc.LOGINFO)
+                    control.run(config.CATCHUPCATALOG, 'service')
+            except Exception as e:
+                xbmc.log('[%s] Service: can\'t look for what is new: %s' % (control.addonInfo('name'), e), level=xbmc.LOGERROR)
 
     server.shutdown()
     server.server_close()

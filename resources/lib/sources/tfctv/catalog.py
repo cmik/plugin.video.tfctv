@@ -195,7 +195,7 @@ def getShow(id, season='1', withEpisodes=False):
             castDB.replaceApiCast(id, data.get('casts', []))
             data['casts'] = castDB.getCast(id)  # the API cast and the actors only the old catalog knows
             if withEpisodes:
-                storeEpisodes(data.get('episodes', []))
+                data['newEpisodes'] = storeEpisodes(data.get('episodes', []))
         else:
             logger.logWarning('Error on show %s: %s' % (id, 'not found'))
     
@@ -203,10 +203,10 @@ def getShow(id, season='1', withEpisodes=False):
 
 def storeEpisodes(episodes):
     """Save episodes in the episodes database: new ones are inserted, known ones get their
-    content updated (views, rating and votes stored locally are kept)"""
+    content updated (views, rating and votes stored locally are kept). Returns the number of new ones."""
     episodes = [e for e in episodes if isinstance(e, dict) and e.get('id')]
     if not episodes:
-        return
+        return 0
     known = set(e.get('id') for e in episodeDB.get([e.get('id') for e in episodes]))
     new = [e for e in episodes if e.get('id') not in known]
     if new:
@@ -214,6 +214,7 @@ def storeEpisodes(episodes):
     updated = [dict((k, v) for k, v in e.items() if k not in ('views', 'rating', 'votes')) for e in episodes if e.get('id') in known]
     if updated:
         episodeDB.update(updated)
+    return len(new)
 
 def repairShowDetails():
     """Load again the details of the shows stored before the number of their seasons was (older versions

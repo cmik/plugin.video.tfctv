@@ -71,6 +71,10 @@
         <setting type="lsep" label="30220"/>
         <setting id="upNext" type="bool" label="30221" default="true" visible="true"/>
         <setting type="sep"/>
+        <setting type="lsep" label="30222"/>
+        <setting id="catalogCheckHours" type="labelenum" label="30223" default="24" values="0|6|12|24|48" visible="true"/>
+        <setting id="notifyNewEpisodes" type="bool" label="30224" default="true" enable="!eq(-1,0)" visible="true"/>
+        <setting type="sep"/>
         <!--setting type="lsep" label="30121"/>
         <setting id="chooseBestStream" type="bool" label="30115" default="true" visible="false"/>
         <setting id="streamServerModification" type="bool" label="30122" default="false" visible="false"/>
