@@ -56,8 +56,26 @@ class PlaybackMonitor(xbmc.Player):
             self.tracker.start(episodeId)
             self._log('following %s' % episodeId)
             threading.Thread(target=self._follow, args=(episodeId,)).start()
+            self._upNext(episodeId)
         except Exception as e:
             self._log('start failed: %s' % e, xbmc.LOGERROR)
+
+    def _upNext(self, episodeId):
+        """Tell the Up Next add-on which episode follows the one that starts (see libraries/upnext.py)"""
+        if control.setting('upNext') == 'false' or not xbmc.getCondVisibility('System.AddonIsEnabled(service.upnext)'):
+            return
+        try:
+            from resources.lib.libraries import upnext
+            from resources.lib.models import episodes, shows
+            addonId = control.addonInfo('id')
+            data = upnext.buildData(episodes.Episode(control.episodesFile), shows.Show(control.showsFile), episodeId, addonId)
+            if data:
+                upnext.send(data, addonId)
+                self._log('Up Next: %s is followed by %s' % (episodeId, data['next_episode']['episodeid']))
+            else:
+                self._log('Up Next: no next episode for %s' % episodeId)
+        except Exception as e:
+            self._log('Up Next failed: %s' % e, xbmc.LOGERROR)
 
     def _follow(self, episodeId):
         monitor = xbmc.Monitor()

@@ -851,3 +851,11 @@ msgstr ""
 msgctxt "#30219"
 msgid "Display continue watching"
 msgstr ""
+
+msgctxt "#30220"
+msgid "Playback"
+msgstr ""
+
+msgctxt "#30221"
+msgid "Offer the next episode at the end (needs the Up Next add-on)"
+msgstr ""
