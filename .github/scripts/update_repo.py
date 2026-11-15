@@ -4,6 +4,7 @@
 usage: update_repo.py <cmik.xbmc dir> <zip>
 
 - copies the zip to downloads/<id>/<id>-<version>.zip and <id>-latest.zip
+- extracts the assets declared in <assets> (icon, fanart...) to downloads/<id>/, where Kodi fetches them
 - replaces the <addon> entry of addons.xml with the addon.xml found in the zip
 - rewrites addons.xml.md5 (the hash only, as Kodi expects)
 """
@@ -32,6 +33,14 @@ target = repo / 'downloads' / addonId
 target.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(zipPath, target / zipPath.name)
 shutil.copyfile(zipPath, target / ('%s-latest.zip' % addonId))
+
+with zipfile.ZipFile(zipPath) as z:
+    for asset in addon.findall('./extension/assets/*'):
+        path = (asset.text or '').strip()
+        member = '%s/%s' % (names[0].split('/')[0], path)
+        if path and member in z.namelist():
+            (target / path).parent.mkdir(parents=True, exist_ok=True)
+            (target / path).write_bytes(z.read(member))
 
 entry = source[source.index('<addon '):].strip()
 entry = '\n'.join(('    ' + line) if line.strip() else '' for line in entry.splitlines())
