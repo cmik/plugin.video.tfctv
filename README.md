@@ -6,8 +6,33 @@ Watch your favorite online Pinoy shows, movies, news and live channels directly 
 **This is not an official TFC.tv add-on nor released by TFC / ABS-CBN.**
 
 
-**TRAKT:**
-The add-on can scrobble what you watch to your Trakt account (setting *Scrobble what I watch to Trakt*, then *Connect to Trakt*; off by default). **iWantTFC Kodi uses Trakt but is not endorsed or certified by Trakt.** See the [privacy notice](PRIVACY.md) for what is sent and kept.
+## Features
+- **Catalog**: browse by category, search shows and movies, and your My List. A ready-made catalog is downloaded on a first installation, then new shows are loaded as they appear.
+- **Continue Watching**: episodes you stopped in the middle, with a progress bar; Kodi offers *Resume from* or *Play from beginning*.
+- **My View History**: what you played, last viewed first. Played episodes are flagged as watched in every list.
+- **Seasons**: shows with several seasons let you choose the season.
+- **New episodes**: the add-on looks on a schedule (setting *Look for new shows and new episodes of my list every...*, 24 hours by default, 0 = never) for new shows and for the new episodes of the shows of My List, and notifies you.
+- **Video quality**: choose how the stream is selected (the settings of inputstream.adaptive, ask when playback starts, or in the player) and a maximum resolution, in the add-on settings.
+- **Export to the Kodi library** as `.strm` and `.nfo` files (see the Q&A).
+
+## Requirements
+- A TFC.tv / iWantTFC account and subscription. Videos are protected by Widevine DRM.
+- Kodi 19 or later to install the add-on. **Playback is tested with Kodi 21 (Omega) and the current Widevine CDM**: Kodi 20.1 crashes with that CDM and an older CDM is refused by the license server.
+- `inputstream.adaptive` and InputStream Helper, which Kodi installs for you.
+
+## Add-ons
+These add-ons work with iWantTFC. They are optional.
+
+### Up Next (`service.upnext`)
+When an episode starts, the add-on tells Up Next which episode follows, so that Kodi offers it at the end. Install **Up Next** from the Kodi repository; it can be turned off with the setting *Offer the next episode at the end*. Nothing is offered for movies or for the last episode of a show.
+
+### Trakt
+The add-on can scrobble what you watch to your [Trakt](https://trakt.tv) account (off by default). **iWantTFC Kodi uses Trakt but is not endorsed or certified by Trakt.**
+1. In the add-on settings, turn on *Scrobble what I watch to Trakt*.
+2. Click *Connect to Trakt*. A code is shown: enter it on https://trakt.tv/activate while signed in to your Trakt account and approve the access. The add-on never sees your Trakt password.
+3. Play an episode or a movie: it shows as *watching* on Trakt, and in your history once you have watched most of it.
+
+Episodes whose title gives the season and the episode (`S2 E10 - ...`) and movies are sent. Shows whose episodes are named by their day (`Ep 24th Oct 2026 - ...`) are not, because Trakt can't number them. *Disconnect from Trakt* asks Trakt to revoke the access and deletes what the add-on kept; if Trakt can't be reached at that moment, the access stays active on the Trakt side until you remove the app from the connected apps of your Trakt account. You can use your own Trakt application instead of the add-on's by giving its client id in the settings. See the [privacy notice](PRIVACY.md) for what is sent and kept.
 
 **REPO:**
 You can find my repo here where you can install TFC.tv add-on: 
@@ -67,9 +92,10 @@ See also:
 
 ### I can't play a movie, episode or a live stream
 >- Check your internet connection
->- Check that you have enabled the Streaming Proxy in the add-on advanced settings (reboot Kodi after any modification)
->- If you have a message "The streaming proxy is not active...". Please reboot your Kodi system.
->- A notification message will normally appear when you play this type of content.
+>- Check your Kodi version and the Widevine CDM: playback needs Kodi 21 (Omega) or later with the current CDM (see *Requirements*)
+>- Check that your subscription is active and that you are signed in (add-on settings)
+>- If you use the optional streaming proxy (advanced settings) and see a message "The streaming proxy is not active...", reboot Kodi.
+>- If the license is refused (*ACCESS_DENIED* in the log), update Kodi and the Widevine CDM.
 
 
 ### How can I export my TFC.tv shows in my Kodi library (export .strm and .nfo files)
