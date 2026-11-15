@@ -824,6 +824,10 @@ msgctxt "#30305"
 msgid "Remove from view history"
 msgstr ""
 
+msgctxt "#30306"
+msgid "Go to the show"
+msgstr ""
+
 msgctxt "#36026"
 msgid "Clear view history"
 msgstr ""
