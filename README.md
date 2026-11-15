@@ -32,7 +32,7 @@ The add-on can scrobble what you watch to your [Trakt](https://trakt.tv) account
 2. Click *Connect to Trakt*. A code is shown: enter it on https://trakt.tv/activate while signed in to your Trakt account and approve the access. The add-on never sees your Trakt password.
 3. Play an episode or a movie: it shows as *watching* on Trakt, and in your history once you have watched most of it.
 
-Episodes whose title gives the season and the episode (`S2 E10 - ...`) and movies are sent. Shows whose episodes are named by their day (`Ep 24th Oct 2026 - ...`) are not, because Trakt can't number them. *Disconnect from Trakt* revokes the access and deletes what the add-on kept. You can use your own Trakt application instead of the add-on's by giving its client id in the settings. See the [privacy notice](PRIVACY.md) for what is sent and kept.
+Episodes whose title gives the season and the episode (`S2 E10 - ...`) and movies are sent. Shows whose episodes are named by their day (`Ep 24th Oct 2026 - ...`) are not, because Trakt can't number them. *Disconnect from Trakt* asks Trakt to revoke the access and deletes what the add-on kept; if Trakt can't be reached at that moment, the access stays active on the Trakt side until you remove the app from the connected apps of your Trakt account. You can use your own Trakt application instead of the add-on's by giving its client id in the settings. See the [privacy notice](PRIVACY.md) for what is sent and kept.
 
 **REPO:**
 You can find my repo here where you can install TFC.tv add-on: 
