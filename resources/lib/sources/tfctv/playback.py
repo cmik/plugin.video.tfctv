@@ -135,7 +135,6 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False, restart=False
             resume = 0 if restart else playertracker.resumePoint(progress)
             if resume > 0:
                 item.setProperty('StartOffset', str(resume))
-                tag.setResumePoint(float(resume), float(progress[1]))
                 control.showNotification(control.lang(37063) % time.strftime('%H:%M:%S', time.gmtime(resume)), control.lang(30001))
             # tell the service what is played, it keeps where it stops (libraries/playertracker.py)
             item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))

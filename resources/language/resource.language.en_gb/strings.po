@@ -855,3 +855,7 @@ msgstr ""
 msgctxt "#37063"
 msgid "Resuming at %s"
 msgstr ""
+
+msgctxt "#30307"
+msgid "Resume at %s"
+msgstr ""
