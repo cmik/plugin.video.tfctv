@@ -54,7 +54,6 @@ ROUTES = {
     # navigation
     config.SUBCATEGORYSHOWS: lambda r: navigator().showSubCategoryShows(r.url),
     config.SHOWEPISODES: lambda r: navigator().showEpisodes(r.url, r.get('season', '1'), r.page),
-    config.CHOOSEBANDWIDTH: lambda r: navigator().chooseBandwidth(r.url, r.title, r.get('ltype', r.show), r.thumbnail),
     config.CATEGORIES: lambda r: navigator().showCategories(),
     config.COLLECTIONCONTENT: lambda r: navigator().showCollectionContent(r.url),
     config.SEASONS: lambda r: navigator().showSeasons(r.url),
@@ -76,7 +75,7 @@ ROUTES = {
     config.TOOLS: lambda r: navigator().showTools(),
     # actions
     config.CHECKFORUPDATES: lambda r: tfctv().checkCatalogUpdates(),
-    config.PLAY: lambda r: tfctv().playEpisode(r.url, r.title, r.get('ltype', r.show), r.thumbnail, r.get('bandwidth', False)),
+    config.PLAY: lambda r: tfctv().playEpisode(r.url, r.title, r.get('ltype', r.show), r.thumbnail),
     config.PLAYDISABLED: lambda r: control.showMessage(control.lang(37032), control.lang(30002)),
     config.LOGOUT: lambda r: tfctv().logout(quiet=False),
     config.ADDTOLIST: lambda r: tfctv().addToMyList(r.url, r.name, r.get('ltype'), r.get('type')),

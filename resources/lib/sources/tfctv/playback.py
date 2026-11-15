@@ -23,7 +23,7 @@ try:
 except Exception:
     inputstreamhelper = None
 
-def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
+def playEpisode(episodeId, name, type, thumbnail):
     """Play an episode"""
     logger.logInfo('called function')
     thisPlugin = control.thisPlugin
@@ -34,7 +34,7 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
             control.showNotification(control.lang(37012), control.lang(30002))
             login()
                 
-        episodeDetails = getMediaInfo(episodeId, name, type, thumbnail, bandwidth)
+        episodeDetails = getMediaInfo(episodeId, name, type, thumbnail)
         logger.logDebug(episodeDetails)
         if episodeDetails and 'errorCode' in episodeDetails and episodeDetails['errorCode'] == 0 and 'data' in episodeDetails:
             if 'preview' in episodeDetails['data'] and episodeDetails['data']['preview'] is True:
@@ -125,6 +125,8 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 item.setProperty("inputstream.adaptive.manifest_headers", urlencode(manifest_headers))
                 item.setProperty('inputstream.adaptive.license_key', '|'.join(list(license_config.values())))
                 item.setProperty('inputstream.adaptive.config', json.dumps(inputstream_config))
+                for key, value in streamQualityProperties().items():
+                    item.setProperty(key, value)
                 item.setMimeType('application/dash+xml')
                 item.setContentLookup(False)
             
@@ -145,10 +147,10 @@ def playEpisode(episodeId, name, type, thumbnail, bandwidth=False):
                 control.showNotification(control.lang(37001), control.lang(30009))
     return False
 
-def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
+def getMediaInfo(episodeId, title, type, thumbnail):
     """Get media info for playback"""
     logger.logInfo('called function')
-    mediaInfo = retrieveMediaInfo(episodeId, type, bandwidth)
+    mediaInfo = retrieveMediaInfo(episodeId, type)
     if mediaInfo['errorCode'] == 0:
         e = {
             'id': episodeId,
@@ -188,40 +190,23 @@ def getMediaInfo(episodeId, title, type, thumbnail, bandwidth=False):
         
     return mediaInfo
 
-def getEpisodeBandwidthList(episodeId, title, type, thumbnail):
-    """Get available bandwidth options"""
-    logger.logInfo('called function')
-    mediaInfo = retrieveMediaInfo(episodeId, type)
-    data = []
-    if mediaInfo['errorCode'] == 0:
-        i = 0
-        for resolution in mediaInfo['data']['bandwidth']:
-            data.append({
-                'id': episodeId,
-                'title': title,
-                'parentid': mediaInfo['data']['showid'],
-                'show': mediaInfo['data']['show'],
-                'image': thumbnail,
-                'fanart': mediaInfo['data']['fanart'],
-                'episodenumber': mediaInfo['data']['episodenumber'],
-                'url': mediaInfo['data']['url'],
-                'description': mediaInfo['data']['plot'],
-                'shortdescription': mediaInfo['data']['plot'],
-                'dateaired': mediaInfo['data']['dateaired'],
-                'date': mediaInfo['data']['date'],
-                'year': mediaInfo['data']['year'],
-                'parentalAdvisory': mediaInfo['data']['parentalAdvisory'],
-                'ltype': mediaInfo['data']['ltype'],
-                'type': 'episode',
-                'duration': mediaInfo['data']['duration'],
-                'views': mediaInfo['data']['views'],
-                'rating': mediaInfo['data']['rating'],
-                'votes': mediaInfo['data']['votes'],
-                'showObj': mediaInfo['data']['showObj'],
-                'bandwidth': i,
-                'resolution': resolution})
-            i += 1
-    return data
+STREAM_SELECTIONS = ('', 'ask-quality', 'manual-osd')
+
+def streamQualityProperties():
+    """inputstream.adaptive properties of the quality settings: how the stream is chosen
+    (the add-on settings of inputstream.adaptive, a choice when the playback starts, or in
+    the player's OSD) and the maximum resolution. Nothing is set when left on the defaults."""
+    properties = {}
+    try:
+        selection = STREAM_SELECTIONS[int(control.setting('streamSelection') or 0)]
+    except (ValueError, IndexError):
+        selection = ''
+    if selection:
+        properties['inputstream.adaptive.stream_selection_type'] = selection
+    maxResolution = control.setting('streamMaxResolution')
+    if maxResolution and maxResolution != 'auto':
+        properties['inputstream.adaptive.chooser_resolution_max'] = maxResolution
+    return properties
 
 def getDeviceUUID():
     """Stable device UUID sent to playback/start (the website sends one; without it
@@ -234,9 +219,9 @@ def getDeviceUUID():
     except Exception:
         return control.generateUUID()
 
-def retrieveMediaInfo(episodeId, type, bandwidth=False):
+def retrieveMediaInfo(episodeId, type):
     """Get media info from website"""
-    logger.logInfo('called function with param (%s, %s, %s)' % (str(episodeId), type, bandwidth))
+    logger.logInfo('called function with param (%s, %s)' % (str(episodeId), type))
     from .api import callJsonApi
 
     playback = callJsonApi(
@@ -342,27 +327,6 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
                 'Connection': 'keep-alive'
             }
             
-            r"""
-            # choose best stream quality
-            defaultQuality = 0
-            if bandwidth is False:
-                mediaInfo['data']['bandwidth'] = []
-                for stream in episode.get('media', {}).get('mpds', []):
-                    mpd_match = re.compile('manifest\.(\d+x\d+)\.mpd', re.IGNORECASE).search(stream)
-                    if mpd_match:
-                        resolution = mpd_match.group(1)
-                        mediaInfo['data']['bandwidth'].append(resolution)
-                        
-                streamQualities = ['1920x1080', '1280x720', '960x540', '768x432', '640x360', '512x288', '384x216']
-                for quality in streamQualities:
-                    if quality in mediaInfo['data']['bandwidth']:
-                        defaultQuality = mediaInfo['data']['bandwidth'].index(quality)
-                        break
-            else:
-                defaultQuality = bandwidth
-                
-            mediaInfo['data']['uri'] = episode.get('media', {}).get('mpds', [])[defaultQuality]
-            """
             
             # DRM
             mediaInfo['dash'] = {
@@ -370,28 +334,6 @@ def retrieveMediaInfo(episodeId, type, bandwidth=False):
                 'key': playback.get('playbackInfo', {}).get('licenseUrl', ''),
                 'headers': headers
             }
-        r"""
-        else:
-            # choose best stream quality
-            defaultQuality = 0
-            if bandwidth is False:
-                mediaInfo['data']['bandwidth'] = []
-                for stream in episode.get('media', {}).get('m3u8s', []):
-                    m3u8_match = re.compile('playlist\.(\d+x\d+)\.m3u8', re.IGNORECASE).search(stream)
-                    if m3u8_match:
-                        resolution = m3u8_match.group(1)
-                        mediaInfo['data']['bandwidth'].append(resolution)
-                        
-                streamQualities = ['1920x1080', '1280x720', '960x540', '768x432', '640x360', '512x288', '384x216']
-                for quality in streamQualities:
-                    if quality in mediaInfo['data']['bandwidth']:
-                        defaultQuality = mediaInfo['data']['bandwidth'].index(quality)
-                        break
-            else:
-                defaultQuality = bandwidth
-                
-            mediaInfo['data']['uri'] = episode.get('media', {}).get('m3u8s', [])[defaultQuality]
-        """
 
         mediaInfo['data']['preview'] = False
         mediaInfo['data']['disableProxy'] = True

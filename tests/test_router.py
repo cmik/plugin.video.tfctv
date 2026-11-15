@@ -50,16 +50,15 @@ sys.modules['resources.lib.sources.tfctv'] = sourcesModule
 
 from resources import config, router  # noqa: E402
 
-QUERY = '?url=U&name=N&title=T&show=S&ltype=L&type=TY&thumbnail=th%2Fx&page=3&season=2&deviceId=D&category=C&bandwidth=B&parentid=P&year=Y'
+QUERY = '?url=U&name=N&title=T&show=S&ltype=L&type=TY&thumbnail=th%2Fx&page=3&season=2&deviceId=D&category=C&parentid=P&year=Y'
 
 # mode -> the calls it makes with QUERY
 EXPECTED = {
     config.CHECKFORUPDATES: [["tfctv.checkCatalogUpdates", [], []]],
     config.SUBCATEGORYSHOWS: [["navigator.showSubCategoryShows", ["U"], []]],
     config.SHOWEPISODES: [["navigator.showEpisodes", ["U", "2", 3], []]],
-    config.PLAY: [["tfctv.playEpisode", ["U", "T", "L", "th/x", "B"], []]],
+    config.PLAY: [["tfctv.playEpisode", ["U", "T", "L", "th/x"], []]],
     config.PLAYDISABLED: [["control.showMessage", ["lang37032", "lang30002"], []]],
-    config.CHOOSEBANDWIDTH: [["navigator.chooseBandwidth", ["U", "T", "L", "th/x"], []]],
     config.CATEGORIES: [["navigator.showCategories", [], []]],
     config.SEASONS: [["navigator.showSeasons", ["U"], []]],
     config.COLLECTIONCONTENT: [["navigator.showCollectionContent", ["U"], []]],
@@ -128,7 +127,6 @@ class RouterTest(unittest.TestCase):
 
     def test_defaults(self):
         self.assertEqual([['navigator.showEpisodes', [None, '1', 1], []]], run('?mode=%d' % config.SHOWEPISODES))
-        self.assertEqual([['navigator.chooseBandwidth', [None, None, 'SS', ''], []]], run('?mode=%d&show=SS' % config.CHOOSEBANDWIDTH))
         self.assertEqual([['navigator.executeSearch', [False, False], []]], run('?mode=%d' % config.EXECUTESEARCH))
         self.assertEqual([['tfctv.addToLibrary', [None, None, -1, ''], []]], run('?mode=%d' % config.ADDTOLIBRARY))
 
