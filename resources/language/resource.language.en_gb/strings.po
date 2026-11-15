@@ -947,3 +947,7 @@ msgstr ""
 msgctxt "#30243"
 msgid "Disconnected from Trakt"
 msgstr ""
+
+msgctxt "#30244"
+msgid "iWantTFC Kodi uses Trakt but is not endorsed or certified by Trakt."
+msgstr ""

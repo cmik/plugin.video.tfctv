@@ -27,6 +27,9 @@ class Store(object):
     def setMeta(self, key, value):
         self.data[key] = value
 
+    def deleteMeta(self, prefix):
+        self.data = {k: v for k, v in self.data.items() if not k.startswith(prefix)}
+
 
 class Response(object):
     def __init__(self, status, body):
@@ -62,10 +65,15 @@ class Opener(object):
 TOKENS = {'access_token': 'A2', 'refresh_token': 'R2', 'expires_in': 7776000, 'created_at': 1000}
 
 
+SLEPT = []
+
+
 def client(*answers, **kwargs):
     store = kwargs.pop('store', None) or Store()
     opener = Opener(*answers)
-    return trakt.Trakt(' id ', 'secret', store, opener, clock=lambda: 1000), store, opener
+    trakt._state.update(lastPost=0.0, blockedUntil=0.0)
+    del SLEPT[:]
+    return trakt.Trakt(' id ', 'secret', store, opener, clock=lambda: 1000, sleep=SLEPT.append), store, opener
 
 
 def connected(*answers, expires=1000 + 90 * 86400):
@@ -190,9 +198,14 @@ class DeviceFlowTest(unittest.TestCase):
         self.assertIsNone(client((500, None))[0].deviceCode())
 
     def test_polling_until_entered(self):
-        c, store, _ = client((400, None), (429, None), (200, TOKENS))
+        now = [1000]
+        opener = Opener((400, None), (429, None), (200, TOKENS))
+        store = Store()
+        trakt._state.update(lastPost=0.0, blockedUntil=0.0)
+        c = trakt.Trakt('id', 'secret', store, opener, clock=lambda: now[0], sleep=lambda s: None)
         self.assertEqual('pending', c.pollToken('D'))
         self.assertEqual('slow', c.pollToken('D'))
+        now[0] += 11  # the delay of the 429 has passed
         self.assertFalse(c.isConnected())
         self.assertEqual('connected', c.pollToken('D'))
         self.assertTrue(c.isConnected())
@@ -255,11 +268,79 @@ class ScrobbleTest(unittest.TestCase):
         c.opener = down
         self.assertEqual(0, c.scrobble('start', self.BODY))
 
-    def test_disconnect_forgets_the_tokens(self):
+    def test_disconnect_forgets_the_tokens_and_the_show_ids(self):
         c, store, opener = connected((200, None))
+        store.data['traktShow:s1'] = '202504'
+        store.data['other'] = 'kept'
         c.disconnect()
         self.assertEqual('https://api.trakt.tv/oauth/revoke', opener.requests[0][0])
         self.assertFalse(c.isConnected())
+        self.assertNotIn('traktShow:s1', store.data)
+        self.assertEqual('kept', store.data['other'])
+
+    def test_a_withdrawn_access_is_forgotten(self):
+        c, store, opener = connected((401, None), (400, {'error': 'invalid_grant'}))
+        self.assertEqual(401, c.scrobble('start', self.BODY))
+        self.assertFalse(c.isConnected())
+        self.assertEqual(0, c.scrobble('start', self.BODY))  # nothing is sent anymore
+        self.assertEqual(2, len(opener.requests))
+
+    def test_a_refresh_that_can_not_reach_trakt_keeps_the_tokens(self):
+        c, store, opener = connected((401, None), (500, None))
+        c.scrobble('start', self.BODY)
+        self.assertTrue(c.isConnected())
+
+    def test_a_refresh_that_hits_a_network_error_keeps_the_tokens(self):
+        # the 401 of the scrobble stays the last status unless the outage resets it
+        c, store, opener = connected((401, None))
+
+        def down_after_first(req, timeout=None, first=[True]):
+            if first[0]:
+                first[0] = False
+                return opener(req, timeout)
+            raise OSError('no network')
+        c.opener = down_after_first
+        c.scrobble('start', self.BODY)
+        self.assertEqual(0, c.lastStatus)
+        self.assertTrue(c.isConnected())
+
+    def test_a_429_blocks_every_request_not_only_the_scrobbles(self):
+        c, store, opener = connected((429, {'error': 'rate'}), expires=1000 + 60)
+        # the token is close to expiry: the refresh itself is the request that gets the 429
+        self.assertEqual(429, c.scrobble('start', self.BODY))
+        self.assertEqual(1, len(opener.requests))
+        self.assertTrue(c.isConnected())  # a 429 is not a refusal
+        before = len(opener.requests)
+        self.assertEqual('slow', c.pollToken('D'))
+        self.assertIsNone(c.findShow('Batang Quiapo'))
+        self.assertIsNone(c.deviceCode())
+        self.assertFalse(c.refresh())
+        self.assertEqual(before, len(opener.requests))  # nothing went out during the delay
+
+    def test_an_expired_token_refused_at_refresh_is_forgotten(self):
+        c, store, opener = connected((401, {'error': 'invalid_grant'}), expires=1000 + 60)
+        self.assertEqual(0, c.scrobble('start', self.BODY))
+        self.assertFalse(c.isConnected())
+
+    def test_scrobbles_are_one_second_apart(self):
+        c, _, _ = connected((201, None), (201, None))
+        c.scrobble('start', self.BODY)
+        self.assertEqual([], SLEPT)
+        c.scrobble('pause', self.BODY)  # same instant on the fake clock
+        self.assertEqual([1.0], SLEPT)
+
+    def test_after_a_429_nothing_is_sent_until_the_delay_has_passed(self):
+        now = [1000]
+        opener = Opener((429, None), (201, None))
+        store = Store()
+        store.data.update({trakt.ACCESS: 'A1', trakt.REFRESH: 'R1', trakt.EXPIRES: 10 ** 9})
+        trakt._state.update(lastPost=0.0, blockedUntil=0.0)
+        c = trakt.Trakt('id', '', store, opener, clock=lambda: now[0], sleep=lambda s: None)
+        self.assertEqual(429, c.scrobble('start', self.BODY))
+        self.assertEqual(429, c.scrobble('pause', self.BODY))  # not sent
+        self.assertEqual(1, len(opener.requests))
+        now[0] += 11  # the default delay is 10 s
+        self.assertEqual(201, c.scrobble('start', self.BODY))
 
 
 if __name__ == '__main__':

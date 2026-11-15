@@ -50,6 +50,16 @@ class ModelsTest(unittest.TestCase):
         self.episodes = episodes.Episode(os.path.join(self.dir, 'episodes.db'))
         self.shows._userdata = self.episodes._userdata = self.ud
 
+    def test_delete_meta_by_prefix(self):
+        for key in ('traktShow:a', 'traktShow:b', 'traktAccessToken', 'trakt_Show:x', 'other'):
+            self.ud.setMeta(key, '1')
+        self.ud.deleteMeta('traktShow:')
+        self.assertEqual([None, None], [self.ud.getMeta('traktShow:a'), self.ud.getMeta('traktShow:b')])
+        self.assertEqual(['1', '1', '1'], [self.ud.getMeta(k) for k in ('traktAccessToken', 'trakt_Show:x', 'other')])
+        self.ud.deleteMeta('trakt_')  # '_' is not a wildcard
+        self.assertIsNone(self.ud.getMeta('trakt_Show:x'))
+        self.assertEqual('1', self.ud.getMeta('traktAccessToken'))
+
     def test_my_list(self):
         self.shows.set([show(1), show(2), show(3)])
         self.assertTrue(self.shows.update({'id': 's2', 'name': 'Show 2', 'mylist': 'true'}))

@@ -6,6 +6,9 @@ Watch your favorite online Pinoy shows, movies, news and live channels directly 
 **This is not an official TFC.tv add-on nor released by TFC / ABS-CBN.**
 
 
+**TRAKT:**
+The add-on can scrobble what you watch to your Trakt account (setting *Scrobble what I watch to Trakt*, then *Connect to Trakt*; off by default). **iWantTFC Kodi uses Trakt but is not endorsed or certified by Trakt.** See the [privacy notice](PRIVACY.md) for what is sent and kept.
+
 **REPO:**
 You can find my repo here where you can install TFC.tv add-on: 
 SHORT LINK: https://cmik.me/repozip
