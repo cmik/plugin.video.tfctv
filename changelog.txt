@@ -1,5 +1,4 @@
 3.6.0
-    (in development) Development versions carry a ~devN suffix until the release
     Up Next: the next episode is offered at the end of an episode (needs the Up Next add-on)
     Scheduled look for new shows and new episodes of My List, with a notification
     Video quality: native stream selection of inputstream.adaptive and maximum resolution, instead of the Choose resolution menu
