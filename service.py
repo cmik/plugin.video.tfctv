@@ -28,7 +28,8 @@ def refreshCountry(monitor, delays=(0, 60, 180)):
     try:
         from resources.lib.sources import tfctv
         for delay in delays:
-            if monitor.waitForAbort(delay):
+            # waitForAbort(0) waits until Kodi stops: don't wait at all for the first try
+            if delay and monitor.waitForAbort(delay):
                 return
             country = tfctv.refreshGeoLocation()
             if country or control.setting('geoAutoUpdate') == 'false':
