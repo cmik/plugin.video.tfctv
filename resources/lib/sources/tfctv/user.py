@@ -304,14 +304,9 @@ def refreshGeoLocation():
     country = geo.countryOf(location)
     if country == '':
         logger.logWarning('Geo location: the country could not be detected, keeping %s' % (geo.countryOf(old) or 'none'))
-    elif geo.changed(old, location):
+    else:
+        import xbmcgui  # tells the service that the detection is done
+        xbmcgui.Window(10000).setProperty(geo.DONE_PROPERTY, country)
+    if country and geo.changed(old, location):
         logger.logInfo('Geo location: the country changed from %s to %s' % (geo.countryOf(old) or 'none', country))
     return country
-    location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False)
-    if 'status' in location and location.get('status') == 200 and 'data' in location and len(location.get('data')) > 0:
-        data = location.get('data')[0]
-        control.setSetting('geoLocation', json.dumps(data))
-        _geoFailedAt[0] = 0
-        return data
-    _geoFailedAt[0] = time.time()
-    return {}

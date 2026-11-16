@@ -24,21 +24,25 @@ from resources.lib.libraries import control
 
 def refreshCountry(monitor, delays=(0, 60, 180)):
     """At the start of Kodi, detect the country again (it may have changed: VPN, travel) and keep it for the add-on.
-    Retries a few times when the network is not ready or the service refuses the request."""
-    try:
+    The detection runs in the plugin (mode REFRESHGEO, as the catch-up of the catalog); tried again a few times when
+    the network is not ready or the service refuses the request."""
+    from resources.lib.libraries import geo
+    window = xbmcgui.Window(10000)
+    window.clearProperty(geo.DONE_PROPERTY)
+    for delay in delays:
+        if control.setting('geoAutoUpdate') == 'false':
+            return
+        # waitForAbort(0) waits until Kodi stops: don't wait at all for the first try
+        if delay and monitor.waitForAbort(delay):
+            return
         xbmc.log('[%s] Service: detecting the country' % control.addonInfo('name'), level=xbmc.LOGINFO)
-        from resources.lib.sources import tfctv
-        for delay in delays:
-            # waitForAbort(0) waits until Kodi stops: don't wait at all for the first try
-            if delay and monitor.waitForAbort(delay):
-                return
-            country = tfctv.refreshGeoLocation()
-            if country or control.setting('geoAutoUpdate') == 'false':
-                xbmc.log('[%s] Service: country is %s' % (control.addonInfo('name'), country or 'not detected (setting off)'), level=xbmc.LOGINFO)
-                return
-        xbmc.log('[%s] Service: the country could not be detected' % control.addonInfo('name'), level=xbmc.LOGWARNING)
-    except Exception as e:
-        xbmc.log('[%s] Service: can\'t detect the country: %s' % (control.addonInfo('name'), e), level=xbmc.LOGERROR)
+        control.run(config.REFRESHGEO, 'service')
+        if monitor.waitForAbort(20):
+            return
+        if window.getProperty(geo.DONE_PROPERTY):
+            xbmc.log('[%s] Service: country is %s' % (control.addonInfo('name'), window.getProperty(geo.DONE_PROPERTY)), level=xbmc.LOGINFO)
+            return
+    xbmc.log('[%s] Service: the country could not be detected' % control.addonInfo('name'), level=xbmc.LOGWARNING)
 
 class PlaybackMonitor(xbmc.Player):
     """Keeps where each episode was left (see libraries/playertracker.py)"""

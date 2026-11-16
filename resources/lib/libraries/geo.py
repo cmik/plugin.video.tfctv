@@ -10,6 +10,7 @@ import re
 
 SETTING = 'geoLocation'          # what the geo location service answered (JSON, kept between two starts)
 OVERRIDE = 'countryOverride'     # country typed by the user in the settings (wins over the detected one)
+DONE_PROPERTY = 'tfctv.geoDetected'  # window property set once the country was detected since Kodi started
 AUTO = 'geoAutoUpdate'           # detect the country again at each start of the add-on
 
 
