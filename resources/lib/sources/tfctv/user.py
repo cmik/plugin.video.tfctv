@@ -284,7 +284,8 @@ def getGeoLocation():
     """Get geo location"""
     if time.time() - _geoFailedAt[0] < GEO_RETRY_DELAY:
         return {}
-    location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False)
+    # a GET: the service answers 403 "Missing Authentication Token" to the POST that callJsonApi sends by default
+    location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False, jsonData=False)
     if 'status' in location and location.get('status') == 200 and 'data' in location and len(location.get('data')) > 0:
         data = location.get('data')[0]
         control.setSetting(geo.SETTING, json.dumps(data))
