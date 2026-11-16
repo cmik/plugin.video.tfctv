@@ -59,6 +59,7 @@ EXPECTED = {
     config.SHOWEPISODES: [["navigator.showEpisodes", ["U", "2", 3], []]],
     config.TRAKTCONNECT: [["tfctv.connectTrakt", [], []]],
     config.TRAKTDISCONNECT: [["tfctv.disconnectTrakt", [], []]],
+    config.REFRESHGEO: [["tfctv.refreshGeoLocation", [], []]],
     config.PLAY: [["tfctv.playEpisode", ["U", "T", "L", "th/x"], []]],
     config.PLAYDISABLED: [["control.showMessage", ["lang37032", "lang30002"], []]],
     config.CATEGORIES: [["navigator.showCategories", [], []]],

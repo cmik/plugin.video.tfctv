@@ -39,7 +39,7 @@ __all__ = [
     'getUserTransactions', 'refreshUserData',
     'refreshUserSubscriptions', 'refreshUserInfo', 'refreshUserContext',
     'getAccount', 'setAccount', 'getFingerprintID', 'getDeviceIP',
-    'getCountryCode', 'getGeoLocation', 'generateNewFingerprintID',
+    'getCountryCode', 'getGeoLocation', 'refreshGeoLocation', 'generateNewFingerprintID',
     
     # MyList
     'getMyList', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',

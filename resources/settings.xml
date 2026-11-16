@@ -455,6 +455,21 @@
                     <control type="toggle"/>
                 </setting>
             </group>
+            <group id="16" label="30245">
+                <setting id="geoAutoUpdate" type="boolean" label="30246" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
+                <setting id="countryOverride" type="string" label="30247" help="">
+                    <level>0</level>
+                    <default/>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string"/>
+                </setting>
+            </group>
             <group id="8" label="30220">
                 <setting id="upNext" type="boolean" label="30221" help="">
                     <level>0</level>
