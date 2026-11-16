@@ -26,6 +26,7 @@ def refreshCountry(monitor, delays=(0, 60, 180)):
     """At the start of Kodi, detect the country again (it may have changed: VPN, travel) and keep it for the add-on.
     Retries a few times when the network is not ready or the service refuses the request."""
     try:
+        xbmc.log('[%s] Service: detecting the country' % control.addonInfo('name'), level=xbmc.LOGINFO)
         from resources.lib.sources import tfctv
         for delay in delays:
             # waitForAbort(0) waits until Kodi stops: don't wait at all for the first try
