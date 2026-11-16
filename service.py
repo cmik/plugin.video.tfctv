@@ -22,6 +22,22 @@ from http.server import SimpleHTTPRequestHandler
 from resources import config
 from resources.lib.libraries import control
 
+def refreshCountry(monitor, delays=(0, 60, 180)):
+    """At the start of Kodi, detect the country again (it may have changed: VPN, travel) and keep it for the add-on.
+    Retries a few times when the network is not ready or the service refuses the request."""
+    try:
+        from resources.lib.sources import tfctv
+        for delay in delays:
+            if monitor.waitForAbort(delay):
+                return
+            country = tfctv.refreshGeoLocation()
+            if country or control.setting('geoAutoUpdate') == 'false':
+                xbmc.log('[%s] Service: country is %s' % (control.addonInfo('name'), country or 'not detected (setting off)'), level=xbmc.LOGINFO)
+                return
+        xbmc.log('[%s] Service: the country could not be detected' % control.addonInfo('name'), level=xbmc.LOGWARNING)
+    except Exception as e:
+        xbmc.log('[%s] Service: can\'t detect the country: %s' % (control.addonInfo('name'), e), level=xbmc.LOGERROR)
+
 class PlaybackMonitor(xbmc.Player):
     """Keeps where each episode was left (see libraries/playertracker.py)"""
 
@@ -300,6 +316,7 @@ if __name__ == "__main__":
     
     monitor = xbmc.Monitor()
     playbackMonitor = PlaybackMonitor()
+    threading.Thread(target=refreshCountry, args=(monitor,)).start()
 
     from resources.lib.libraries import catchup
     from resources.lib.models import userdata

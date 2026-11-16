@@ -951,3 +951,15 @@ msgstr ""
 msgctxt "#30244"
 msgid "iWantTFC Kodi uses Trakt but is not endorsed or certified by Trakt."
 msgstr ""
+
+msgctxt "#30245"
+msgid "Location"
+msgstr ""
+
+msgctxt "#30246"
+msgid "Detect my country at each start (the catalog and the live channels depend on it)"
+msgstr ""
+
+msgctxt "#30247"
+msgid "Country code to use instead (two letters, e.g. FR, PH, US; empty = detected)"
+msgstr ""

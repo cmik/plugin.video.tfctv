@@ -9,7 +9,7 @@ import time
 import datetime
 import hashlib
 from resources import config
-from resources.lib.libraries import control
+from resources.lib.libraries import control, geo
 from .api import callJsonApi, getCookieContent
 
 logger = control.logger
@@ -266,10 +266,13 @@ def getDeviceIP():
     return ipAddress
 
 def getCountryCode():
-    """Get country code"""
-    countryCode = json.loads(control.setting('geoLocation') if control.setting('geoLocation') else '{}').get('geoLocation', {}).get('countryCode', '')
+    """Get country code: the one set by the user in the settings, else the detected one"""
+    override = control.setting(geo.OVERRIDE)
+    if override and not geo.normalize(override):
+        logger.logWarning('Ignoring country %r from the settings: use a code of two letters (FR, PH, US...)' % override)
+    countryCode = geo.effectiveCountry(override, geo.stored(control.setting(geo.SETTING)))
     if countryCode == '':
-        countryCode = getGeoLocation().get('geoLocation', {}).get('countryCode', '')
+        countryCode = geo.countryOf(getGeoLocation())
     logger.logInfo('Device country code is %s' % countryCode)
     return countryCode
 
@@ -281,6 +284,29 @@ def getGeoLocation():
     """Get geo location"""
     if time.time() - _geoFailedAt[0] < GEO_RETRY_DELAY:
         return {}
+    location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False)
+    if 'status' in location and location.get('status') == 200 and 'data' in location and len(location.get('data')) > 0:
+        data = location.get('data')[0]
+        control.setSetting(geo.SETTING, json.dumps(data))
+        _geoFailedAt[0] = 0
+        return data
+    _geoFailedAt[0] = time.time()
+    return {}
+
+def refreshGeoLocation():
+    """Ask the geo location service again (at the start of the add-on) and keep the answer, even when the country
+    changed (VPN, travel). Returns the country detected, '' when the service can't be reached or the setting is off."""
+    if control.setting(geo.AUTO) == 'false':
+        return ''
+    _geoFailedAt[0] = 0
+    old = geo.stored(control.setting(geo.SETTING))
+    location = getGeoLocation()
+    country = geo.countryOf(location)
+    if country == '':
+        logger.logWarning('Geo location: the country could not be detected, keeping %s' % (geo.countryOf(old) or 'none'))
+    elif geo.changed(old, location):
+        logger.logInfo('Geo location: the country changed from %s to %s' % (geo.countryOf(old) or 'none', country))
+    return country
     location = callJsonApi(config.geoLocationUrl, base_url='', useCache=False)
     if 'status' in location and location.get('status') == 200 and 'data' in location and len(location.get('data')) > 0:
         data = location.get('data')[0]
