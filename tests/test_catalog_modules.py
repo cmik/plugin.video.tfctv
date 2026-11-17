@@ -104,6 +104,11 @@ class CatalogModulesTest(unittest.TestCase):
         self.assertEqual({}, MODULES['formatters'].formatAssetToShow(None))
         self.assertEqual({}, MODULES['formatters'].formatToShow({'title': 'no id'}))
 
+    def test_asset_kinds(self):
+        kind = MODULES['formatters'].assetKind
+        self.assertEqual(['show', 'movie', 'livestream', 'livestream', 'movie', 'unknown'],
+                         [kind(k) for k in ('tvshow', 'movie', 'channel', 'live', 'special', 'playlistV2')])
+
     def test_search_results(self):
         item = lambda i, t, kind, playable=True: {'id': i, 'assetType': kind, 'title': t, 'isPlayable': playable, 'images': {}, 'cast': ['A B']}
         data = {'rails': [{'assets': {'items': [

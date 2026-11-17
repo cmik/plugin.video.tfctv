@@ -38,6 +38,8 @@ Trakt show matching (`libraries/trakt.py`): Trakt finds shows by title, so `Trak
 
 Online search: the search menu entry *Search the website (online)* (`enterSearch` type `online`, `searchOnline`) asks the website search (`searchCatalog`), whatever the databases know, and `formatSearchResults` formats what it finds: shows, movies and documentaries (`stored`) are added to the databases when missing (that is how a title a catalog reload does not bring is recovered; their episodes load when the show is opened), channels and live events play as `livestream` (not kept: the Home rail lists only a few), specials play as movies.
 
+Top Picks: the main menu entry *Top Picks Near You!* (`TOPPICKS`, `getTopPicks`) is what the website search lists for an empty query (a rail of 50 for the user's country), shown in the website's order and stored like the online search (`keepFound`).
+
 Catalog seed (`resources/lib/libraries/seed.py`): on a first installation or an update from a version < 3 (`seedReason`), `tools.importDBFiles()` downloads `catalog-seed.zip` + `manifest.json` from the GitHub release tagged `catalog-seed` (setting `catalogSeedURL`), checks sha256 and the databases, keeps the replaced ones as `.bak`, remaps My List by title if ids changed, then starts `catchUpCatalog` in the background (loads the shows that are new since the seed). Build and publish a seed from a profile whose catalog was loaded (Reload Catalog Cache with episodes):
 
     python3 .github/scripts/build_seed.py "$HOME/Library/Application Support/Kodi/userdata/addon_data/plugin.video.tfctv" /tmp/seed

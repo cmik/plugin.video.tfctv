@@ -45,7 +45,7 @@ __all__ = [
     'getMyList', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',
     
     # Search
-    'enterSearch',
+    'enterSearch', 'getTopPicks',
     
     # Utils
     'unicodetoascii', 'checkProxy', 'cleanCookies',

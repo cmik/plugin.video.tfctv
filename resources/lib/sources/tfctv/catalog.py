@@ -350,7 +350,16 @@ def searchOnline(search):
     """The website search, whatever the catalog databases know. What it finds that is missing from the databases
     (a show or a movie a reload of the catalog does not bring) is added to them; channels, live events and
     specials are only listed (they are not kept)."""
-    found = formatSearchResults((searchCatalog(search) or {}).get('search'))
+    return keepFound(formatSearchResults((searchCatalog(search) or {}).get('search')))
+
+def getTopPicks():
+    """The picks of the website for the user's country (what its search lists for an empty query), in the website's
+    order; the shows and movies missing from the databases are added as for the online search"""
+    return keepFound(formatSearchResults((searchCatalog('') or {}).get('search')))
+
+def keepFound(found):
+    """Adds to the databases the shows and movies of what the search found that they miss, and gives back the list
+    with what the databases hold in place of what the search gave (My List, views...)"""
     stored = [f for f in found if f.get('stored')]
     known = dict((s.get('id'), s) for s in showDB.get([f['id'] for f in stored])) if stored else {}
     new = [f for f in stored if f['id'] not in known]

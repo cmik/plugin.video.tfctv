@@ -10,6 +10,12 @@ from .utils import unicodetoascii
 
 logger = control.logger
 
+def assetKind(assetType):
+    """How an asset of the website is listed and played: channels and live events play as a live channel, specials
+    (one-off videos) as a movie"""
+    return {'tvshow': 'show', 'movie': 'movie', 'documentary': 'documentary', 'channel': 'livestream', 'live': 'livestream',
+            'special': 'movie'}.get(assetType, 'unknown')
+
 def formatToShow(data):
     """Format show data"""
     logger.logInfo('called function')
@@ -18,7 +24,7 @@ def formatToShow(data):
     if data is None or not isinstance(data, dict) or 'id' not in data:
         return {}
     
-    type = 'show' if data.get('assetType', '') == 'tvshow' else 'movie' if data.get('assetType', '') == 'movie' else 'documentary' if data.get('assetType', '') == 'documentary' else 'livestream' if data.get('assetType', '') == 'channel' else 'unknown'
+    type = assetKind(data.get('assetType', ''))
     image = data.get('images', {})
     showDetails = data.get('tvShowDetails', {}) if data.get('tvShowDetails', {}) is not None else {}
     return {
@@ -80,7 +86,7 @@ def formatAssetToShow(asset, episodes={}):
     if asset is None or not isinstance(asset, dict) or 'id' not in asset:
         return {}
 
-    type = 'show' if asset.get('assetType', '') == 'tvshow' else 'movie' if asset.get('assetType', '') == 'movie' else 'documentary' if asset.get('assetType', '') == 'documentary' else 'livestream' if asset.get('assetType', '') == 'channel' else 'unknown'
+    type = assetKind(asset.get('assetType', ''))
     image = asset.get('images', {})
     showDetails = asset.get('tvShowDetails', {}) if asset.get('tvShowDetails', {}) is not None else {}
     return {

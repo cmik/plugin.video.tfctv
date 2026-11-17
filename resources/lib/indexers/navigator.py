@@ -54,6 +54,9 @@ class navigator:
         else:
             self.showMainMenu()
     
+    def myAccountShown(self):
+        return control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != ''
+
     def showMainMenu(self):
         logger.logInfo('called function')
         self.addDirectoryItem(control.lang(30204), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30204)), isFolder=True, **self.formatMenu())
@@ -73,8 +76,11 @@ class navigator:
         if control.setting('displayContinueWatching') != 'false':
             self.addDirectoryItem(control.lang(30218), config.uri.get('base'), config.CONTINUEWATCHING, control.addonFolderIcon(control.lang(30218)), isFolder=True, **self.formatMenu())
 
-        if control.setting('displayViewHistory') != 'false':
+        if control.setting('displayViewHistory') != 'false' and not self.myAccountShown():
+            # without the My account menu, the history stays in the main menu
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
+
+        self.addDirectoryItem(control.lang(30257), config.uri.get('base'), config.TOPPICKS, control.addonFolderIcon(control.lang(30257)), isFolder=True, **self.formatMenu())
 
         if control.setting('displayWebsiteSections') == 'true':
             self.addDirectoryItem(control.lang(30201), config.uri.get('base'), config.CATEGORIES, control.addonFolderIcon(control.lang(30201)), isFolder=True, **self.formatMenu())
@@ -87,7 +93,7 @@ class navigator:
             for c in collections:
                 self.addDirectoryItem(c['title'].title(), str(c['collectionId']), config.COLLECTIONCONTENT, control.addonFolderIcon(c['title'].title()), isFolder=True, **self.formatMenu())
 
-        if control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != '':
+        if self.myAccountShown():
             self.addDirectoryItem(control.lang(30202), config.uri.get('base'), config.MYACCOUNT, control.addonFolderIcon(control.lang(30202)), isFolder=True, **self.formatMenu())
 
         if control.setting('exportToLibrary') == 'true':
@@ -237,7 +243,11 @@ class navigator:
         query = {'parentid': str(show.get('parentid', '')), 'year': show.get('year', '')} if mode == config.SHOWEPISODES else ''
         return self.generateActionUrl(str(showId), mode, info.get('show') or show.get('name') or '', show.get('image') or '', query=query)
 
-    def displayShows(self, shows):
+    def showTopPicks(self):
+        logger.logInfo('called function')
+        self.displayShows(tfctv.getTopPicks(), keepOrder=True)
+
+    def displayShows(self, shows, keepOrder=False):
         logger.logInfo('called function')
         sortedShowInfos = []
         for show in shows:
@@ -248,7 +258,8 @@ class navigator:
                 title = show.get('name')
                 sortedShowInfos.append((title.lower(), title, str(show.get('id')), config.PLAY, show.get('image'), False, {'ltype': show['ltype'], 'title': title}, self.formatVideoInfo(show)))
         
-        sortedShowInfos = sorted(sortedShowInfos, key = itemgetter(0))
+        if not keepOrder:  # the order of the website (top picks) or by title
+            sortedShowInfos = sorted(sortedShowInfos, key = itemgetter(0))
         for info in sortedShowInfos:
             self.addDirectoryItem(info[1], info[2], info[3], info[4], isFolder=info[5], query=info[6], **info[7])
                 
@@ -276,16 +287,16 @@ class navigator:
             self.addDirectoryItem(control.lang(30209), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30209)), isFolder=True, query='category=%s&type=%s' % (category, 'category'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30210), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30210)), isFolder=True, query='category=%s&type=%s' % (category, 'cast'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30212), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30212)), isFolder=True, query='category=%s&type=%s' % (category, 'year'), **self.formatMenu())
-            self.addDirectoryItem(control.lang(30256), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30256)), isFolder=True, query='category=%s&type=%s' % (category, 'online'), **self.formatMenu())
         elif category == 'episode':
             self.addDirectoryItem(control.lang(30208), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30208)), isFolder=True, query='category=%s&type=%s' % (category, 'title'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30211), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30211)), isFolder=True, query='category=%s&type=%s' % (category, 'date'), **self.formatMenu())
         elif category == 'celebrity':
             control.showNotification(control.lang(37026), control.lang(30001))
         else:
-             self.addDirectoryItem(control.lang(30205), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30205)), isFolder=True, query='category=%s' % 'movieshow', **self.formatMenu())
-             self.addDirectoryItem(control.lang(30206), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30206)), isFolder=True, query='category=%s' % 'episode', **self.formatMenu())
-             # self.addDirectoryItem(control.lang(30207), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30207)), isFolder=True, query='category=%s' % 'celebrity', **self.formatMenu())
+            self.addDirectoryItem(control.lang(30256), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30256)), isFolder=True, query='category=%s&type=%s' % ('movieshow', 'online'), **self.formatMenu())
+            self.addDirectoryItem(control.lang(30205), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30205)), isFolder=True, query='category=%s' % 'movieshow', **self.formatMenu())
+            self.addDirectoryItem(control.lang(30206), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30206)), isFolder=True, query='category=%s' % 'episode', **self.formatMenu())
+            # self.addDirectoryItem(control.lang(30207), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30207)), isFolder=True, query='category=%s' % 'celebrity', **self.formatMenu())
         self.endDirectory()
 
     def executeSearch(self, category, type):
@@ -315,6 +326,8 @@ class navigator:
         ]
         for c in categories:
             self.addDirectoryItem(c.get('name'), c.get('url'), c.get('mode'), control.addonFolderIcon(c.get('name')))
+        if control.setting('displayViewHistory') != 'false':
+            self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
         self.addDirectoryItem(control.lang(36007), config.uri.get('base'), config.LOGOUT, control.addonFolderIcon('Logout'), isFolder = False)    
         self.endDirectory()
     
