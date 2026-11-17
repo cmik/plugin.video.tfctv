@@ -187,3 +187,31 @@ def getSeasonFilters(asset):
             seasons.append({'id': i, 'name': 'Season %d' % i, 'seasonId': str(i), 'year': None, 'month': None})
     return seasons
 
+
+# the kinds of assets the website search finds: those the catalog databases keep, and the ones they don't
+STORED_ASSETS = ('tvshow', 'movie', 'documentary')
+LIVE_ASSETS = ('channel', 'live')
+
+def formatSearchResults(data):
+    """Everything the website search found (data = the `search` part of the answer), without duplicates.
+    Shows, movies and documentaries are formatted as the catalog stores them (`stored` is True: they can be added
+    to the databases); channels and live events play as a live channel; other videos (specials) play as a movie.
+    What can't be played yet is left out."""
+    found, seen = [], set()
+    for rail in ((data or {}).get('rails') or []):
+        for asset in (((rail or {}).get('assets') or {}).get('items') or []):
+            kind = asset.get('assetType')
+            if not asset.get('id') or asset['id'] in seen or asset.get('isPlayable') is False:
+                continue
+            seen.add(asset['id'])
+            if kind in STORED_ASSETS:
+                item = formatAssetToShow(asset)
+                item['stored'] = True
+            elif kind in LIVE_ASSETS:
+                item = formatToShow(dict(asset, assetType='channel'))
+                item['type'] = kind
+            else:
+                item = formatToShow(dict(asset, assetType='movie'))
+                item['type'] = kind
+            found.append(item)
+    return found
