@@ -304,7 +304,7 @@ class Trakt(object):
             return int(saved)
         if saved == SKIPPED:
             return None
-        if saved.startswith('none:') and self.clock() - int(saved[5:] or 0) < 86400:
+        if saved.startswith('unsure:') and self.clock() - int(saved[7:] or 0) < 86400:
             return None
         found = self.candidates(title)
         if found is None:  # Trakt can't be reached: not remembered
@@ -313,7 +313,7 @@ class Trakt(object):
         if picked:
             self.store.setMeta(key, picked)
             return int(picked)
-        self.store.setMeta(key, 'none:%d' % int(self.clock()))
+        self.store.setMeta(key, 'unsure:%d' % int(self.clock()))
         self.unresolved = True
         return None
 

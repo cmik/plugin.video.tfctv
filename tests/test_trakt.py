@@ -188,7 +188,7 @@ class ShowChoiceTest(unittest.TestCase):
         c, store, _ = client((200, results))
         self.assertIsNone(c.resolveShow('s1', 'Sigabo', ''))
         self.assertTrue(c.unresolved)  # the user is asked to choose
-        self.assertTrue(str(store.getMeta('traktShow:s1')).startswith('none:'))
+        self.assertTrue(str(store.getMeta('traktShow:s1')).startswith('unsure:'))
 
     def test_the_year_tells_between_two_shows(self):
         old = {'id': 1, 'title': 'Pamilya Ko Two', 'year': 2010, 'score': 1}
