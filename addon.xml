@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tfctv" name="iWantTFC" version="3.8.0~dev8" provider-name="cmik">
+<addon id="plugin.video.tfctv" name="iWantTFC" version="3.8.0~dev9" provider-name="cmik">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.six"/>
@@ -27,6 +27,7 @@
         <news>v3.8.0 (in development)
           [change] Development versions carry a ~devN suffix until the release
           [new] Trakt: a show is also searched without the name of its star (Coco Martin's Sigabo is Sigabo on Trakt); when Trakt can't tell which show it is, choose it among the most likely ones with the context menu (Choose the show on Trakt), the choice is kept
+          [new] Top Picks Near You! in the main menu: the picks of the website for your country
           [fix] Home: the Live Streams rail (live events) and the one-off videos of the rails were empty; My View History moved under My Account
           [change] Clean-up: the old live stream code and the unused history.db are removed
           [new] Search > Search the website (online): finds anything the website has, live channels and events included; the shows and movies a reload of the catalog does not bring are added to your catalog

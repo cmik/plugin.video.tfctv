@@ -80,6 +80,8 @@ class navigator:
             # without the My account menu, the history stays in the main menu
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
 
+        self.addDirectoryItem(control.lang(30257), config.uri.get('base'), config.TOPPICKS, control.addonFolderIcon(control.lang(30257)), isFolder=True, **self.formatMenu())
+
         if control.setting('displayWebsiteSections') == 'true':
             self.addDirectoryItem(control.lang(30201), config.uri.get('base'), config.CATEGORIES, control.addonFolderIcon(control.lang(30201)), isFolder=True, **self.formatMenu())
         else:
@@ -241,7 +243,11 @@ class navigator:
         query = {'parentid': str(show.get('parentid', '')), 'year': show.get('year', '')} if mode == config.SHOWEPISODES else ''
         return self.generateActionUrl(str(showId), mode, info.get('show') or show.get('name') or '', show.get('image') or '', query=query)
 
-    def displayShows(self, shows):
+    def showTopPicks(self):
+        logger.logInfo('called function')
+        self.displayShows(tfctv.getTopPicks(), keepOrder=True)
+
+    def displayShows(self, shows, keepOrder=False):
         logger.logInfo('called function')
         sortedShowInfos = []
         for show in shows:
@@ -252,7 +258,8 @@ class navigator:
                 title = show.get('name')
                 sortedShowInfos.append((title.lower(), title, str(show.get('id')), config.PLAY, show.get('image'), False, {'ltype': show['ltype'], 'title': title}, self.formatVideoInfo(show)))
         
-        sortedShowInfos = sorted(sortedShowInfos, key = itemgetter(0))
+        if not keepOrder:  # the order of the website (top picks) or by title
+            sortedShowInfos = sorted(sortedShowInfos, key = itemgetter(0))
         for info in sortedShowInfos:
             self.addDirectoryItem(info[1], info[2], info[3], info[4], isFolder=info[5], query=info[6], **info[7])
                 

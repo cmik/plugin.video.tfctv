@@ -81,6 +81,7 @@ EXPECTED = {
     config.REMOVEFROMLIBRARY: [["navigator.removeShowFromLibrary", ["U", "N"], []]],
     config.CHECKLIBRARYUPDATES: [["tfctv.checkLibraryUpdates", [False], []]],
     config.EXPORTEDSHOWS: [["navigator.showExportedShows", [], []]],
+    config.TOPPICKS: [["navigator.showTopPicks", [], []]],
     config.SEARCHMENU: [["navigator.showSearchMenu", ["C"], []]],
     config.EXECUTESEARCH: [["navigator.executeSearch", ["C", "TY"], []]],
     config.TOOLS: [["navigator.showTools", [], []]],
