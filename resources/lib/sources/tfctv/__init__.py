@@ -12,6 +12,7 @@ from .playback import *
 from .library import *
 from .user import *
 from .history import *
+from .watchlist import *
 from .trakt import *
 from .utils import *
 
@@ -45,7 +46,7 @@ __all__ = [
     'getMyList', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',
     
     # Search
-    'enterSearch', 'getTopPicks',
+    'enterSearch', 'getTopPicks', 'syncWatchlist', 'pushChange',
     
     # Utils
     'unicodetoascii', 'checkProxy', 'cleanCookies',

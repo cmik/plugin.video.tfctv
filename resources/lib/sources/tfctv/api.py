@@ -77,7 +77,7 @@ def reset_opener():
     global _opener
     _opener = None
 
-def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useCache=True, jsonData=False, returnMessage=True, _retry=False):
+def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useCache=True, jsonData=False, returnMessage=True, _retry=False, method=None):
     """Call service API"""
     logger.logInfo('called function with param (%s%s)' % (base_url, path))
     global cookieJar
@@ -124,6 +124,8 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
         try:
             opener = get_opener()
             request = libRequest.Request(url)
+            if method:  # e.g. DELETE (a request without data is a GET otherwise)
+                request.method = method
             logger.logDebug('### Request URL & params ###')
             logger.logDebug('%s - %s' % (url, params))
             logger.logDebug('### Request headers ###')
@@ -188,7 +190,7 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
                             ('Authorization', 'Bearer %s' % control.setting('iWantUserAuthentication')) if h[0] == 'Authorization' else h
                             for h in headers
                         ]
-                        return callServiceApi(path, params, new_headers, base_url, useCache, jsonData, returnMessage, _retry=True)
+                        return callServiceApi(path, params, new_headers, base_url, useCache, jsonData, returnMessage, _retry=True, method=method)
                 except Exception as re_login_err:
                     logger.logError('Error during re-login: %s' % re_login_err)
                 logger.logWarning('Re-login failed for %s' % url)
@@ -223,13 +225,13 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
     
     return res.get('message') if returnMessage else res
 
-def callJsonApi(path, params={}, headers=[], base_url=config.webserviceUrl, useCache=True, jsonData=True):
+def callJsonApi(path, params={}, headers=[], base_url=config.webserviceUrl, useCache=True, jsonData=True, method=None):
     """Call JSON API"""
     logger.logInfo('called function')
     headers = list(headers) + [('Accept', 'application/json')]  # not the default list, shared by every call
     if params != {} and jsonData:
         headers.append(('Content-Type', 'application/json'))
-    res = callServiceApi(path, params, headers, base_url, useCache, jsonData)
+    res = callServiceApi(path, params, headers, base_url, useCache, jsonData, method=method)
     
     if not res:
         return {}

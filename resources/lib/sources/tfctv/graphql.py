@@ -148,6 +148,61 @@ def searchCatalog(query):
     return response
 
 
+def getWatchlist(headers):
+    """The watchlist of the user on the website (needs the Authorization header): the `watchlist` part of the
+    answer ({} when it can't be read)"""
+    logger.logInfo('called function')
+    response = callGraphQLApi(
+"""query Watchlist($skus: [String!]) {
+    watchlist(skus: $skus) {
+        items {
+            id
+            assetType
+            title
+            shortDescription
+            images {
+                landscape
+                landscapeHero
+                portrait
+                portraitHero
+                title
+                square
+            }
+            isPlayable
+            duration
+            durationInSeconds
+            genres
+            releaseDate
+            cast
+            rating
+            tvShowDetails {
+                totalSeasons
+                tvShowType
+            }
+            seasons {
+                id
+                title
+                count
+                filter {
+                    year
+                    month
+                    seasonId
+                }
+            }
+        }
+        totalItems
+        pageSize
+        currentPage
+        totalPages
+        hasNextPage
+    }
+}""",
+        {'skus': getServiceIds()},
+        headers,
+        useCache=False
+    )
+    return (response or {}).get('watchlist') or {}
+
 def getAppLaunchDetails():
     """Get app launch details from website"""
     logger.logInfo('called function')

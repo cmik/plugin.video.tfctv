@@ -2,6 +2,7 @@
     (in development) Development versions carry a ~devN suffix until the release
     Trakt: shows are also searched without the name of their star; a show Trakt can't tell can be chosen among the most likely ones (context menu), the choice is kept
     Search: a new online search (Search the website) finds anything the website has, live channels and events included, and adds the shows and movies a reload of the catalog does not bring
+    My List can be synchronized with the watchlist of iWant (Tools): merge, or replace one by the other; then what you add or remove in Kodi follows on iWant (setting)
     New main menu entry Top Picks Near You! (the picks of the website for your country)
     Home: the Live Streams rail (live events) and the one-off videos of the rails are listed again; My View History moved under My Account
     Clean-up: the old live stream code and the unused history.db are removed

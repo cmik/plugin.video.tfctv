@@ -385,6 +385,8 @@ class navigator:
     def showTools(self):
         logger.logInfo('called function')
         self.addDirectoryItem(control.lang(36021), config.uri.get('base'), config.IMPORTALLDB, control.addonFolderIcon(control.lang(36021)))
+        if tfctv.isLoggedIn():
+            self.addDirectoryItem(control.lang(30258), config.uri.get('base'), config.SYNCWATCHLIST, control.addonFolderIcon(control.lang(30258)))
         self.addDirectoryItem(control.lang(30215), config.uri.get('base'), config.CHECKFORUPDATES, control.addonFolderIcon(control.lang(30215)))
         self.addDirectoryItem(control.lang(36009), config.uri.get('base'), config.RELOADCATALOG, control.addonFolderIcon(control.lang(36009)))
         self.addDirectoryItem(control.lang(36018), config.uri.get('base'), config.RESETCATALOG, control.addonFolderIcon(control.lang(36018)))

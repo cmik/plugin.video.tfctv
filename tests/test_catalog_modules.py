@@ -38,7 +38,7 @@ def load():
     saved = dict((k, sys.modules.get(k)) for k in fakes)
     sys.modules.update(fakes)
     try:
-        return dict((name, importlib.import_module('%s.%s' % (PACKAGE, name))) for name in ('db', 'formatters', 'graphql', 'rails', 'catalog', 'history'))
+        return dict((name, importlib.import_module('%s.%s' % (PACKAGE, name))) for name in ('db', 'formatters', 'graphql', 'rails', 'catalog', 'history', 'watchlist'))
     finally:
         for key, module in saved.items():
             if module is None:
