@@ -115,7 +115,6 @@ def formatAssetToShow(asset, episodes={}):
         'type': asset.get('assetType', type),
         'parentalAdvisory': 'true' if asset.get('rating', '') == 'SPG' else 'false',
         'media': False,
-        'streamID': False,
         'nbSeasons': len(getSeasonFilters(asset)),
         'isPlayable': asset.get('isPlayable', True),
     }

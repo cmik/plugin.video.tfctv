@@ -39,7 +39,6 @@ uri = {
     'loginStatus' : '/api/1.0/user/login',
     'profile' : 'https://purchase.iwanttfc.com/proxy',
     'licence' : '/api/1.0/license?itemID=%s',
-    'livestream' : '/api/1.0/stream?streamID=%s',
     'profileDetails' : '/profile/details',
     'logout' : "/logout",
     'apiKey' : '/sso/api/apikey?ocpKey=%s&siteUrl=https://tfc.tv',

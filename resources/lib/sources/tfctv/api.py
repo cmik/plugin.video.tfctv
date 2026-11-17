@@ -226,7 +226,7 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
 def callJsonApi(path, params={}, headers=[], base_url=config.webserviceUrl, useCache=True, jsonData=True):
     """Call JSON API"""
     logger.logInfo('called function')
-    headers.append(('Accept', 'application/json'))
+    headers = list(headers) + [('Accept', 'application/json')]  # not the default list, shared by every call
     if params != {} and jsonData:
         headers.append(('Content-Type', 'application/json'))
     res = callServiceApi(path, params, headers, base_url, useCache, jsonData)

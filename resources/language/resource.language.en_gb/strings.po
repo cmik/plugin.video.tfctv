@@ -108,10 +108,6 @@ msgctxt "#30108"
 msgid "Display most loved shows"
 msgstr ""
 
-msgctxt "#30109"
-msgid "Display Live TV Channels"
-msgstr ""
-
 msgctxt "#30110"
 msgid "Parental Control"
 msgstr ""
