@@ -12,7 +12,7 @@ from resources import config
 from resources.lib.libraries import control
 from .db import castDB, episodeDB, showDB
 from .formatters import (
-    formatAssetToEpisode, formatAssetToShow, formatItemsToEpisodes, formatSearchLive, formatToShow, getSeasonFilters
+    formatAssetToEpisode, formatAssetToShow, formatItemsToEpisodes, formatSearchResults, formatToShow, getSeasonFilters
 )
 from .graphql import getAppLaunchDetails, getAsset, getCollection, getTVShowEpisodes, searchCatalog
 from .rails import (
@@ -346,6 +346,23 @@ def getEpisode(id, show={}):
         return logger.logInfo(episode)
     return {}
 
+def searchOnline(search):
+    """The website search, whatever the catalog databases know. What it finds that is missing from the databases
+    (a show or a movie a reload of the catalog does not bring) is added to them; channels, live events and
+    specials are only listed (they are not kept)."""
+    found = formatSearchResults((searchCatalog(search) or {}).get('search'))
+    stored = [f for f in found if f.get('stored')]
+    known = dict((s.get('id'), s) for s in showDB.get([f['id'] for f in stored])) if stored else {}
+    new = [f for f in stored if f['id'] not in known]
+    if new:
+        showDB.set(new)
+        for show in new:
+            castDB.replaceApiCast(show['id'], show.get('casts', []))
+        logger.logInfo('Online search: %d title(s) added to the catalog' % len(new))
+        known.update((s.get('id'), s) for s in showDB.get([f['id'] for f in new]))
+    # what the databases hold (with My List, views...) replaces what the search gave
+    return [known.get(f['id'], f) if f.get('stored') else f for f in found]
+
 def enterSearch(category, type):
     """Search functionality"""
     logger.logInfo('called function with params (%s, %s)' % (category, type))
@@ -362,9 +379,8 @@ def enterSearch(category, type):
             elif type == 'cast':
                 cast = castDB.searchByActorName(search)
                 data = showDB.get([c.get('showid') for c in cast])
-            elif type == 'live':
-                # the channels and live events are not in the databases: the website search finds them
-                data = formatSearchLive((searchCatalog(search) or {}).get('search'))
+            elif type == 'online':
+                data = searchOnline(search)
         elif category == 'episode':
             if type == 'title':
                 data = episodeDB.searchByTitle(search)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tfctv" name="iWantTFC" version="3.8.0~dev4" provider-name="cmik">
+<addon id="plugin.video.tfctv" name="iWantTFC" version="3.8.0~dev5" provider-name="cmik">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.six"/>
@@ -28,7 +28,7 @@
           [change] Development versions carry a ~devN suffix until the release
           [new] Trakt: a show is also searched without the name of its star (Coco Martin's Sigabo is Sigabo on Trakt); when Trakt can't tell which show it is, choose it among the most likely ones with the context menu (Choose the show on Trakt), the choice is kept
           [change] Clean-up: the old live stream code and the unused history.db are removed
-          [new] Search > Movies and shows > Live channels and events (online): the website search finds every live channel and live event (the Home list shows only a few)
+          [new] Search > Movies and shows > Search the website (online): finds anything the website has, live channels and events included; the shows and movies a reload of the catalog does not bring are added to your catalog
           [fix] A header was added again at each call of the JSON API
 
           v3.7.0
