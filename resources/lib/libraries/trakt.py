@@ -34,6 +34,7 @@ TIMEOUT = 15
 # The service keeps this between the clients it makes (one per thread that sends).
 MIN_POST_INTERVAL = 1.0
 DEFAULT_RETRY_AFTER = 10
+SKIPPED = 'skip'  # what is kept for a show the user said is not on Trakt
 _state = {'lastPost': 0.0, 'blockedUntil': 0.0}
 _stateLock = threading.Lock()
 
@@ -50,6 +51,71 @@ def matches(wanted, found):
     if not a or not b:
         return False
     return a == b or (min(len(a), len(b)) >= 5 and (a in b or b in a))
+
+
+def titleVariants(title):
+    """The titles to search on Trakt for a show, the most likely first: the title itself, then without the name of the
+    star ("Coco Martin's Sigabo" is "Sigabo" on Trakt) and without a subtitle ("Show: Season 2", "Show - Part 2")"""
+    title = re.sub(r'\s*\([^)]*\)\s*$', '', (title or '').strip())  # "(2026)" at the end
+    variants = [title]
+    possessive = re.match(r"^.+?['\u2019]s\s+(.+)$", title)
+    if possessive:
+        variants.append(possessive.group(1))
+    for separator in (':', ' - '):
+        if separator in title:
+            variants.append(title.split(separator)[0])
+            if possessive and separator in possessive.group(1):
+                variants.append(possessive.group(1).split(separator)[0])
+    unique, seen = [], set()
+    for v in variants:
+        v = v.strip()
+        if len(normalize(v)) >= 2 and normalize(v) not in seen:
+            seen.add(normalize(v))
+            unique.append(v)
+    return unique
+
+
+def plausible(title, found):
+    """Whether a title of Trakt can be the one of the show, or one of its variants (see titleVariants)"""
+    return any(matches(v, found) for v in titleVariants(title))
+
+
+def yearNear(year, other):
+    """Whether two years are the same or one apart (the year here is the one of the latest season); True when one is unknown"""
+    try:
+        return abs(int(year) - int(other)) <= 1
+    except (TypeError, ValueError):
+        return True
+
+
+def pickShow(title, year, candidates):
+    """The Trakt id of the candidate that is surely the show, or None (nothing matches, or several shows could be it).
+    In order: the same title; the only one equal to a variant of the title; the only one that matches; the only one
+    of the right year among those that match."""
+    possible = [c for c in candidates if plausible(title, c['title'])]
+    if not possible:
+        return None
+    exact = [c for c in possible if normalize(c['title']) == normalize(title)]
+    if len(exact) == 1:
+        return exact[0]['id']
+    names = set(normalize(v) for v in titleVariants(title))
+    byVariant = [c for c in possible if normalize(c['title']) in names]
+    if len(byVariant) == 1:
+        return byVariant[0]['id']
+    if len(possible) == 1:
+        return possible[0]['id']
+    near = [c for c in possible if yearNear(year, c.get('year'))]
+    if len(near) == 1:
+        return near[0]['id']
+    return None
+
+
+def rankCandidates(title, year, candidates):
+    """The candidates, the most likely first: the same title, a title that matches, the right year, Trakt's score"""
+    names = set(normalize(v) for v in titleVariants(title))
+    def key(c):
+        return (normalize(c['title']) in names, plausible(title, c['title']), yearNear(year, c.get('year')), c.get('score') or 0)
+    return sorted(candidates, key=key, reverse=True)
 
 
 def scrobbleBody(episode, show, progress, traktId=None):
@@ -107,6 +173,7 @@ class Trakt(object):
         self.clock = clock
         self.sleep = sleep
         self.lastStatus = None
+        self.unresolved = False
 
     def hasCredentials(self):
         return bool(self.clientId)
@@ -186,34 +253,77 @@ class Trakt(object):
         self.store.setMeta(REFRESH, data['refresh_token'])
         self.store.setMeta(EXPIRES, int(data.get('created_at', self.clock())) + int(data.get('expires_in', 0)))
 
-    def findShow(self, title):
-        """The Trakt id of the show with this title (the best result of a search whose title matches), or None"""
+    def search(self, title):
+        """The shows Trakt finds for a title (dicts id, title, year, score), or None when it can't answer"""
         status, data = self._call('/search/show?query=%s&limit=10' % quote(title or ''), token=None)
         if status != 200 or not isinstance(data, list):
             return None
-        found = [r for r in data if matches(title, (r.get('show') or {}).get('title'))]
-        if not found:
-            return None
-        # the exact title first, then the best score
-        found.sort(key=lambda r: (normalize(r['show']['title']) == normalize(title), r.get('score') or 0), reverse=True)
-        return (found[0]['show'].get('ids') or {}).get('trakt')
+        found = []
+        for r in data:
+            show = r.get('show') or {}
+            traktId = (show.get('ids') or {}).get('trakt')
+            if traktId and show.get('title'):
+                found.append({'id': int(traktId), 'title': show['title'], 'year': show.get('year'), 'score': r.get('score') or 0})
+        return found
 
-    def resolveShow(self, showKey, title):
-        """The Trakt id of a show, remembered by the id the show has here. A show Trakt doesn't know is
-        looked for again after a day. None when it can't be found (or Trakt can't be reached)."""
+    def candidates(self, title):
+        """The shows found for the variants of the title, until one matches; None when Trakt can't answer"""
+        found, answered = {}, False
+        for query in titleVariants(title)[:3]:
+            result = self.search(query)
+            if result is None:
+                if not answered:
+                    return None
+                break
+            answered = True
+            for c in result:
+                found.setdefault(c['id'], c)
+            if any(plausible(title, c['title']) for c in found.values()):
+                break
+        return list(found.values())
+
+    def suggestions(self, title, year=None, limit=5):
+        """The shows the user can choose among, the most likely first; None when Trakt can't answer"""
+        found = self.candidates(title)
+        return None if found is None else rankCandidates(title, year, found)[:limit]
+
+    def findShow(self, title, year=None):
+        """The Trakt id of the show with this title, or None when no result is surely it"""
+        found = self.candidates(title)
+        return pickShow(title, year, found) if found else None
+
+    def resolveShow(self, showKey, title, year=None):
+        """The Trakt id of a show, remembered by the id the show has here (what the user chose is kept the same way).
+        A show Trakt doesn't know, or can't tell among several, is looked for again after a day (`unresolved` is then
+        True: the user can choose it). None when it can't be found, when the user said it is not on Trakt, or when
+        Trakt can't be reached."""
+        self.unresolved = False
         key = 'traktShow:%s' % showKey
         saved = str(self.store.getMeta(key) or '')
         if saved.isdigit():
             return int(saved)
+        if saved == SKIPPED:
+            return None
         if saved.startswith('none:') and self.clock() - int(saved[5:] or 0) < 86400:
             return None
-        found = self.findShow(title)
-        if found:
-            self.store.setMeta(key, found)
-            return int(found)
-        if self.lastStatus == 200:  # Trakt answered: the show is unknown to it
-            self.store.setMeta(key, 'none:%d' % int(self.clock()))
+        found = self.candidates(title)
+        if found is None:  # Trakt can't be reached: not remembered
+            return None
+        picked = pickShow(title, year, found)
+        if picked:
+            self.store.setMeta(key, picked)
+            return int(picked)
+        self.store.setMeta(key, 'none:%d' % int(self.clock()))
+        self.unresolved = True
         return None
+
+    def isSkipped(self, showKey):
+        """True when the user said that the show is not on Trakt"""
+        return str(self.store.getMeta('traktShow:%s' % showKey) or '') == SKIPPED
+
+    def chooseShow(self, showKey, traktId):
+        """Remembers the show the user chose on Trakt; None as the id remembers that it is not on Trakt (not scrobbled)"""
+        self.store.setMeta('traktShow:%s' % showKey, int(traktId) if traktId else SKIPPED)
 
     def deviceCode(self):
         """The code to enter on trakt.tv (user_code, verification_url, device_code, expires_in, interval), or None"""

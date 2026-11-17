@@ -102,7 +102,14 @@ class PlaybackMonitor(xbmc.Player):
             traktId = None
             if current and current.get('ltype') != 'movie' and current.get('parentid'):
                 # Trakt knows the show by its own title, find it once (in a thread: it is a network call)
-                traktId = client.resolveShow(current.get('parentid'), (show or {}).get('name') or current.get('show'))
+                showTitle = (show or {}).get('name') or current.get('show')
+                traktId = client.resolveShow(current.get('parentid'), showTitle, (show or {}).get('year'))
+                if client.isSkipped(current.get('parentid')):
+                    self._log('Trakt: %s is not on Trakt (chosen by the user), not scrobbled' % showTitle)
+                    return
+                if client.unresolved:
+                    # a search that found nothing sure: tell the user once (the answer is kept a day), who chooses the show
+                    xbmcgui.Dialog().notification(control.lang(30231), control.lang(30249) % showTitle, xbmcgui.NOTIFICATION_INFO, 8000)
             body = trakt.scrobbleBody(current, show, 0, traktId)
             if not body:
                 self._log('Trakt: %s can\'t be identified, not scrobbled' % episodeId)

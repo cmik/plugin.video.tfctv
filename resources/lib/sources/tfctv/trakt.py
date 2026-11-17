@@ -61,3 +61,34 @@ def disconnectTrakt():
     client.disconnect()
     control.showNotification(control.lang(30243), control.lang(30231))
     return True
+
+
+def chooseTraktShow(showId, title, year=None):
+    """Lets the user choose which show of Trakt is a show of the add-on (the 5 most likely ones, a search with
+    another title, or "not on Trakt"); the choice is kept and used for the scrobbling of its episodes"""
+    if not showId or not title:
+        return False
+    client = getTraktClient()
+    query = title
+    while True:
+        found = client.suggestions(query, year)
+        if found is None:
+            control.alert(control.lang(30238), title=control.lang(30231))
+            return False
+        labels = ['%s (%s)' % (c['title'], c['year']) if c.get('year') else c['title'] for c in found]
+        labels += [control.lang(30251), control.lang(30252)]
+        choice = control.selectDialog(labels, control.lang(30250) % query)
+        if choice < 0:
+            return False
+        if choice < len(found):
+            client.chooseShow(showId, found[choice]['id'])
+            control.showNotification(control.lang(30253) % (title, found[choice]['title']), control.lang(30231))
+            return True
+        if choice == len(found):
+            typed = control.inputText(control.lang(30255), query)
+            if typed and typed.strip():
+                query = typed.strip()
+            continue
+        client.chooseShow(showId, None)
+        control.showNotification(control.lang(30254) % title, control.lang(30231))
+        return True

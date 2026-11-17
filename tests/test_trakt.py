@@ -161,6 +161,69 @@ class ShowSearchTest(unittest.TestCase):
         self.assertEqual({'show': {'ids': {'trakt': 202504}}, 'episode': {'season': 2, 'number': 194}, 'progress': 0}, body)
 
 
+class ShowChoiceTest(unittest.TestCase):
+    def test_the_variants_of_a_title(self):
+        self.assertEqual(["Coco Martin's Sigabo", 'Sigabo'], trakt.titleVariants("Coco Martin's Sigabo"))
+        self.assertEqual(['Batang Quiapo'], trakt.titleVariants('Batang Quiapo'))
+        self.assertEqual(['Show: Season 2', 'Show'], trakt.titleVariants('Show: Season 2'))
+        self.assertEqual(['Show'], trakt.titleVariants('Show (2026)'))
+        self.assertEqual([], trakt.titleVariants(''))
+
+    def test_a_show_with_the_name_of_its_star_is_found_by_the_second_search(self):
+        # "Coco Martin's Sigabo" is "Sigabo" on Trakt: the first search finds nothing that matches
+        c, store, opener = client((200, [result('Ice T and Coco', 1)]), (200, [result('Sigabo', 262140)]))
+        self.assertEqual(262140, c.resolveShow('s1', "Coco Martin's Sigabo", '2026'))
+        self.assertEqual(2, len(opener.requests))
+        self.assertIn('query=Sigabo', opener.requests[1][0])
+        self.assertEqual(262140, store.getMeta('traktShow:s1'))
+        self.assertFalse(c.unresolved)
+
+    def test_the_second_search_is_not_made_when_the_first_one_matches(self):
+        c, _, opener = client((200, [result("Coco Martin's Sigabo", 5)]))
+        self.assertEqual(5, c.resolveShow('s1', "Coco Martin's Sigabo"))
+        self.assertEqual(1, len(opener.requests))
+
+    def test_several_possible_shows_are_not_guessed(self):
+        results = [result('Sigabo: The Series', 1), result('Sigabo: Origins', 2)]
+        c, store, _ = client((200, results))
+        self.assertIsNone(c.resolveShow('s1', 'Sigabo', ''))
+        self.assertTrue(c.unresolved)  # the user is asked to choose
+        self.assertTrue(str(store.getMeta('traktShow:s1')).startswith('none:'))
+
+    def test_the_year_tells_between_two_shows(self):
+        old = {'id': 1, 'title': 'Pamilya Ko Two', 'year': 2010, 'score': 1}
+        new = {'id': 2, 'title': 'Pamilya Ko Two!', 'year': 2026, 'score': 1}
+        self.assertEqual(2, trakt.pickShow('Pamilya Ko Two (Season)', '2026', [old, new]))
+        self.assertIsNone(trakt.pickShow('Pamilya Ko Two (Season)', '', [old, new]))
+
+    def test_the_suggestions_are_the_most_likely_first(self):
+        results = [result('Something Else', 9, 900), result('Sigabo: Behind the Scenes', 3, 300), result('Sigabo', 2, 200)]
+        c, _, _ = client((200, results))
+        found = c.suggestions("Coco Martin's Sigabo", '2026')
+        self.assertEqual([2, 3, 9], [x['id'] for x in found])
+        self.assertIsNone(client((500, None))[0].suggestions('Sigabo'))
+
+    def test_at_most_five_suggestions(self):
+        results = [result('Sigabo %d' % i, i) for i in range(1, 9)]
+        self.assertEqual(5, len(client((200, results))[0].suggestions('Sigabo')))
+
+    def test_the_choice_of_the_user_is_kept(self):
+        c, store, opener = client()
+        c.chooseShow('s1', 262140)
+        self.assertEqual(262140, c.resolveShow('s1', 'Whatever the title is'))
+        self.assertEqual(0, len(opener.requests))  # no search for a show the user chose
+
+    def test_a_show_that_is_not_on_trakt(self):
+        c, store, opener = client()
+        c.chooseShow('s1', None)
+        self.assertTrue(c.isSkipped('s1'))
+        self.assertIsNone(c.resolveShow('s1', 'Sigabo'))
+        self.assertEqual(0, len(opener.requests))
+        c.chooseShow('s1', 5)  # the user changed their mind
+        self.assertFalse(c.isSkipped('s1'))
+        self.assertEqual(5, c.resolveShow('s1', 'Sigabo'))
+
+
 class SettingsTest(unittest.TestCase):
     def setUp(self):
         self.settings = {}
