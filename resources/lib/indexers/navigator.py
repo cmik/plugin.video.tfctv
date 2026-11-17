@@ -54,6 +54,9 @@ class navigator:
         else:
             self.showMainMenu()
     
+    def myAccountShown(self):
+        return control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != ''
+
     def showMainMenu(self):
         logger.logInfo('called function')
         self.addDirectoryItem(control.lang(30204), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30204)), isFolder=True, **self.formatMenu())
@@ -73,7 +76,8 @@ class navigator:
         if control.setting('displayContinueWatching') != 'false':
             self.addDirectoryItem(control.lang(30218), config.uri.get('base'), config.CONTINUEWATCHING, control.addonFolderIcon(control.lang(30218)), isFolder=True, **self.formatMenu())
 
-        if control.setting('displayViewHistory') != 'false':
+        if control.setting('displayViewHistory') != 'false' and not self.myAccountShown():
+            # without the My account menu, the history stays in the main menu
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
 
         if control.setting('displayWebsiteSections') == 'true':
@@ -87,7 +91,7 @@ class navigator:
             for c in collections:
                 self.addDirectoryItem(c['title'].title(), str(c['collectionId']), config.COLLECTIONCONTENT, control.addonFolderIcon(c['title'].title()), isFolder=True, **self.formatMenu())
 
-        if control.setting('displayMyAccountMenu') == 'true' and control.setting('emailAddress') != '':
+        if self.myAccountShown():
             self.addDirectoryItem(control.lang(30202), config.uri.get('base'), config.MYACCOUNT, control.addonFolderIcon(control.lang(30202)), isFolder=True, **self.formatMenu())
 
         if control.setting('exportToLibrary') == 'true':
@@ -315,6 +319,8 @@ class navigator:
         ]
         for c in categories:
             self.addDirectoryItem(c.get('name'), c.get('url'), c.get('mode'), control.addonFolderIcon(c.get('name')))
+        if control.setting('displayViewHistory') != 'false':
+            self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
         self.addDirectoryItem(control.lang(36007), config.uri.get('base'), config.LOGOUT, control.addonFolderIcon('Logout'), isFolder = False)    
         self.endDirectory()
     
