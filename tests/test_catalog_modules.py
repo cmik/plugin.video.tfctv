@@ -104,6 +104,17 @@ class CatalogModulesTest(unittest.TestCase):
         self.assertEqual({}, MODULES['formatters'].formatAssetToShow(None))
         self.assertEqual({}, MODULES['formatters'].formatToShow({'title': 'no id'}))
 
+    def test_search_keeps_the_channels_and_live_events(self):
+        item = lambda i, t, kind, playable=True: {'id': i, 'assetType': kind, 'title': t, 'isPlayable': playable, 'images': {}}
+        data = {'rails': [{'assets': {'items': [
+            item('1', 'ANC Global', 'channel'), item('2', 'PBB Live', 'live'), item('3', 'A show', 'tvshow'),
+            item('4', 'A movie', 'movie'), item('1', 'ANC Global', 'channel'), item('5', 'Not yet', 'live', False)]}}]}
+        found = MODULES['formatters'].formatSearchLive(data)
+        self.assertEqual(['ANC Global', 'PBB Live'], [f['name'] for f in found])
+        self.assertEqual(['livestream', 'livestream'], [f['ltype'] for f in found])  # both play as a live channel
+        self.assertEqual([], MODULES['formatters'].formatSearchLive(None))
+        self.assertEqual([], MODULES['formatters'].formatSearchLive({'rails': [None, {'assets': None}]}))
+
     def test_graphql_functions_survive_an_empty_answer(self):
         self.assertEqual({}, MODULES['graphql'].getAsset('x'))
         self.assertEqual({}, MODULES['graphql'].getCollection('x'))

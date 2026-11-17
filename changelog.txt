@@ -1,6 +1,7 @@
 3.8.0
     (in development) Development versions carry a ~devN suffix until the release
     Trakt: shows are also searched without the name of their star; a show Trakt can't tell can be chosen among the most likely ones (context menu), the choice is kept
+    Search: Live channels and events (online) finds the channels the Home list doesn't show, with the website search
     Clean-up: the old live stream code and the unused history.db are removed
     Fixed a header that was added again at each call of the JSON API
 3.7.0

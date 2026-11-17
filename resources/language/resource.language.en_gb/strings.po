@@ -991,3 +991,7 @@ msgstr ""
 msgctxt "#30255"
 msgid "Title to search on Trakt"
 msgstr ""
+
+msgctxt "#30256"
+msgid "Live channels and events (online)"
+msgstr ""

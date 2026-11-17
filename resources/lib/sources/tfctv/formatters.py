@@ -187,3 +187,20 @@ def getSeasonFilters(asset):
             seasons.append({'id': i, 'name': 'Season %d' % i, 'seasonId': str(i), 'year': None, 'month': None})
     return seasons
 
+
+# what the search of the website finds that the catalog databases don't keep: the channels and the live events
+LIVE_ASSETS = ('channel', 'live')
+
+def formatSearchLive(data):
+    """The channels and live events of the answer of the website search (data = the `search` part of the answer),
+    formatted as shows that play as a live channel"""
+    found, seen = [], set()
+    for rail in ((data or {}).get('rails') or []):
+        for asset in (((rail or {}).get('assets') or {}).get('items') or []):
+            if asset.get('assetType') not in LIVE_ASSETS or asset.get('id') in seen or asset.get('isPlayable') is False:
+                continue
+            seen.add(asset.get('id'))
+            show = formatToShow(dict(asset, assetType='channel'))
+            show['type'] = asset.get('assetType')
+            found.append(show)
+    return found

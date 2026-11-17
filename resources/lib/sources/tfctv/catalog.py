@@ -12,7 +12,7 @@ from resources import config
 from resources.lib.libraries import control
 from .db import castDB, episodeDB, showDB
 from .formatters import (
-    formatAssetToEpisode, formatAssetToShow, formatItemsToEpisodes, formatToShow, getSeasonFilters
+    formatAssetToEpisode, formatAssetToShow, formatItemsToEpisodes, formatSearchLive, formatToShow, getSeasonFilters
 )
 from .graphql import getAppLaunchDetails, getAsset, getCollection, getTVShowEpisodes, searchCatalog
 from .rails import (
@@ -362,6 +362,9 @@ def enterSearch(category, type):
             elif type == 'cast':
                 cast = castDB.searchByActorName(search)
                 data = showDB.get([c.get('showid') for c in cast])
+            elif type == 'live':
+                # the channels and live events are not in the databases: the website search finds them
+                data = formatSearchLive((searchCatalog(search) or {}).get('search'))
         elif category == 'episode':
             if type == 'title':
                 data = episodeDB.searchByTitle(search)

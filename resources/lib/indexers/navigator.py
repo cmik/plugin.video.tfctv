@@ -276,6 +276,7 @@ class navigator:
             self.addDirectoryItem(control.lang(30209), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30209)), isFolder=True, query='category=%s&type=%s' % (category, 'category'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30210), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30210)), isFolder=True, query='category=%s&type=%s' % (category, 'cast'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30212), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30212)), isFolder=True, query='category=%s&type=%s' % (category, 'year'), **self.formatMenu())
+            self.addDirectoryItem(control.lang(30256), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30256)), isFolder=True, query='category=%s&type=%s' % (category, 'live'), **self.formatMenu())
         elif category == 'episode':
             self.addDirectoryItem(control.lang(30208), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30208)), isFolder=True, query='category=%s&type=%s' % (category, 'title'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30211), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30211)), isFolder=True, query='category=%s&type=%s' % (category, 'date'), **self.formatMenu())
