@@ -220,6 +220,12 @@ class navigator:
         """A show with several seasons offers the choice of the season before its episodes"""
         return config.SEASONS if (show.get('nbSeasons') or 0) > 1 else config.SHOWEPISODES
 
+    def traktEntry(self, showId, title, year):
+        """The context menu entry that links a show to its show on Trakt (none when the show is not known)"""
+        if not showId or not title:
+            return {}
+        return { control.lang(30248) : 'RunPlugin(%s)' % self.generateActionUrl(str(showId), config.TRAKTLINK, title, query={'year': year or ''}) }
+
     def showTarget(self, info):
         """The URL that opens the show of an episode: its seasons when it has several, else its episodes
         (None for movies and when the show is not known)"""
@@ -444,6 +450,8 @@ class navigator:
             contextMenu.update(add)
         else:
             contextMenu.update(remove)
+        if control.setting('traktScrobble') == 'true' and info.get('ltype') == 'show':
+            contextMenu.update(self.traktEntry(info.get('id'), info.get('name'), info.get('year')))
         # export to library
         if control.setting('exportToLibrary') == 'true':
             addToLibrary = { control.lang(30302) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
@@ -496,6 +504,9 @@ class navigator:
             contextMenu.update(remove)
         if options.get('goToShow') and self.showTarget(info):
             contextMenu.update({ control.lang(30306) : 'Container.Update(%s)' % self.showTarget(info) })
+        if control.setting('traktScrobble') == 'true' and info.get('parentid') and info.get('ltype') not in ('movie', 'documentary', 'livestream', 'channel'):
+            show = info.get('showObj') or {}
+            contextMenu.update(self.traktEntry(info.get('parentid'), info.get('show') or show.get('name'), show.get('year') or info.get('year')))
         if options.get('history'):
             contextMenu.update({ control.lang(30305) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMHISTORY, info.get('title')) })
 

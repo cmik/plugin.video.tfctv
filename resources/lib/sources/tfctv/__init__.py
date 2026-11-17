@@ -53,7 +53,7 @@ __all__ = [
     'removeDuplicates', 'checkIfError',
     
     # Trakt
-    'connectTrakt', 'disconnectTrakt', 'getTraktClient',
+    'connectTrakt', 'disconnectTrakt', 'getTraktClient', 'chooseTraktShow',
 
     # Cookies
     'getFromCookieByName', 'getCookieContent',

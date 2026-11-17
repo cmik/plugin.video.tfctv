@@ -959,3 +959,35 @@ msgstr ""
 msgctxt "#30247"
 msgid "Country code to use instead (two letters, e.g. FR, PH, US; empty = detected)"
 msgstr ""
+
+msgctxt "#30248"
+msgid "Choose the show on Trakt"
+msgstr ""
+
+msgctxt "#30249"
+msgid "Trakt can't tell which show \"%s\" is. Choose it with the context menu: Choose the show on Trakt"
+msgstr ""
+
+msgctxt "#30250"
+msgid "Which show on Trakt is \"%s\"?"
+msgstr ""
+
+msgctxt "#30251"
+msgid "Search with another title..."
+msgstr ""
+
+msgctxt "#30252"
+msgid "It is not on Trakt (do not scrobble it)"
+msgstr ""
+
+msgctxt "#30253"
+msgid "\"%s\" is linked to \"%s\" on Trakt"
+msgstr ""
+
+msgctxt "#30254"
+msgid "\"%s\" will not be scrobbled to Trakt"
+msgstr ""
+
+msgctxt "#30255"
+msgid "Title to search on Trakt"
+msgstr ""
