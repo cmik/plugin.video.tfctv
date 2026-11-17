@@ -26,18 +26,17 @@
         <source>https://github.com/cmik/cmik.xbmc</source>
         <news>v3.8.0 (in development)
           [change] Development versions carry a ~devN suffix until the release
-          [new] Trakt: a show is also searched without the name of its star (Coco Martin's Sigabo is Sigabo on Trakt); when Trakt can't tell which show it is, choose it among the most likely ones with the context menu (Choose the show on Trakt), the choice is kept
+          [new] Trakt: a show is also searched without the name of its star (Coco Martin's Sigabo is Sigabo on Trakt); when Trakt can't tell which show it is, choose it with the context menu (Choose the show on Trakt), the choice is kept
           [new] Top Picks Near You! in the main menu: the picks of the website for your country
-          [fix] Home: the Live Streams rail (live events) and the one-off videos of the rails were empty; My View History moved under My Account
-          [change] Clean-up: the old live stream code and the unused history.db are removed
-          [new] Search > Search the website (online): finds anything the website has, live channels and events included; the shows and movies a reload of the catalog does not bring are added to your catalog
-          [fix] A header was added again at each call of the JSON API
+          [new] Search > Search the website (online): finds anything the website has, live channels and events included, and adds the shows and movies a catalog reload does not bring
+          [fix] Home: the Live Streams rail and the one-off videos were empty; My View History moved under My Account
+          [change] Clean-up: old live stream code and history.db removed; a header was added again at each call of the JSON API
 
           v3.7.0
-          [fix] Live channels can be played again: the catalog is read for your country, as the website does (the channels of the Philippines were listed and refused elsewhere)
+          [fix] Live channels can be played again: the catalog is read for your country, as the website does
           [change] The settings use the Kodi 18+ format (same settings and values)
-          [new] Location: the country, which decides the catalog and the live channels, is detected again at each start of Kodi (VPN, trip); this can be turned off and a country can be set by hand (Advanced > Location)
-          [fix] The geo location service refused the request of the add-on (403), so the country was not detected on some devices
+          [new] Location: the country is detected again at each start of Kodi (VPN, trip); it can be set by hand (Advanced > Location)
+          [fix] The geo location service refused the request (403): the country was not detected on some devices
         </news>
         <assets>
             <icon>resources/icon.png</icon>
