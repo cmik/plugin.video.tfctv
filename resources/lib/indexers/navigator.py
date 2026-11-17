@@ -272,7 +272,6 @@ class navigator:
     def showSearchMenu(self, category):    
         logger.logInfo('called function')
         if category == 'movieshow':
-            self.addDirectoryItem(control.lang(30256), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30256)), isFolder=True, query='category=%s&type=%s' % (category, 'online'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30208), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30208)), isFolder=True, query='category=%s&type=%s' % (category, 'title'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30209), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30209)), isFolder=True, query='category=%s&type=%s' % (category, 'category'), **self.formatMenu())
             self.addDirectoryItem(control.lang(30210), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30210)), isFolder=True, query='category=%s&type=%s' % (category, 'cast'), **self.formatMenu())
@@ -283,9 +282,10 @@ class navigator:
         elif category == 'celebrity':
             control.showNotification(control.lang(37026), control.lang(30001))
         else:
-             self.addDirectoryItem(control.lang(30205), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30205)), isFolder=True, query='category=%s' % 'movieshow', **self.formatMenu())
-             self.addDirectoryItem(control.lang(30206), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30206)), isFolder=True, query='category=%s' % 'episode', **self.formatMenu())
-             # self.addDirectoryItem(control.lang(30207), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30207)), isFolder=True, query='category=%s' % 'celebrity', **self.formatMenu())
+            self.addDirectoryItem(control.lang(30256), config.uri.get('base'), config.EXECUTESEARCH, control.addonFolderIcon(control.lang(30256)), isFolder=True, query='category=%s&type=%s' % ('movieshow', 'online'), **self.formatMenu())
+            self.addDirectoryItem(control.lang(30205), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30205)), isFolder=True, query='category=%s' % 'movieshow', **self.formatMenu())
+            self.addDirectoryItem(control.lang(30206), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30206)), isFolder=True, query='category=%s' % 'episode', **self.formatMenu())
+            # self.addDirectoryItem(control.lang(30207), config.uri.get('base'), config.SEARCHMENU, control.addonFolderIcon(control.lang(30207)), isFolder=True, query='category=%s' % 'celebrity', **self.formatMenu())
         self.endDirectory()
 
     def executeSearch(self, category, type):
