@@ -28,7 +28,7 @@ __all__ = [
     
     # Playback
     'playEpisode', 'getMediaInfo', 'getMediaInfoFromWebsite',
-    'getEpisodeFromShow', 'getEpisodeFromLiveStream',
+    'getEpisodeFromShow',
     
     # Library
     'addToLibrary', 'removeFromLibrary', 'showExportedShowsToLibrary',

@@ -5,6 +5,7 @@
     Copyright (C) 2018 cmik
 '''
 
+import os
 from resources import config
 from resources.lib.libraries import control
 from resources.lib.libraries import tools
@@ -43,6 +44,14 @@ def upgradeDB():
         viewhistory.backfill(episodeDB.getUserData(), episodeDB)
     except Exception as e:
         logger.logError('Can\'t build the view history: %s' % str(e))
+    # history.db belonged to the old model (ids of the old API) and nothing reads it anymore
+    try:
+        oldHistory = os.path.join(control.dataPath, 'history.db')
+        if os.path.isfile(oldHistory):
+            os.remove(oldHistory)
+            logger.logNotice('Removed the unused history.db')
+    except Exception as e:
+        logger.logError('Can\'t remove history.db: %s' % str(e))
     if control.setting('lastVersion')[:1] in ('', '1', '2'):
         upgradeSettings()
         control.setSetting('lastVersion', control.addonInfo('version'))

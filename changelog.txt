@@ -1,3 +1,7 @@
+3.8.0
+    (in development) Development versions carry a ~devN suffix until the release
+    Clean-up: the old live stream code and the unused history.db are removed
+    Fixed a header that was added again at each call of the JSON API
 3.7.0
     Live channels can be played again; the catalog is read for the country of the user
     Settings in the Kodi 18+ format (same settings and values)
