@@ -82,6 +82,7 @@ EXPECTED = {
     config.CHECKLIBRARYUPDATES: [["tfctv.checkLibraryUpdates", [False], []]],
     config.EXPORTEDSHOWS: [["navigator.showExportedShows", [], []]],
     config.TOPPICKS: [["navigator.showTopPicks", [], []]],
+    config.SYNCWATCHLIST: [["tfctv.syncWatchlist", [], []]],
     config.SEARCHMENU: [["navigator.showSearchMenu", ["C"], []]],
     config.EXECUTESEARCH: [["navigator.executeSearch", ["C", "TY"], []]],
     config.TOOLS: [["navigator.showTools", [], []]],

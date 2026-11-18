@@ -81,6 +81,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="syncWatchlist" type="boolean" label="30266" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
                 <setting id="displayViewHistory" type="boolean" label="30217" help="">
                     <level>0</level>
                     <default>true</default>

@@ -32,6 +32,7 @@ uri = {
     'getUserData' : '/identity/api/iam/get-contact?api-version=1.2',
     'getSubscriptions' : '/subs/api/subscription/get-active-entitlements',
     'graphql' : '/consumer/graphql',
+    'watchlist' : '/watchlist/watchlist',
     'video' : '/entitlement/playback/start/%s',
 
     'base' : '/',
@@ -123,6 +124,7 @@ TRAKTDISCONNECT = 69
 REFRESHGEO = 70
 TRAKTLINK = 71
 TOPPICKS = 72
+SYNCWATCHLIST = 73
 FIRSTINSTALL = 98
 ENDSETUP = 99
 

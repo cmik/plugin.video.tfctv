@@ -785,7 +785,7 @@ msgid "%s has been saved to my list"
 msgstr ""
 
 msgctxt "#37054"
-msgid "%s has been removed from my lis"
+msgid "%s has been removed from my list"
 msgstr ""
 
 msgctxt "#37056"
@@ -998,4 +998,56 @@ msgstr ""
 
 msgctxt "#30257"
 msgid "Top Picks Near You!"
+msgstr ""
+
+msgctxt "#30258"
+msgid "Synchronize My List with iWant"
+msgstr ""
+
+msgctxt "#30259"
+msgid "My List and iWant differ (%d only here, %d only on iWant)"
+msgstr ""
+
+msgctxt "#30260"
+msgid "Merge both lists (nothing is removed)"
+msgstr ""
+
+msgctxt "#30261"
+msgid "Replace My List on Kodi with the iWant watchlist"
+msgstr ""
+
+msgctxt "#30262"
+msgid "Replace the iWant watchlist with My List on Kodi"
+msgstr ""
+
+msgctxt "#30263"
+msgid "This removes %d title(s) from Kodi and %d from iWant. Continue?"
+msgstr ""
+
+msgctxt "#30264"
+msgid "%d change(s) could not be sent to iWant. Try again later."
+msgstr ""
+
+msgctxt "#30265"
+msgid "Synchronized: %d added, %d removed"
+msgstr ""
+
+msgctxt "#30266"
+msgid "Keep the iWant watchlist up to date with My List"
+msgstr ""
+
+msgctxt "#30267"
+msgid "The iWant watchlist could not be read."
+msgstr ""
+
+msgctxt "#30268"
+msgid "My List and the iWant watchlist are the same"
+msgstr ""
+
+msgctxt "#30269"
+msgid "iWant could not be updated for \"%s\": synchronize from Tools"
+msgstr ""
+
+msgctxt "#30270"
+msgid "My list could not be updated for %s"
 msgstr ""
