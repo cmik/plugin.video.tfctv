@@ -40,6 +40,7 @@ def show(i, name=None):
 
 
 class SyncTest(unittest.TestCase):
+    real = staticmethod(wl.getRemoteWatchlist)
 
     def setUp(self):
         self.userData = db.showDB.getUserData()
@@ -49,6 +50,7 @@ class SyncTest(unittest.TestCase):
         self.added, self.removed, self.alerts, self.notes = [], [], [], []
         self.remote = []
         self.choice, self.confirm = 0, True
+        self.realGetRemote = SyncTest.real
         wl.getRemoteWatchlist = lambda: self.remote
         wl.addToRemote = lambda i: self.added.append(i) or True
         wl.removeFromRemote = lambda i: self.removed.append(i) or True
@@ -121,6 +123,21 @@ class SyncTest(unittest.TestCase):
         self.assertFalse(wl.syncWatchlist())
         self.assertEqual(1, len(self.alerts))
         self.assertTrue(wl.isSynced())  # what failed comes with the next synchronization, the changes after it are sent
+
+    def test_an_expired_token_is_renewed_once(self):
+        answers = [{}, {'items': [{'id': 'a', 'assetType': 'tvshow', 'title': 'A', 'images': {}}]}]
+        calls = []
+        wl.getWatchlist = lambda headers: calls.append(1) or answers[len(calls) - 1]
+        wl._login = lambda: True
+        wl.getRemoteWatchlist = self.realGetRemote
+        self.assertEqual(['a'], [f['id'] for f in wl.getRemoteWatchlist()])
+        self.assertEqual(2, len(calls))
+        # nothing to renew: the answer stays empty
+        calls[:] = []
+        answers[:] = [{}, {}]
+        wl._login = lambda: False
+        self.assertIsNone(wl.getRemoteWatchlist())
+        self.assertEqual(1, len(calls))
 
     def test_a_channel_is_not_sent_to_iwant(self):
         formatters = test_catalog_modules.MODULES['formatters']
