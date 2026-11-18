@@ -21,6 +21,7 @@ logger = control.logger
 
 # Global state
 cookieJar = None
+lastError = None  # the last HTTP error answer: {'code', 'url', 'body'} (None when the last call went well)
 _opener = None
 
 def initialize(force=False):
@@ -80,7 +81,8 @@ def reset_opener():
 def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useCache=True, jsonData=False, returnMessage=True, _retry=False, method=None):
     """Call service API"""
     logger.logInfo('called function with param (%s%s)' % (base_url, path))
-    global cookieJar
+    global cookieJar, lastError
+    lastError = None
 
     url = base_url + path
     res = {}
@@ -197,9 +199,11 @@ def callServiceApi(path, params={}, headers=[], base_url=config.websiteUrl, useC
                 control.showNotification(control.lang(37012), control.lang(30004))
             else:
                 logger.logError(e)
+                lastError = {'code': e.code, 'url': url, 'body': ''}
                 try:
                     # what the server says about the error (it explains a 400 or a 403)
-                    logger.logError('HTTP %s answer of %s: %s' % (e.code, url, e.read()[:600].decode('utf-8', 'replace')))
+                    lastError['body'] = e.read()[:600].decode('utf-8', 'replace')
+                    logger.logError('HTTP %s answer of %s: %s' % (e.code, url, lastError['body']))
                 except Exception:
                     pass
                 message = '%s : %s' % (e, url)

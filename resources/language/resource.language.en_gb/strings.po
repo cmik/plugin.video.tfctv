@@ -1059,3 +1059,11 @@ msgstr ""
 msgctxt "#30272"
 msgid "Display Live TV (channels and live events)"
 msgstr ""
+
+msgctxt "#30273"
+msgid "iWant does not accept \"%s\" in its watchlist: it stays in My List of Kodi only"
+msgstr ""
+
+msgctxt "#30274"
+msgid "%d titles are not accepted by iWant: they stay in My List of Kodi only"
+msgstr ""

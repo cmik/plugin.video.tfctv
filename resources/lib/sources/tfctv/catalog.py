@@ -82,7 +82,10 @@ def setMyList(id, name, inList):
         control.showNotification(control.lang(37053 if inList else 37054) % name)
         # the iWant watchlist follows (once the two lists were synchronized: Tools)
         from .watchlist import pushChange
-        if not pushChange(id, inList):
+        pushed = pushChange(id, inList)
+        if pushed == 'refused':  # iWant does not accept this title: it stays in My List of Kodi only
+            control.showNotification(control.lang(30273) % name)
+        elif not pushed:
             control.showNotification(control.lang(30269) % name)
     else:
         control.showNotification(control.lang(30270) % name)

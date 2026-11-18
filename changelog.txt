@@ -1,6 +1,8 @@
 3.9.0
     New main menu entry Live TV (setting): the live channels, then the live events, of the website for your country
     Clean log: the actions started from a menu entry (Tools, login) are run as actions (context menu: RunPlugin; entries: not folders) (no more "GetDirectory - Error getting plugin")
+    The Kodi log hides the tokens, cookies and passwords the debug mode used to write
+    Watchlist sync: a title iWant refuses ("invalid asset", GMA ones so far) stays in My List of Kodi only and is not sent again (a message says so)
     My List: the list on screen is refreshed after an add or a remove from the context menu
     An expired login is renewed for every call to the website (GraphQL), not only for the synchronization of My List: no more empty lists after a few days without signing in again
 
