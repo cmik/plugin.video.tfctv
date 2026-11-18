@@ -1,0 +1,2 @@
+# the first version of tests/test_logger.py had a made-up JWT that looked real (header only, no secret); rewritten since
+6c1b425ca451257d8849fb8fa7ffc798cd34530d:tests/test_logger.py:jwt:29

@@ -3,6 +3,7 @@
 
 import os
 import sys
+import types
 import unittest
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -41,12 +42,14 @@ def show(i, name=None):
 
 class SyncTest(unittest.TestCase):
     real = staticmethod(wl.getRemoteWatchlist)
+    realAdd = staticmethod(wl.addToRemote)
 
     def setUp(self):
         self.userData = db.showDB.getUserData()
         for showId, _ in self.userData.getMyList():
             self.userData.removeFromMyList(showId)
         self.userData.setMeta(wl.SYNCED, '')
+        self.userData.deleteMeta(wl.REFUSED)
         self.added, self.removed, self.alerts, self.notes = [], [], [], []
         self.remote = []
         self.choice, self.confirm = 0, True
@@ -55,7 +58,7 @@ class SyncTest(unittest.TestCase):
         wl.addToRemote = lambda i: self.added.append(i) or True
         wl.removeFromRemote = lambda i: self.removed.append(i) or True
         wl.keepFound = lambda found: found
-        control.lang = lambda number: '%s' if number == 30264 else '%s %s'
+        control.lang = lambda number: '%s' if number in (30264, 30274) else '%s %s'
         control.selectDialog = lambda items, heading='': self.choice
         control.yesnoDialog = lambda message: self.confirm
         control.alert = lambda message, *a, **k: self.alerts.append(message)
@@ -123,6 +126,38 @@ class SyncTest(unittest.TestCase):
         self.assertFalse(wl.syncWatchlist())
         self.assertEqual(1, len(self.alerts))
         self.assertTrue(wl.isSynced())  # what failed comes with the next synchronization, the changes after it are sent
+
+    def refuse(self):
+        """iWant answers 400 invalid asset to the add"""
+        wl.addToRemote = SyncTest.realAdd
+        control.setting = lambda key: ''
+        wl.callJsonApi = lambda *a, **k: {}
+        wl.api = types.SimpleNamespace(lastError={'code': 400, 'url': 'u', 'body': '{"statusMessage":"invalid asset"}'})
+        self.addCleanup(setattr, wl, 'api', None)
+
+    def test_a_refused_title_stays_in_kodi_only(self):
+        self.refuse()
+        self.userData.setMeta(wl.SYNCED, '1')
+        self.assertEqual(wl.REFUSED_ANSWER, wl.pushChange('g', True))
+        self.assertTrue(wl.isRefused('g'))
+        self.assertEqual([], wl.syncable(['g']))  # left out of the next synchronizations
+        self.assertTrue(wl.pushChange('g', False))  # nothing to remove on iWant either
+
+    def test_a_refusal_is_not_a_failure_of_the_synchronization(self):
+        self.refuse()
+        self.userData.addToMyList('g', 'G')
+        self.remote = []
+        self.choice = 0
+        self.assertTrue(wl.syncWatchlist())
+        self.assertEqual([], self.alerts)
+        self.assertTrue(wl.isRefused('g'))
+
+    def test_another_error_is_not_a_refusal(self):
+        self.refuse()
+        wl.api.lastError = {'code': 500, 'url': 'u', 'body': 'invalid asset'}
+        self.userData.setMeta(wl.SYNCED, '1')
+        self.assertFalse(wl.pushChange('h', True))
+        self.assertFalse(wl.isRefused('h'))
 
     def test_a_channel_is_not_sent_to_iwant(self):
         formatters = test_catalog_modules.MODULES['formatters']

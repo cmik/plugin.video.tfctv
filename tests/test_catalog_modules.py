@@ -56,7 +56,7 @@ PUBLIC = {
     'formatters': ['formatToShow', 'formatAssetToEpisode', 'formatAssetToShow', 'formatItemsToEpisodes', 'getSeasonFilters'],
     'graphql': ['getAppLaunchDetails', 'searchCatalog', 'getCollection', 'getTVShowEpisodes', 'getAsset'],
     'rails': ['getWebsiteCollections', 'getCachedCollection', 'getCollectionContent', 'getCollectionShowIds', 'getCatalogShowIds',
-              'findCollectionRail', 'getWebsiteSectionContent', 'SHOW_ASSET_TYPES'],
+              'findCollectionRail', 'getWebsiteSectionContent', 'SHOW_ASSET_TYPES', 'getLiveTV'],
     'history': ['recordView', 'getEpisodeViews', 'getViewHistory', 'hasNextViewHistoryPage', 'removeFromViewHistory', 'clearViewHistory'],
     'catalog': ['getCategories', 'getShows', 'getMyList', 'getMyListShows', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',
                 'getSettings', 'loadSettings', 'refreshCatalogShows', 'checkCatalogUpdates', 'getSeasons', 'getShowEpisodeItems', 'getShow',
@@ -108,6 +108,22 @@ class CatalogModulesTest(unittest.TestCase):
         kind = MODULES['formatters'].assetKind
         self.assertEqual(['show', 'movie', 'livestream', 'livestream', 'movie', 'unknown'],
                          [kind(k) for k in ('tvshow', 'movie', 'channel', 'live', 'special', 'playlistV2')])
+
+    def test_live_tv(self):
+        rails = MODULES['rails']
+        def asset(i, kind, **k):
+            return dict({'id': i, 'assetType': kind, 'title': i, 'images': {}}, **k)
+        collections = {'home': {'rails': [{'assets': {'items': [asset('e1', 'live'), asset('show', 'tvshow'), asset('c1', 'channel')]}}]},
+                       'other': {'rails': [{'assets': {'items': [asset('c1', 'channel'), asset('c2', 'channel'), asset('e2', 'live', isPlayable=False)]}}]}}
+        saved = (rails.getWebsiteCollections, rails.getCachedCollection)
+        rails.getWebsiteCollections = lambda: [{'collectionId': 'home'}, {'collectionId': 'other'}]
+        rails.getCachedCollection = lambda c: collections[c]
+        try:
+            live = rails.getLiveTV()
+        finally:
+            rails.getWebsiteCollections, rails.getCachedCollection = saved
+        self.assertEqual(['c1', 'c2', 'e1'], [i['id'] for i in live])  # channels first, no duplicate, no show, not playable left out
+        self.assertEqual({'livestream'}, set(i['ltype'] for i in live))
 
     def test_search_results(self):
         item = lambda i, t, kind, playable=True: {'id': i, 'assetType': kind, 'title': t, 'isPlayable': playable, 'images': {}, 'cast': ['A B']}

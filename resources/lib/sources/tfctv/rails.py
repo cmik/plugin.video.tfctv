@@ -10,7 +10,7 @@ import re
 from resources.lib.libraries import cache
 from resources.lib.libraries import control
 from .db import showDB
-from .formatters import formatToShow
+from .formatters import formatToShow, formatSearchResults, LIVE_ASSETS
 from .graphql import getAppLaunchDetails, getCollection
 from .utils import removeDuplicates
 
@@ -70,6 +70,20 @@ def getCollectionShowIds(collectionId, refresh=False):
             if item.get('id') and item.get('assetType', '') in SHOW_ASSET_TYPES:
                 ids.append(item.get('id'))
     return list(dict.fromkeys(ids))
+
+def getLiveTV():
+    """The live channels, then the live events, listed by the rails of the website collections (what the website
+    offers in the user's country; nothing is stored: the events come and go)"""
+    logger.logInfo('called function')
+    rails = []
+    for collection in getWebsiteCollections():
+        try:
+            rails += getCachedCollection(collection.get('collectionId', collection.get('id'))).get('rails') or []
+        except Exception as e:
+            logger.logError('Can\'t read collection %s : %s' % (collection.get('collectionId'), str(e)))
+    live = [i for i in formatSearchResults({'rails': rails}) if i.get('type') in LIVE_ASSETS]
+    # channels first (the order of the website is kept), then the events
+    return sorted(live, key=lambda i: i['type'] != 'channel')
 
 def getCatalogShowIds(refresh=False):
     """Get the ids of all the shows listed in the website collections (without duplicates).

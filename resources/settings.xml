@@ -91,6 +91,11 @@
                     <default>true</default>
                     <control type="toggle"/>
                 </setting>
+                <setting id="displayLiveTV" type="boolean" label="30272" help="">
+                    <level>0</level>
+                    <default>true</default>
+                    <control type="toggle"/>
+                </setting>
                 <setting id="displayContinueWatching" type="boolean" label="30219" help="">
                     <level>0</level>
                     <default>true</default>

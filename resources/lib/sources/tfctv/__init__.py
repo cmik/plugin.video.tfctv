@@ -46,7 +46,7 @@ __all__ = [
     'getMyList', 'getMylistShowLastEpisodes', 'addToMyList', 'removeFromMyList',
     
     # Search
-    'enterSearch', 'getTopPicks', 'syncWatchlist', 'pushChange',
+    'enterSearch', 'getTopPicks', 'getLiveTV', 'syncWatchlist', 'pushChange',
     
     # Utils
     'unicodetoascii', 'checkProxy', 'cleanCookies',

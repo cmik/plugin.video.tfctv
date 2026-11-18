@@ -80,6 +80,9 @@ class navigator:
             # without the My account menu, the history stays in the main menu
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
 
+        if control.setting('displayLiveTV') != 'false':
+            self.addDirectoryItem(control.lang(30271), config.uri.get('base'), config.LIVETV, control.addonFolderIcon(control.lang(30271)), isFolder=True, **self.formatMenu())
+
         self.addDirectoryItem(control.lang(30257), config.uri.get('base'), config.TOPPICKS, control.addonFolderIcon(control.lang(30257)), isFolder=True, **self.formatMenu())
 
         if control.setting('displayWebsiteSections') == 'true':
@@ -163,7 +166,7 @@ class navigator:
         if tfctv.hasNextViewHistoryPage(page, itemsPerPage):
             self.addDirectoryItem(control.lang(36008), config.uri.get('base'), config.VIEWHISTORY, '', page + 1)
         if len(episodes) > 0 and int(page) == 1:
-            self.addDirectoryItem(control.lang(36026), config.uri.get('base'), config.CLEARHISTORY, control.addonFolderIcon(control.lang(36026)), isFolder=False)
+            self.addDirectoryItem(control.lang(36026), config.uri.get('base'), config.CLEARHISTORY, control.addonFolderIcon(control.lang(36026)), **self.actionItem())
         self.endDirectory(content='episodes', sortMethods=('unsorted', 'lastplayed'))
 
     def showContinueWatching(self, page=1):
@@ -247,6 +250,10 @@ class navigator:
         logger.logInfo('called function')
         self.displayShows(tfctv.getTopPicks(), keepOrder=True)
 
+    def showLiveTV(self):
+        logger.logInfo('called function')
+        self.displayShows(tfctv.getLiveTV(), keepOrder=True)
+
     def displayShows(self, shows, keepOrder=False):
         logger.logInfo('called function')
         sortedShowInfos = []
@@ -328,7 +335,7 @@ class navigator:
             self.addDirectoryItem(c.get('name'), c.get('url'), c.get('mode'), control.addonFolderIcon(c.get('name')))
         if control.setting('displayViewHistory') != 'false':
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
-        self.addDirectoryItem(control.lang(36007), config.uri.get('base'), config.LOGOUT, control.addonFolderIcon('Logout'), isFolder = False)    
+        self.addDirectoryItem(control.lang(36007), config.uri.get('base'), config.LOGOUT, control.addonFolderIcon('Logout'), **self.actionItem())    
         self.endDirectory()
     
     def showMyInfo(self):
@@ -382,17 +389,22 @@ class navigator:
         tfctv.removeFromLibrary(id, name)
         control.refresh()
             
+    def actionItem(self):
+        """What an entry that runs an action (not a listing) needs: Kodi runs the plugin without waiting for a listing
+        (a folder entry logs "GetDirectory - Error getting plugin", also when the plugin ends the directory as failed)"""
+        return {'isFolder': False, 'listProperties': {'IsPlayable': 'false'}}
+
     def showTools(self):
         logger.logInfo('called function')
-        self.addDirectoryItem(control.lang(36021), config.uri.get('base'), config.IMPORTALLDB, control.addonFolderIcon(control.lang(36021)))
+        self.addDirectoryItem(control.lang(36021), config.uri.get('base'), config.IMPORTALLDB, control.addonFolderIcon(control.lang(36021)), **self.actionItem())
         if tfctv.isLoggedIn():
-            self.addDirectoryItem(control.lang(30258), config.uri.get('base'), config.SYNCWATCHLIST, control.addonFolderIcon(control.lang(30258)))
-        self.addDirectoryItem(control.lang(30215), config.uri.get('base'), config.CHECKFORUPDATES, control.addonFolderIcon(control.lang(30215)))
-        self.addDirectoryItem(control.lang(36009), config.uri.get('base'), config.RELOADCATALOG, control.addonFolderIcon(control.lang(36009)))
-        self.addDirectoryItem(control.lang(36018), config.uri.get('base'), config.RESETCATALOG, control.addonFolderIcon(control.lang(36018)))
-        self.addDirectoryItem(control.lang(36017), config.uri.get('base'), config.CHECKLIBRARYUPDATES, control.addonFolderIcon(control.lang(36017)))
-        self.addDirectoryItem(control.lang(36010), config.uri.get('base'), config.CLEANCOOKIES, control.addonFolderIcon(control.lang(36010)))
-        self.addDirectoryItem(control.lang(36022), config.uri.get('base'), config.FIRSTINSTALL, control.addonFolderIcon(control.lang(36022)))
+            self.addDirectoryItem(control.lang(30258), config.uri.get('base'), config.SYNCWATCHLIST, control.addonFolderIcon(control.lang(30258)), **self.actionItem())
+        self.addDirectoryItem(control.lang(30215), config.uri.get('base'), config.CHECKFORUPDATES, control.addonFolderIcon(control.lang(30215)), **self.actionItem())
+        self.addDirectoryItem(control.lang(36009), config.uri.get('base'), config.RELOADCATALOG, control.addonFolderIcon(control.lang(36009)), **self.actionItem())
+        self.addDirectoryItem(control.lang(36018), config.uri.get('base'), config.RESETCATALOG, control.addonFolderIcon(control.lang(36018)), **self.actionItem())
+        self.addDirectoryItem(control.lang(36017), config.uri.get('base'), config.CHECKLIBRARYUPDATES, control.addonFolderIcon(control.lang(36017)), **self.actionItem())
+        self.addDirectoryItem(control.lang(36010), config.uri.get('base'), config.CLEANCOOKIES, control.addonFolderIcon(control.lang(36010)), **self.actionItem())
+        self.addDirectoryItem(control.lang(36022), config.uri.get('base'), config.FIRSTINSTALL, control.addonFolderIcon(control.lang(36022)), **self.actionItem())
         self.endDirectory()
             
     def firstInstall(self):
@@ -401,9 +413,9 @@ class navigator:
             control.showMessage(control.lang(37016), control.lang(37018))
             control.setSetting('showWelcomeMessage', 'false')
         
-        self.addDirectoryItem(control.lang(36025), config.uri.get('base'), config.LOGINWITHTFC, control.addonIcon())
+        self.addDirectoryItem(control.lang(36025), config.uri.get('base'), config.LOGINWITHTFC, control.addonIcon(), **self.actionItem())
         if control.setting('FBAppID') != '' or control.setting('FBClientToken') != '':
-            self.addDirectoryItem(control.lang(36024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon())
+            self.addDirectoryItem(control.lang(36024), config.uri.get('base'), config.LOGINWITHFB, control.facebookIcon(), **self.actionItem())
         self.endDirectory()
 
     def loginWithTFC(self):
@@ -460,8 +472,8 @@ class navigator:
     def formatShowInfo(self, info, addToList=True, options = {}):
         contextMenu = {}
         # add to mylist / remove from mylist
-        add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
-        remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
+        add = { control.lang(30300) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
+        remove = { control.lang(30301) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
         if addToList:
             if info.get('ltype') not in ('livestream', 'channel', 'unknown'):  # a channel can't be in My List (nor on iWant)
                 contextMenu.update(add)
@@ -471,8 +483,8 @@ class navigator:
             contextMenu.update(self.traktEntry(info.get('id'), info.get('name'), info.get('year')))
         # export to library
         if control.setting('exportToLibrary') == 'true':
-            addToLibrary = { control.lang(30302) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
-            removeFromLibrary = { control.lang(30304) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
+            addToLibrary = { control.lang(30302) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
+            removeFromLibrary = { control.lang(30304) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIBRARY, info.get('name'), query={'parentid': str(info.get('parentid')), 'year' : info.get('year'), 'ltype' : info.get('ltype'), 'type' : info.get('type')}) }
             if info.get('inLibrary', False):
                 contextMenu.update(removeFromLibrary)
             else:
@@ -513,8 +525,8 @@ class navigator:
 
         contextMenu = {}
         # add to mylist / remove from mylist
-        add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
-        remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
+        add = { control.lang(30300) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
+        remove = { control.lang(30301) : 'RunPlugin(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
         if addToList:
             if info.get('ltype') not in ('livestream', 'channel', 'unknown'):  # a channel can't be in My List (nor on iWant)
                 contextMenu.update(add)

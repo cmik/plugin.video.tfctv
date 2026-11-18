@@ -72,6 +72,7 @@ ROUTES = {
     config.EXPORTEDSHOWS: lambda r: navigator().showExportedShows(),
     config.TOPPICKS: lambda r: navigator().showTopPicks(),
     config.SYNCWATCHLIST: lambda r: tfctv().syncWatchlist(),
+    config.LIVETV: lambda r: navigator().showLiveTV(),
     config.SEARCHMENU: lambda r: navigator().showSearchMenu(r.get('category', False)),
     config.EXECUTESEARCH: lambda r: navigator().executeSearch(r.get('category', False), r.get('type', False)),
     config.TOOLS: lambda r: navigator().showTools(),
