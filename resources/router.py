@@ -107,31 +107,10 @@ ROUTES = {
 }
 
 
-# Modes that do something and list nothing. When one is opened from a menu entry (a Tools entry is a folder to
-# Kodi, which waits for a listing) the plugin must end the directory, else the log gets "GetDirectory - Error
-# getting plugin"; succeeded=False leaves the screen as it is.
-ACTIONS = frozenset([
-    config.CHECKFORUPDATES, config.LOGOUT, config.ADDTOLIST, config.REMOVEFROMLIST, config.ADDTOLIBRARY,
-    config.REMOVEFROMLIBRARY, config.CHECKLIBRARYUPDATES, config.CLEANCOOKIES, config.ENTERCREDENTIALS,
-    config.LOGINWITHTFC, config.LOGINWITHFB, config.PERSONALIZESETTINGS, config.OPTIMIZELIBRARY, config.ENDSETUP,
-    config.RELOADCATALOG, config.RESETCATALOG, config.CATCHUPCATALOG, config.REFRESHGEO, config.TRAKTLINK,
-    config.TRAKTCONNECT, config.TRAKTDISCONNECT, config.IMPORTALLDB, config.SYNCWATCHLIST, config.CLEARHISTORY,
-    config.REMOVEFROMHISTORY,
-])
-
-
-def route(request, handle=-1):
-    """Run what handles the mode of the request (the root menu when there is no mode); `handle` is the one Kodi
-    gave to the plugin (-1 when it was started by RunPlugin, which waits for no listing)"""
+def route(request):
+    """Run what handles the mode of the request (the root menu when there is no mode)"""
     if request.mode is None:
         return navigator().root()
     handler = ROUTES.get(request.mode)
     if handler is not None:
-        try:
-            return handler(request)
-        finally:
-            if request.mode in ACTIONS and handle >= 0:
-                try:
-                    control.directory(handle, succeeded=False, updateListing=False, cacheToDisc=False)
-                except Exception:
-                    pass
+        return handler(request)

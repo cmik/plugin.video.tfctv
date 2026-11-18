@@ -1,6 +1,6 @@
 3.9.0
     New main menu entry Live TV (setting): the live channels, then the live events, of the website for your country
-    Clean log: the actions started from a menu entry (Tools, login) end their listing properly (no more "GetDirectory - Error getting plugin")
+    Clean log: the actions started from a menu entry (Tools, login) are run as actions (context menu: RunPlugin; entries: not folders) (no more "GetDirectory - Error getting plugin")
     An expired login is renewed for every call to the website (GraphQL), not only for the synchronization of My List: no more empty lists after a few days without signing in again
 
 3.8.0
