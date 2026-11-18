@@ -1,5 +1,4 @@
 3.8.0
-    (in development) Development versions carry a ~devN suffix until the release
     Trakt: shows are also searched without the name of their star; a show Trakt can't tell can be chosen among the most likely ones (context menu), the choice is kept
     Search: a new online search (Search the website) finds anything the website has, live channels and events included, and adds the shows and movies a reload of the catalog does not bring
     My List can be synchronized with the watchlist of iWant (Tools): merge, or replace one by the other; then what you add or remove in Kodi follows on iWant (setting)
