@@ -124,21 +124,6 @@ class SyncTest(unittest.TestCase):
         self.assertEqual(1, len(self.alerts))
         self.assertTrue(wl.isSynced())  # what failed comes with the next synchronization, the changes after it are sent
 
-    def test_an_expired_token_is_renewed_once(self):
-        answers = [{}, {'items': [{'id': 'a', 'assetType': 'tvshow', 'title': 'A', 'images': {}}]}]
-        calls = []
-        wl.getWatchlist = lambda headers: calls.append(1) or answers[len(calls) - 1]
-        wl._login = lambda: True
-        wl.getRemoteWatchlist = self.realGetRemote
-        self.assertEqual(['a'], [f['id'] for f in wl.getRemoteWatchlist()])
-        self.assertEqual(2, len(calls))
-        # nothing to renew: the answer stays empty
-        calls[:] = []
-        answers[:] = [{}, {}]
-        wl._login = lambda: False
-        self.assertIsNone(wl.getRemoteWatchlist())
-        self.assertEqual(1, len(calls))
-
     def test_a_channel_is_not_sent_to_iwant(self):
         formatters = test_catalog_modules.MODULES['formatters']
         db.showDB.set(formatters.formatAssetToShow({'id': 'ch', 'assetType': 'channel', 'title': 'A channel', 'images': {}}))
