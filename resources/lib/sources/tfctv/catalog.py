@@ -17,7 +17,7 @@ from .formatters import (
 from .graphql import getAppLaunchDetails, getAsset, getCollection, getTVShowEpisodes, searchCatalog
 from .rails import (
     SHOW_ASSET_TYPES, findCollectionRail, getCachedCollection, getCatalogShowIds, getCollectionContent,
-    getCollectionShowIds, getWebsiteCollections, getWebsiteSectionContent
+    getCollectionShowIds, getLiveTV, getWebsiteCollections, getWebsiteSectionContent
 )
 
 logger = control.logger

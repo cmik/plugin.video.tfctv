@@ -1051,3 +1051,11 @@ msgstr ""
 msgctxt "#30270"
 msgid "My list could not be updated for %s"
 msgstr ""
+
+msgctxt "#30271"
+msgid "Live TV"
+msgstr ""
+
+msgctxt "#30272"
+msgid "Display Live TV (channels and live events)"
+msgstr ""

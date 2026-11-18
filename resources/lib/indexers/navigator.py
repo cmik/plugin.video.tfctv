@@ -80,6 +80,9 @@ class navigator:
             # without the My account menu, the history stays in the main menu
             self.addDirectoryItem(control.lang(30216), config.uri.get('base'), config.VIEWHISTORY, control.addonFolderIcon(control.lang(30216)), isFolder=True, **self.formatMenu())
 
+        if control.setting('displayLiveTV') != 'false':
+            self.addDirectoryItem(control.lang(30271), config.uri.get('base'), config.LIVETV, control.addonFolderIcon(control.lang(30271)), isFolder=True, **self.formatMenu())
+
         self.addDirectoryItem(control.lang(30257), config.uri.get('base'), config.TOPPICKS, control.addonFolderIcon(control.lang(30257)), isFolder=True, **self.formatMenu())
 
         if control.setting('displayWebsiteSections') == 'true':
@@ -246,6 +249,10 @@ class navigator:
     def showTopPicks(self):
         logger.logInfo('called function')
         self.displayShows(tfctv.getTopPicks(), keepOrder=True)
+
+    def showLiveTV(self):
+        logger.logInfo('called function')
+        self.displayShows(tfctv.getLiveTV(), keepOrder=True)
 
     def displayShows(self, shows, keepOrder=False):
         logger.logInfo('called function')

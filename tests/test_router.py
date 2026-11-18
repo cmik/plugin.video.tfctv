@@ -83,6 +83,7 @@ EXPECTED = {
     config.EXPORTEDSHOWS: [["navigator.showExportedShows", [], []]],
     config.TOPPICKS: [["navigator.showTopPicks", [], []]],
     config.SYNCWATCHLIST: [["tfctv.syncWatchlist", [], []]],
+    config.LIVETV: [["navigator.showLiveTV", [], []]],
     config.SEARCHMENU: [["navigator.showSearchMenu", ["C"], []]],
     config.EXECUTESEARCH: [["navigator.executeSearch", ["C", "TY"], []]],
     config.TOOLS: [["navigator.showTools", [], []]],
