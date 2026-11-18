@@ -79,13 +79,13 @@ def setMyList(id, name, inList):
     """Add a show to My List or remove it"""
     show = getShow(id)
     if showDB.update({'id': id, 'name': show.get('name') or name, 'mylist': 'true' if inList else 'false'}):
-        control.showNotification(control.lang(37053) % name)
+        control.showNotification(control.lang(37053 if inList else 37054) % name)
         # the iWant watchlist follows (once the two lists were synchronized: Tools)
         from .watchlist import pushChange
         if not pushChange(id, inList):
             control.showNotification(control.lang(30269) % name)
     else:
-        control.showNotification(control.lang(37054) % name)
+        control.showNotification(control.lang(30270) % name)
 
 def addToMyList(id, name, ltype, type):
     """Add to my list"""

@@ -785,7 +785,7 @@ msgid "%s has been saved to my list"
 msgstr ""
 
 msgctxt "#37054"
-msgid "%s has been removed from my lis"
+msgid "%s has been removed from my list"
 msgstr ""
 
 msgctxt "#37056"
@@ -1046,4 +1046,8 @@ msgstr ""
 
 msgctxt "#30269"
 msgid "iWant could not be updated for "%s": synchronize from Tools"
+msgstr ""
+
+msgctxt "#30270"
+msgid "My list could not be updated for %s"
 msgstr ""
