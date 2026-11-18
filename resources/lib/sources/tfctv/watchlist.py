@@ -14,6 +14,8 @@ from .graphql import getWatchlist
 
 logger = control.logger
 
+# what iWant keeps in its watchlist (it answers 400 "invalid content type" for a channel or a live event)
+SYNCABLE = ('show', 'movie', 'documentary')
 SYNCED = 'watchlistSyncedAt'  # META of userdata.db: set once the two lists were settled (not before, nothing is sent)
 
 
@@ -51,6 +53,13 @@ def removeFromRemote(showId):
     return bool(answer and answer.get('message') == 'success')
 
 
+def syncable(ids):
+    """The ids of `ids` iWant can keep: the ones the catalog knows as another kind of asset (a live channel...) are left out"""
+    ids = list(ids)
+    kinds = dict((s.get('id'), s.get('ltype')) for s in showDB.get(ids)) if ids else {}
+    return [i for i in ids if kinds.get(i, 'show') in SYNCABLE]
+
+
 def isSynced():
     return bool(showDB.getUserData().getMeta(SYNCED))
 
@@ -58,7 +67,7 @@ def isSynced():
 def pushChange(showId, inList):
     """Tells iWant about a change made in Kodi, when the synchronisation is on and was done once. False when
     iWant could not be reached (the next synchronisation settles it)."""
-    if control.setting('syncWatchlist') == 'false' or not isSynced():
+    if control.setting('syncWatchlist') == 'false' or not isSynced() or not syncable([showId]):
         return True
     try:
         return addToRemote(showId) if inList else removeFromRemote(showId)
@@ -76,7 +85,7 @@ def syncWatchlist():
         control.alert(control.lang(30267))
         return False
     remoteIds = [f['id'] for f in remote]
-    local = [m[0] for m in userData.getMyList()]
+    local = syncable(m[0] for m in userData.getMyList())  # what is not a show or a movie stays in Kodi only
     onlyLocal, onlyRemote = watchlist.differences(local, remoteIds)
     if not onlyLocal and not onlyRemote:
         userData.setMeta(SYNCED, '1')
@@ -103,9 +112,9 @@ def syncWatchlist():
         failures += 0 if addToRemote(showId) else 1
     for showId in changes['remoteRemove']:
         failures += 0 if removeFromRemote(showId) else 1
+    userData.setMeta(SYNCED, '1')  # the lists were read and settled as far as iWant accepted: what failed comes with the next one
     if failures:
         control.alert(control.lang(30264) % failures)
         return False
-    userData.setMeta(SYNCED, '1')
     control.showNotification(control.lang(30265) % (len(changes['localAdd']) + len(changes['remoteAdd']), removed))
     return True

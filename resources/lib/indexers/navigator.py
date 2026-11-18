@@ -462,8 +462,9 @@ class navigator:
         # add to mylist / remove from mylist
         add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
         remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('name'), query={'ltype': info.get('ltype'), 'type': info.get('type')}) } 
-        if addToList: 
-            contextMenu.update(add)
+        if addToList:
+            if info.get('ltype') not in ('livestream', 'channel', 'unknown'):  # a channel can't be in My List (nor on iWant)
+                contextMenu.update(add)
         else:
             contextMenu.update(remove)
         if control.setting('traktScrobble') == 'true' and info.get('ltype') == 'show':
@@ -514,8 +515,9 @@ class navigator:
         # add to mylist / remove from mylist
         add = { control.lang(30300) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.ADDTOLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
         remove = { control.lang(30301) : 'Container.Update(%s)' % self.generateActionUrl(str(info.get('id')), config.REMOVEFROMLIST, info.get('title'), query={'ltype': info.get('ltype'), 'type': info.get('ltype')}) } 
-        if addToList: 
-            contextMenu.update(add)
+        if addToList:
+            if info.get('ltype') not in ('livestream', 'channel', 'unknown'):  # a channel can't be in My List (nor on iWant)
+                contextMenu.update(add)
         else:
             contextMenu.update(remove)
         if options.get('goToShow') and self.showTarget(info):

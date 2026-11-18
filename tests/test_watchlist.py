@@ -119,7 +119,24 @@ class SyncTest(unittest.TestCase):
         self.remote = [show('b')]
         wl.addToRemote = lambda i: False
         self.assertFalse(wl.syncWatchlist())
-        self.assertFalse(wl.isSynced())
+        self.assertEqual(1, len(self.alerts))
+        self.assertTrue(wl.isSynced())  # what failed comes with the next synchronization, the changes after it are sent
+
+    def test_a_channel_is_not_sent_to_iwant(self):
+        formatters = test_catalog_modules.MODULES['formatters']
+        db.showDB.set(formatters.formatAssetToShow({'id': 'ch', 'assetType': 'channel', 'title': 'A channel', 'images': {}}))
+        self.userData.addToMyList('ch', 'A channel')
+        self.userData.addToMyList('a', 'A')
+        self.remote = [show('b')]
+        self.choice = 2  # iWant gets what Kodi has
+        self.assertTrue(wl.syncWatchlist())
+        self.assertEqual((['a'], ['b']), (self.added, self.removed))
+        self.assertIn('ch', self.local())  # it stays in Kodi
+        self.added[:] = []
+        self.userData.setMeta(wl.SYNCED, '1')
+        control.setting = lambda key: ''
+        wl.pushChange('ch', True)
+        self.assertEqual([], self.added)
 
     def test_changes_are_pushed_only_after_a_synchronization(self):
         control.setting = lambda key: ''
