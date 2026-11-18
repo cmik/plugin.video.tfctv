@@ -30,19 +30,10 @@ def _headers():
     ]
 
 
-def _login():
-    from .auth import login
-    return login(quiet=True)
-
-
 def getRemoteWatchlist():
     """The shows, movies and documentaries of the iWant watchlist, as the search formats them (what is neither is
     not synchronised); None when it can't be read"""
-    data = getWatchlist(_headers())
-    if not data and _login():
-        # an expired token is not answered by a 401 here but by a 400 "Failed to get watchlist" inside a 200:
-        # log in again, then ask once more
-        data = getWatchlist(_headers())
+    data = getWatchlist(_headers())  # an expired token is renewed by callGraphQLApi
     if not data:
         return None
     if data.get('hasNextPage'):

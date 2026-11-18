@@ -242,9 +242,29 @@ def callJsonApi(path, params={}, headers=[], base_url=config.webserviceUrl, useC
         logger.logError(f'JSON decode error: {e}')
         return {}
 
-def callGraphQLApi(query, variables={}, headers=[], base_url=config.webserviceUrl, useCache=True):
+RELOGIN_EVERY = 300  # seconds: at most one automatic login for GraphQL answers in error
+_lastRelogin = 0
+
+def _reloginForGraphQL(headers):
+    """An expired token is not answered by a 401 on GraphQL but by an error inside a 200 (400 "Failed to get
+    watchlist"): log in again, at most once every few minutes; returns the headers with the new token, or None"""
+    global _lastRelogin
+    if not any(h[0] == 'Authorization' for h in headers) or time.time() - _lastRelogin < RELOGIN_EVERY:
+        return None
+    _lastRelogin = time.time()
+    try:
+        from .auth import login
+        if login(quiet=True):
+            return [('Authorization', 'Bearer %s' % control.setting('iWantUserAuthentication')) if h[0] == 'Authorization' else h
+                    for h in headers]
+    except Exception as e:
+        logger.logError('Error during re-login: %s' % e)
+    return None
+
+def callGraphQLApi(query, variables={}, headers=[], base_url=config.webserviceUrl, useCache=True, _retry=False):
     """Call GraphQL API"""
     logger.logInfo('called function with query %s...' % query[:20])
+    given = list(headers)
     headers = list(headers)  # not the default list, shared by every call
     headers.append(('Accept', 'application/graphql-response+json, application/json'))
     headers.append(('Content-Type', 'application/json'))
@@ -265,12 +285,17 @@ def callGraphQLApi(query, variables={}, headers=[], base_url=config.webserviceUr
     
     try:
         response = json.loads(res)
-        if 'data' in response:
+        if response.get('data'):
             return response['data']
+        if 'errors' in response and not _retry:
+            newHeaders = _reloginForGraphQL(given)
+            if newHeaders is not None:
+                logger.logWarning('GraphQL error (%s): logged in again, asking once more' % response['errors'][0].get('message', ''))
+                return callGraphQLApi(query, variables, newHeaders, base_url, False, _retry=True)
         if 'errors' in response:
             logger.logError(f"GraphQL errors: {response['errors'][0].get('message', '')}")
             control.showNotification(f"{response['errors'][0].get('message', '')}", control.lang(30004))
-        return {}
+        return response.get('data') or {}
     except (json.JSONDecodeError, ValueError) as e:
         logger.logError(f'JSON decode error: {e}')
         return {}

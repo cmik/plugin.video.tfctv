@@ -1,3 +1,6 @@
+3.9.0
+    An expired login is renewed for every call to the website (GraphQL), not only for the synchronization of My List: no more empty lists after a few days without signing in again
+
 3.8.0
     Trakt: shows are also searched without the name of their star; a show Trakt can't tell can be chosen among the most likely ones (context menu), the choice is kept
     Search: a new online search (Search the website) finds anything the website has, live channels and events included, and adds the shows and movies a reload of the catalog does not bring
