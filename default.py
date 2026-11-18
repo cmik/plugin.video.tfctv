@@ -36,6 +36,6 @@ if request.caller == 'addon' and control.setting('lastVersion') != control.addon
     upgrade.upgradeSettings()
     control.setSetting('lastVersion', control.addonInfo('version'))
 
-router.route(request)
+router.route(request, int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].lstrip('-').isdigit() else -1)
 
 logger.logNotice('Finished in %s' % str(time.time() - exec_start))

@@ -125,6 +125,18 @@ class RouterTest(unittest.TestCase):
         modes = set(v for k, v in vars(config).items() if k.isupper() and isinstance(v, int) and not isinstance(v, bool))
         self.assertEqual(modes, set(EXPECTED))  # a new mode must be added to the table and here
 
+    def test_an_action_ends_the_directory_it_was_opened_from(self):
+        ended = []
+        control.directory = lambda *a, **k: ended.append((a, k))
+        for mode, listing in ((config.SYNCWATCHLIST, False), (config.CLEANCOOKIES, False), (config.TOOLS, True), (config.PLAY, True)):
+            del ended[:]
+            router.route(router.Request('?mode=%d' % mode), 7)
+            self.assertEqual([] if listing else [((7,), {'succeeded': False, 'updateListing': False, 'cacheToDisc': False})], ended, mode)
+        del ended[:]
+        router.route(router.Request('?mode=%d' % config.SYNCWATCHLIST))  # RunPlugin: no handle, nothing to end
+        router.route(router.Request('?mode=%d' % config.SYNCWATCHLIST), -1)
+        self.assertEqual([], ended)
+
     def test_no_mode_is_the_root_menu(self):
         self.assertEqual([['navigator.root', [], []]], run(QUERY))
 
