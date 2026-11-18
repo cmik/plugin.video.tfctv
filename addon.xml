@@ -35,11 +35,6 @@
           [fix] Home: the Live Streams rail and the one-off videos were empty
           [change] My View History moved under My Account; old live stream code and history.db removed
 
-          v3.7.0
-          [fix] Live channels can be played again: the catalog is read for your country, as the website does
-          [change] The settings use the Kodi 18+ format (same settings and values)
-          [new] Location: the country is detected again at each start of Kodi (VPN, trip); it can be set by hand (Advanced > Location)
-          [fix] The geo location service refused the request (403): the country was not detected on some devices
         </news>
         <assets>
             <icon>resources/icon.png</icon>
