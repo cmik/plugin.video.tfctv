@@ -1045,7 +1045,7 @@ msgid "My List and the iWant watchlist are the same"
 msgstr ""
 
 msgctxt "#30269"
-msgid "iWant could not be updated for "%s": synchronize from Tools"
+msgid "iWant could not be updated for \"%s\": synchronize from Tools"
 msgstr ""
 
 msgctxt "#30270"
