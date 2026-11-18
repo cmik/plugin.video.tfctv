@@ -91,11 +91,13 @@ def addToMyList(id, name, ltype, type):
     """Add to my list"""
     logger.logInfo('called function with param (%s, %s, %s, %s)' % (id, name, ltype, type))
     setMyList(id, name, True)
+    control.refresh()  # started by RunPlugin: the list on screen shows the change
 
 def removeFromMyList(id, name, ltype, type):
     """Remove from my list"""
     logger.logInfo('called function with param (%s, %s, %s, %s)' % (id, name, ltype, type))
     setMyList(id, name, False)
+    control.refresh()  # started by RunPlugin: the list on screen shows the change
 
 def getSettings(refresh=False):
     """Get settings from website"""
