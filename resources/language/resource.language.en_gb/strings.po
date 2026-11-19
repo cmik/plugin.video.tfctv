@@ -1067,3 +1067,31 @@ msgstr ""
 msgctxt "#30274"
 msgid "%d titles are not accepted by iWant: they stay in My List of Kodi only"
 msgstr ""
+
+msgctxt "#30275"
+msgid "Skip the intro (when iWant marks it)"
+msgstr ""
+
+msgctxt "#30276"
+msgid "Skip the recap (when iWant marks it)"
+msgstr ""
+
+msgctxt "#30277"
+msgid "Ask (button on screen)"
+msgstr ""
+
+msgctxt "#30278"
+msgid "Skip automatically"
+msgstr ""
+
+msgctxt "#30279"
+msgid "Do not skip"
+msgstr ""
+
+msgctxt "#30280"
+msgid "Skip Intro"
+msgstr ""
+
+msgctxt "#30281"
+msgid "Skip Recap"
+msgstr ""
