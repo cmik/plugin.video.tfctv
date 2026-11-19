@@ -9,11 +9,12 @@ formatters.py and rails.py (plus db.py for the databases); their functions stay 
 
 import time
 from resources import config
-from resources.lib.libraries import control
+from resources.lib.libraries import cache, control
 from .db import castDB, episodeDB, showDB
 from .formatters import (
     formatAssetToEpisode, formatAssetToShow, formatItemsToEpisodes, formatSearchResults, formatToShow, getSeasonFilters
 )
+from .user import getCountryCode
 from .graphql import getAppLaunchDetails, getAsset, getCollection, getTVShowEpisodes, searchCatalog
 from .rails import (
     SHOW_ASSET_TYPES, findCollectionRail, getCachedCollection, getCatalogShowIds, getCollectionContent,
@@ -364,7 +365,10 @@ def searchOnline(search):
 def getTopPicks():
     """The picks of the website for the user's country (what its search lists for an empty query), in the website's
     order; the shows and movies missing from the databases are added as for the online search"""
-    return keepFound(formatSearchResults((searchCatalog('') or {}).get('search')))
+    # the picks change seldom: kept 30 minutes (the search itself is never kept)
+    search = cache.getCachedJson(cache.shortCache, 'picks-%s' % (getCountryCode() or ''), lambda: (searchCatalog('') or {}).get('search'),
+                                 ttl=config.cacheTTLs['picks'])
+    return keepFound(formatSearchResults(search))
 
 def keepFound(found):
     """Adds to the databases the shows and movies of what the search found that they miss, and gives back the list

@@ -15,6 +15,14 @@ settingsRefreshRate = 10 * 60                       # catalog updates every 10 m
 shortCache = {'name' : 'tfctv', 'ttl': 1}
 longCache = {'name' : 'tfctv_db', 'ttl': 24*7}
 urlCachePrefix = 'urlcache_'
+# how long what the website answers is kept (seconds), by kind: what changes seldom is kept longer. The search and the
+# data of the user (watchlist, playback, login) are never kept.
+cacheTTLs = {
+    'menu': 6 * 3600,       # the collections of the website (appLaunchDetails)
+    'rails': 3600,          # the rails of a collection
+    'live': 5 * 60,         # the live channels and events: an event can start or end any time
+    'picks': 30 * 60,       # Top Picks Near You!
+}
 
 # HOSTS / URI
 webserviceUrl = 'https://api.iwanttfc.com'

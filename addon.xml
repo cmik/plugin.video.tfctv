@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tfctv" name="iWantTFC" version="3.10.0~dev1" provider-name="cmik">
+<addon id="plugin.video.tfctv" name="iWantTFC" version="3.10.0~dev2" provider-name="cmik">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.six"/>
@@ -27,6 +27,7 @@
         <news>v3.10.0
           [new] Skip Intro and Skip Recap: when iWant marks the intro or the recap of an episode, a button appears on the video (or the add-on skips it by itself, see the Playback settings)
           [change] Up Next offers the next episode when the credits start
+          [change] Live TV is kept 5 minutes (an event can start any time), the menu of the website a few hours, Top Picks 30 minutes: faster menus
 
           v3.9.0
           [new] Live TV in the main menu: the live channels, then the live events, of your country
