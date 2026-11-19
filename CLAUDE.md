@@ -54,7 +54,7 @@ Catalog seed (`resources/lib/libraries/seed.py`): on a first installation or an 
     gh release create catalog-seed /tmp/seed/catalog-seed.zip /tmp/seed/manifest.json --title "Catalog seed" --notes "..."   # first time
     gh release upload catalog-seed /tmp/seed/catalog-seed.zip /tmp/seed/manifest.json --clobber                              # next ones
 
-Tests (outside Kodi, run in CI): `python -m unittest discover -s tests`.
+Tests (outside Kodi, run in CI): `python -m unittest discover -s tests`. `tests/test_navigator.py` runs the real `navigator` module against a fake Kodi `control` and a fake `tfctv` (loaded with `importlib`, the modules it imports are put back afterwards because `test_router.py` replaces them in `sys.modules`): a test sets what `tfctv` answers and reads the listing back (`entries()`); use it before splitting or changing the navigator.
 
 The branch `nw_adapt_v3` is adapting the add-on to the new iWantTFC website/API (v3.0.0 beta). `API_MAP.md` (local) documents the endpoints used by each `tfctv/` module.
 
