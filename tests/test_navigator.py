@@ -148,14 +148,19 @@ def loadNavigator(control, tfctv):
     sources.__path__ = []
     fakes = {'xbmc': xbmc, 'resources.lib.libraries': libraries, 'resources.lib.libraries.control': control,
              'resources.lib.sources': sources, 'resources.lib.sources.tfctv': tfctv}
+    fakes['resources.lib.indexers.listing'] = None  # put back afterwards like the others
     saved = dict((k, sys.modules.get(k)) for k in fakes)
-    sys.modules.update(fakes)
+    sys.modules.update(dict((k, v) for k, v in fakes.items() if v is not None))
     try:
-        spec = importlib.util.spec_from_file_location('navigator_under_test', os.path.join(ROOT, 'resources', 'lib', 'indexers', 'navigator.py'))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        # the listing blocks first (the navigator imports them), then the navigator itself
+        for name, path in (('resources.lib.indexers.listing', 'listing.py'), ('navigator_under_test', 'navigator.py')):
+            spec = importlib.util.spec_from_file_location(name, os.path.join(ROOT, 'resources', 'lib', 'indexers', path))
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
         return module
     finally:
+        sys.modules.pop('navigator_under_test', None)
         for k, v in saved.items():
             if v is None:
                 sys.modules.pop(k, None)
@@ -584,6 +589,21 @@ class NavigatorTest(unittest.TestCase):
         self.assertEqual('false', control.settings['showPersonalize'])
 
     # ---- the building blocks
+
+    def test_how_an_episode_is_titled(self):
+        title = navigatorModule.episodeTitle
+        self.assertEqual('Show | Episode 12 | Name - Part 2', title('S1E12 Name - Part 2', 'Show'))
+        self.assertEqual('Show | Episode 3 | X', title('s2e3 X', 'Show'))
+        self.assertEqual('Ep 24th Oct 2026 - Episode 1', title('Ep 24th Oct 2026 - Episode 1', 'Show'))
+        self.assertIsNone(title(None, 'Show'))  # a missing title does not break the list
+
+    def test_the_navigator_has_the_building_blocks_of_listing(self):
+        listing = navigatorModule.Listing
+        self.assertTrue(issubclass(navigatorModule.navigator, listing))
+        for name in ('addDirectoryItem', 'generateActionUrl', 'endDirectory', 'formatMenu', 'formatShowInfo', 'formatVideoInfo',
+                     'showMode', 'showTarget', 'traktEntry', 'actionItem', 'addPlayableEpisodes'):
+            self.assertIn(name, vars(listing))
+            self.assertNotIn(name, vars(navigatorModule.navigator))  # one definition
 
     def test_action_urls(self):
         url = self.nav.generateActionUrl('a b', config.PLAY, 'Name é', 'http://x/y.jpg', 3, {'ltype': 'movie'})

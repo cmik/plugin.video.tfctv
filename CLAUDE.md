@@ -13,7 +13,7 @@ Versions: between two releases `master` carries a development version `X.Y.0~dev
 ## Architecture
 
 Entry points (declared in `addon.xml`):
-- `default.py`: plugin entry. Parses `sys.argv[2]` into params, then dispatches on an integer `mode` through one large `if/elif` chain. Mode constants live in `resources/config.py` (alongside base URLs, user agents, DB paths). Navigation modes call `resources/lib/indexers/navigator.py` (`navigator` class builds Kodi directory listings); action modes call `tfctv` functions directly. It also runs `resources/upgrade.py` (DB/settings migration) when `lastVersion` differs from the add-on version.
+- `default.py`: plugin entry. Parses `sys.argv[2]` into params, then dispatches on an integer `mode` through one large `if/elif` chain. Mode constants live in `resources/config.py` (alongside base URLs, user agents, DB paths). Navigation modes call `resources/lib/indexers/navigator.py` (`navigator` class: the menus and the lists; the building blocks of a listing — list items, context menus, plugin URLs, end of directory, `episodeTitle` — are in `resources/lib/indexers/listing.py`, class `Listing`, which `navigator` inherits); action modes call `tfctv` functions directly. It also runs `resources/upgrade.py` (DB/settings migration) when `lastVersion` differs from the add-on version.
 - `service.py`: background service started at Kodi startup: a local HTTP proxy (`ProxyHandler`, used for streaming with cookies/headers) and the library checker.
 
 Source layer, `resources/lib/sources/`:
