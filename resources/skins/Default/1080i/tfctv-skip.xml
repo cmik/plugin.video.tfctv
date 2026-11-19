@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+    <defaultcontrol always="true">3012</defaultcontrol>
+    <controls>
+        <control type="button" id="3012">
+            <right>60</right>
+            <bottom>140</bottom>
+            <width>360</width>
+            <height>80</height>
+            <label>$INFO[Window.Property(label)]</label>
+            <font>font13</font>
+            <align>center</align>
+            <aligny>center</aligny>
+            <textcolor>FFFFFFFF</textcolor>
+            <focusedcolor>FF000000</focusedcolor>
+            <texturenofocus colordiffuse="99000000" border="2">white.png</texturenofocus>
+            <texturefocus colordiffuse="FFFFFFFF" border="2">white.png</texturefocus>
+        </control>
+    </controls>
+</window>

@@ -44,6 +44,29 @@ def refreshCountry(monitor, delays=(0, 60, 180)):
             return
     xbmc.log('[%s] Service: the country could not be detected' % control.addonInfo('name'), level=xbmc.LOGWARNING)
 
+class SkipDialog(xbmcgui.WindowXMLDialog):
+    """The button of Skip intro / Skip recap, shown over the video (resources/skins/Default/1080i/tfctv-skip.xml)"""
+    BUTTON = 3012
+
+    def __init__(self, *args, **kwargs):
+        xbmcgui.WindowXMLDialog.__init__(self)
+        self.clicked = False
+        self.label = ''
+
+    def onInit(self):
+        self.setProperty('label', self.label)
+        self.setFocusId(self.BUTTON)
+
+    def onClick(self, controlId):
+        if controlId == self.BUTTON:
+            self.clicked = True
+            self.close()
+
+    def onAction(self, action):
+        if action.getId() in (xbmcgui.ACTION_PREVIOUS_MENU, xbmcgui.ACTION_NAV_BACK):
+            self.close()
+
+
 class PlaybackMonitor(xbmc.Player):
     """Keeps where each episode was left (see libraries/playertracker.py)"""
 
@@ -55,6 +78,8 @@ class PlaybackMonitor(xbmc.Player):
         self.tracker = playertracker.PlaybackTracker(lambda: userdata.UserData(control.userDataFile))
         self._window = xbmcgui.Window(10000)
         self._trakt = None  # (scrobble body of what is played) while it is scrobbled
+        self._skip = None  # SkipController of what is played (libraries/markers.py), None without markers
+        self._skipDialog = None
 
     def _log(self, message, level=xbmc.LOGINFO):
         xbmc.log('[%s] Playback tracking: %s' % (control.addonInfo('name'), message), level=level)
@@ -79,7 +104,8 @@ class PlaybackMonitor(xbmc.Player):
             self.tracker.start(episodeId)
             self._log('following %s' % episodeId)
             threading.Thread(target=self._follow, args=(episodeId,)).start()
-            self._upNext(episodeId)
+            found = self._markers()
+            self._upNext(episodeId, found)
             threading.Thread(target=self._traktStart, args=(episodeId,)).start()
         except Exception as e:
             self._log('start failed: %s' % e, xbmc.LOGERROR)
@@ -141,7 +167,63 @@ class PlaybackMonitor(xbmc.Player):
         from resources.lib.libraries import trakt
         return trakt.progressOf(self.tracker.position, self.tracker.total)
 
-    def _upNext(self, episodeId):
+    def _markers(self):
+        """The intro, recap and outro iWant gave for what plays (property of the item); prepares the skip"""
+        self._skip = None
+        try:
+            from resources.lib.libraries import markers
+            found = markers.decode(self.getPlayingItem().getProperty(markers.PROPERTY))
+            modes = dict((kind, markers.modeOf(control.setting(key))) for kind, key in markers.SETTINGS.items())
+            controller = markers.SkipController(found, modes)
+            if controller.markers:
+                self._skip = controller
+                self._log('markers: %s' % ', '.join('%s %d-%d s' % (m['kind'], m['start'], m['end']) for m in found))
+            return found
+        except Exception as e:
+            self._log('markers failed: %s' % e, xbmc.LOGERROR)
+            return []
+
+    def _skipStep(self, position):
+        """Offers or does the skip the position calls for (called every second while an episode with markers plays)"""
+        if not self._skip:
+            return
+        action = self._skip.tick(position)
+        if not action:
+            return
+        what, marker = action
+        if what == 'skip':
+            self._log('skipping the %s (%d s -> %d s)' % (marker['kind'], position, marker['end']))
+            self.seekTime(marker['end'])
+            xbmcgui.Dialog().notification(control.addonInfo('name'), control.lang(30280 if marker['kind'] == 'intro' else 30281), xbmcgui.NOTIFICATION_INFO, 2000, False)
+        elif what == 'offer':
+            self._hideSkip()
+            dialog = SkipDialog('tfctv-skip.xml', control.addonInfo('path'), 'Default', '1080i')
+            dialog.label = control.lang(30280 if marker['kind'] == 'intro' else 30281)
+            dialog.clicked = False
+            self._skipDialog = dialog
+            self._skipMarker = marker
+            dialog.show()
+        elif what == 'hide':
+            self._hideSkip()
+
+    def _skipClicked(self):
+        """The viewer pressed the button: skip to the end of the marker offered"""
+        dialog = self._skipDialog
+        if dialog and dialog.clicked:
+            self._skip.skipped(self._skipMarker)
+            self._log('skipping the %s (%d s -> %d s), asked by the viewer' % (self._skipMarker['kind'], self.tracker.position, self._skipMarker['end']))
+            self.seekTime(self._skipMarker['end'])
+            self._skipDialog = None
+
+    def _hideSkip(self):
+        dialog, self._skipDialog = self._skipDialog, None
+        if dialog:
+            try:
+                dialog.close()
+            except RuntimeError:
+                pass
+
+    def _upNext(self, episodeId, found=()):
         """Tell the Up Next add-on which episode follows the one that starts (see libraries/upnext.py)"""
         if control.setting('upNext') == 'false' or not xbmc.getCondVisibility('System.AddonIsEnabled(service.upnext)'):
             return
@@ -151,6 +233,10 @@ class PlaybackMonitor(xbmc.Player):
             addonId = control.addonInfo('id')
             data = upnext.buildData(episodes.Episode(control.episodesFile), shows.Show(control.showsFile), episodeId, addonId)
             if data:
+                from resources.lib.libraries import markers
+                before = markers.outroStart(found, self.getTotalTime())
+                if before:
+                    data['notification_time'] = before  # the outro starts: offer the next episode now
                 upnext.send(data, addonId)
                 self._log('Up Next: %s is followed by %s' % (episodeId, data['next_episode']['episodeid']))
             else:
@@ -160,9 +246,16 @@ class PlaybackMonitor(xbmc.Player):
 
     def _follow(self, episodeId):
         monitor = xbmc.Monitor()
+        ticks = 0
         while self.tracker.active and self.tracker.episodeId == episodeId and not monitor.abortRequested():
-            self._sample()
-            monitor.waitForAbort(5)
+            if ticks % 5 == 0 or self._skip:
+                self._sample()
+            if self._skip:
+                self._skipStep(self.tracker.position)
+                self._skipClicked()
+            ticks += 1
+            monitor.waitForAbort(1 if self._skip else 5)
+        self._hideSkip()
 
     def _sample(self):
         try:

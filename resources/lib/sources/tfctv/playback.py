@@ -14,7 +14,7 @@ from .catalog import getEpisode, getShow, episodeDB, showDB
 from .graphql import getAsset
 from .formatters import formatAssetToEpisode
 from .history import recordView
-from resources.lib.libraries import playertracker, liveplayback
+from resources.lib.libraries import playertracker, liveplayback, markers as skipmarkers
 from .auth import isLoggedIn, login
 from .utils import checkProxy
 
@@ -139,6 +139,9 @@ def playEpisode(episodeId, name, type, thumbnail):
             if not liveplayback.isLive(type):
                 item.setProperty(playertracker.ITEM_PROPERTY, str(episodeId))
                 control.window.setProperty(playertracker.PROPERTY, playertracker.encode(episodeId))
+                # the intro, recap and outro iWant knows: the service offers to skip them (libraries/markers.py)
+                if episodeDetails['data'].get('markers'):
+                    item.setProperty(skipmarkers.PROPERTY, skipmarkers.encode(episodeDetails['data']['markers']))
             try:
                 return control.resolve(thisPlugin, True, item)
             except Exception:
@@ -369,6 +372,7 @@ def retrieveMediaInfo(episodeId, type):
         mediaInfo['data']['duration'] = episode.get('duration')
         mediaInfo['data']['views'] = episode.get('views', 0)
         mediaInfo['data']['showObj'] = show
+        mediaInfo['data']['markers'] = skipmarkers.parse(playback.get('markers'))  # intro, recap, outro of some episodes
                 
         logger.logInfo(mediaInfo)
     
