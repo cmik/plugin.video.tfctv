@@ -1,6 +1,3 @@
-3.11.0
-    My Shows Last Episodes reads the stored episodes (the website is asked once per 6 hours per show, config.cacheTTLs['episodes'], and for a show with nothing stored); the last episode is the one of the latest season (libraries/upnext.py lastEpisode)
-
 3.10.0
     Skip Intro / Skip Recap: iWant gives the markers of the intro, the recap and the outro of some episodes; the service shows a button on the video (or skips by itself) according to the settings Skip the intro and Skip the recap (Playback)
     Up Next offers the next episode when the outro (credits) starts, when iWant marks it
