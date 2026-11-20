@@ -63,17 +63,34 @@ def getMyList():
     data = getMyListShows()
     return sorted(data, key=lambda item: item['title'] if 'title' in item else item['name'], reverse=False)
 
+def lastEpisodeOf(show):
+    """The last episode of a show of My List, from the episodes stored in the database: the website is asked once
+    per `config.cacheTTLs['episodes']` (and when nothing is stored yet), not at each opening of the list.
+    The last one is the one of the latest season (`upnext.lastEpisode`)."""
+    from resources.lib.libraries import upnext
+    showId = show.get('id')
+    if show.get('ltype') == 'movie':
+        found = episodeDB.get(showId)
+        if found:
+            episode = found[0]
+            episode['title'] = show.get('name')
+            episode['episodenumber'] = 1
+            episode['showObj'] = show
+            return episode
+        episodes = getEpisodesPerPage(showId, 1, 1)[0]
+        return episodes[0] if episodes else None
+    # all the seasons are read (the last episode is the one of the latest season) when nothing is stored or the stored ones are old
+    cache.getCachedJson(cache.shortCache, 'lastepisodes-%s' % showId, lambda: bool(getShow(showId, 'all', True)) or None,
+                        refresh=not episodeDB.get(showId, 'SHOWID'), ttl=config.cacheTTLs['episodes'])
+    episode = upnext.lastEpisode(episodeDB.get(showId, 'SHOWID'))
+    if episode:
+        episode['showObj'] = show
+    return episode
+
 def getMylistShowLastEpisodes():
     """Get last episodes from my list shows"""
     logger.logInfo('called function')
-    data = []
-    shows = getMyListShows()
-    if len(shows) > 0:
-        for show in shows:
-            (episodes, n) = getEpisodesPerPage(show.get('id'), 1, 1)
-            if episodes:
-                data.append(episodes.pop())
-
+    data = [e for e in (lastEpisodeOf(show) for show in getMyListShows()) if e]
     return sorted(data, key=lambda item: item['title'] if 'title' in item else item['name'], reverse=False)
 
 def setMyList(id, name, inList):

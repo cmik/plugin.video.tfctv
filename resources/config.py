@@ -21,6 +21,7 @@ cacheTTLs = {
     'menu': 6 * 3600,       # the collections of the website (appLaunchDetails)
     'rails': 3600,          # the rails of a collection
     'live': 5 * 60,         # the live channels and events: an event can start or end any time
+    'episodes': 6 * 3600,   # when the episodes of a show of My List are read again from the website (Last Episodes)
     'picks': 30 * 60,       # Top Picks Near You!
 }
 
