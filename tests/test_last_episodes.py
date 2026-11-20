@@ -20,6 +20,9 @@ class FakeEpisodes(object):
         field = 'parentid' if by == 'SHOWID' else 'id'
         return [dict(e) for e in self.stored if e.get(field) == key]
 
+    def getOrder(self, showId):
+        return [dict((k, e[k]) for k in ('id', 'title', 'episodenumber')) for e in self.stored if e.get('parentid') == showId]
+
 
 def ep(i, show, title, number=1):
     return {'id': i, 'parentid': show, 'title': title, 'episodenumber': number, 'show': 'S'}
@@ -78,6 +81,20 @@ class LastEpisodesTest(unittest.TestCase):
             self.assertEqual(['a', 'z'], [e['id'] for e in catalog.getMylistShowLastEpisodes()])
         finally:
             catalog.getMyListShows = saved
+
+
+class OrderQueryTest(unittest.TestCase):
+
+    def test_the_order_is_read_without_the_whole_episodes(self):
+        import tempfile
+        from resources.lib.models import episodes
+        db = episodes.Episode(os.path.join(tempfile.mkdtemp(), 'episodes.db'))
+        full = lambda i, show, title, n: {'id': i, 'title': title, 'parentid': show, 'show': 'S', 'image': '', 'fanart': '', 'episodenumber': n,
+                                           'url': '', 'description': '', 'shortdescription': '', 'date': '', 'year': 2020, 'parentalAdvisory': '',
+                                           'ltype': 'show', 'duration': 0, 'views': 0, 'rating': 0, 'votes': 0}
+        db.set([full('1', 'A', 'S1 E1', 1), full('2', 'A', 'S2 E1', 1), full('3', 'B', 'S1 E9', 9)])
+        self.assertEqual({'1': 'S1 E1', '2': 'S2 E1'}, dict((o['id'], o['title']) for o in db.getOrder('A')))
+        self.assertEqual([], db.getOrder('nobody'))
 
 
 if __name__ == '__main__':

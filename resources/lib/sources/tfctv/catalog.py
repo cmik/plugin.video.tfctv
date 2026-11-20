@@ -81,11 +81,13 @@ def lastEpisodeOf(show):
         return episodes[0] if episodes else None
     # all the seasons are read (the last episode is the one of the latest season) when nothing is stored or the stored ones are old
     cache.getCachedJson(cache.shortCache, 'lastepisodes-%s' % showId, lambda: bool(getShow(showId, 'all', True)) or None,
-                        refresh=not episodeDB.get(showId, 'SHOWID'), ttl=config.cacheTTLs['episodes'])
-    episode = upnext.lastEpisode(episodeDB.get(showId, 'SHOWID'))
-    if episode:
-        episode['showObj'] = show
-    return episode
+                        refresh=not episodeDB.getOrder(showId), ttl=config.cacheTTLs['episodes'])
+    last = upnext.lastEpisode(episodeDB.getOrder(showId))  # only the order is read, then the one episode
+    found = episodeDB.get(last['id']) if last else None
+    if not found:
+        return None
+    found[0]['showObj'] = show
+    return found[0]
 
 def getMylistShowLastEpisodes():
     """Get last episodes from my list shows"""

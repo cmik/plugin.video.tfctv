@@ -208,6 +208,16 @@ class Episode(model.Model):
         except: 
             return False
 
+    def getOrder(self, showId):
+        """What the order of the episodes of a show is made of, without reading them whole: [{'id', 'title', 'episodenumber'}]"""
+        try:
+            dbcur = self.getCursor()
+            self._exec(dbcur, 'SELECT ID, TITLE, EPISODENUMBER FROM EPISODE WHERE SHOWID = ?', (str(showId),))
+            return [{'id': r[0], 'title': r[1], 'episodenumber': r[2]} for r in dbcur.fetchall()]
+        except Exception as e:
+            logger.logError('Exception: %s for show %s' % (str(e), repr(showId)))
+            return []
+
     def searchByTitle(self, title, limit=100):
         return self.search({'TITLE' : title}, limit)
 
