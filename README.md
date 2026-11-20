@@ -8,7 +8,11 @@ Watch your favorite online Pinoy shows, movies, news and live channels directly 
 
 ## Features
 - **Catalog**: browse by category, search shows and movies, and your My List. A ready-made catalog is downloaded on a first installation, then new shows are loaded as they appear.
-- **Live channels**: the channels of your country are in the *Live Channels* rail of the *Home* section. What the website offers depends on your country and your subscription.
+- **Live TV**: a main menu entry (setting *Display Live TV*) lists the live channels, then the live events, that the website offers in your country. The same channels are in the *Live Channels* rail of *Home*. What is offered depends on your country and your subscription.
+- **Search the website (online)**: finds anything the website has, live channels and events included, and adds the shows and movies your catalog did not have.
+- **Top Picks Near You!**: the picks of the website for your country.
+- **My List and the iWant watchlist**: *Tools* > *Synchronize My List with iWant* merges or replaces one by the other; then what you add or remove in Kodi follows on iWant (setting).
+- **Skip Intro / Skip Recap**: when iWant marks the intro or the recap of an episode, a button appears on the video, or the add-on skips it by itself (settings *Skip the intro* and *Skip the recap*, *Playback*).
 - **Continue Watching**: episodes you stopped in the middle, with a progress bar; Kodi offers *Resume from* or *Play from beginning*.
 - **My View History**: what you played, last viewed first. Played episodes are flagged as watched in every list.
 - **Seasons**: shows with several seasons let you choose the season.
@@ -25,7 +29,7 @@ Watch your favorite online Pinoy shows, movies, news and live channels directly 
 These add-ons work with iWantTFC. They are optional.
 
 ### Up Next (`service.upnext`)
-When an episode starts, the add-on tells Up Next which episode follows, so that Kodi offers it at the end. Install **Up Next** from the Kodi repository; it can be turned off with the setting *Offer the next episode at the end*. Nothing is offered for movies or for the last episode of a show.
+When an episode starts, the add-on tells Up Next which episode follows, so that Kodi offers it at the end (when the credits start, if iWant marks them). Install **Up Next** from the Kodi repository; it can be turned off with the setting *Offer the next episode at the end*. Nothing is offered for movies or for the last episode of a show.
 
 ### Trakt
 The add-on can scrobble what you watch to your [Trakt](https://trakt.tv) account (off by default). **iWantTFC Kodi uses Trakt but is not endorsed or certified by Trakt.**
