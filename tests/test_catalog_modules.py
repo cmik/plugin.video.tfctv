@@ -23,7 +23,6 @@ def load():
         setattr(control, name, os.path.join(directory, name + '.db'))
     control.setting = lambda key: ''
     control.lang = lambda number: ''
-    cache = types.ModuleType('resources.lib.libraries.cache')
     package = types.ModuleType(PACKAGE)
     package.__path__ = [os.path.join(ROOT, 'resources', 'lib', 'sources', 'tfctv')]
     api = types.ModuleType(PACKAGE + '.api')
@@ -34,7 +33,7 @@ def load():
     user = types.ModuleType(PACKAGE + '.user')
     user.getCountryCode = lambda: 'PH'
     user.getServiceIds = lambda: []
-    fakes = {'resources.lib.libraries.cache': cache, PACKAGE: package, PACKAGE + '.api': api, PACKAGE + '.utils': utils, PACKAGE + '.user': user}
+    fakes = {PACKAGE: package, PACKAGE + '.api': api, PACKAGE + '.utils': utils, PACKAGE + '.user': user}
     saved = dict((k, sys.modules.get(k)) for k in fakes)
     sys.modules.update(fakes)
     try:
@@ -117,13 +116,15 @@ class CatalogModulesTest(unittest.TestCase):
                        'other': {'rails': [{'assets': {'items': [asset('c1', 'channel'), asset('c2', 'channel'), asset('e2', 'live', isPlayable=False)]}}]}}
         saved = (rails.getWebsiteCollections, rails.getCachedCollection)
         rails.getWebsiteCollections = lambda: [{'collectionId': 'home'}, {'collectionId': 'other'}]
-        rails.getCachedCollection = lambda c: collections[c]
+        asked = []
+        rails.getCachedCollection = lambda c, ttl=None: asked.append(ttl) or collections[c]
         try:
             live = rails.getLiveTV()
         finally:
             rails.getWebsiteCollections, rails.getCachedCollection = saved
         self.assertEqual(['c1', 'c2', 'e1'], [i['id'] for i in live])  # channels first, no duplicate, no show, not playable left out
         self.assertEqual({'livestream'}, set(i['ltype'] for i in live))
+        self.assertEqual([300, 300], asked)  # the live rails are kept 5 minutes, not the hour of the other rails
 
     def test_search_results(self):
         item = lambda i, t, kind, playable=True: {'id': i, 'assetType': kind, 'title': t, 'isPlayable': playable, 'images': {}, 'cast': ['A B']}

@@ -4,38 +4,39 @@
 Website collections and rails (home sections, ids of the shows they list)
 """
 
-import datetime
-import json
 import re
+from resources import config
 from resources.lib.libraries import cache
 from resources.lib.libraries import control
 from .db import showDB
 from .formatters import formatToShow, formatSearchResults, LIVE_ASSETS
 from .graphql import getAppLaunchDetails, getCollection
+from .user import getCountryCode
 from .utils import removeDuplicates
 
 logger = control.logger
 
-def getWebsiteCollections():
-    """Get website collections"""
+def getWebsiteCollections(refresh=False):
+    """Get website collections (the menu of the website changes seldom: kept for a few hours, by country)"""
     logger.logInfo('called function')
-    return getAppLaunchDetails().get('menu', {}).get('collections', [])
-
-def getCachedCollection(collectionId, refresh=False):
-    """Get cached collection"""
-    logger.logInfo('called function with param (%s, %s)' % (collectionId, refresh))
-    catalogKey = 'collection-%s-%s' % (collectionId, datetime.datetime.now().strftime('%Y%m%d%H'))
-    catalogJson = cache.getCached(
+    return cache.getCachedJson(
         cache.shortCache,
-        catalogKey,
-        lambda: json.dumps(getCollection(collectionId)),
-        refresh
-    )
-    collection = {} if catalogJson is None else json.loads(catalogJson)
-    if not collection:
-        # don't keep a failed call cached for the whole hour
-        cache.shortCache.delete(catalogKey)
-    return collection
+        'menu-%s' % (getCountryCode() or ''),
+        lambda: getAppLaunchDetails().get('menu', {}).get('collections', []),
+        refresh,
+        config.cacheTTLs['menu']
+    ) or []
+
+def getCachedCollection(collectionId, refresh=False, ttl=None):
+    """Get a collection (its rails), kept `ttl` seconds (an hour by default); the rails depend on the country"""
+    logger.logInfo('called function with param (%s, %s)' % (collectionId, refresh))
+    return cache.getCachedJson(
+        cache.shortCache,
+        'collection-%s-%s' % (collectionId, getCountryCode() or ''),
+        lambda: getCollection(collectionId),
+        refresh,
+        config.cacheTTLs['rails'] if ttl is None else ttl
+    ) or {}
 
 def getCollectionContent(id):
     """Get website home sections"""
@@ -73,12 +74,12 @@ def getCollectionShowIds(collectionId, refresh=False):
 
 def getLiveTV():
     """The live channels, then the live events, listed by the rails of the website collections (what the website
-    offers in the user's country; nothing is stored: the events come and go)"""
+    offers in the user's country; nothing is stored in the databases, the rails are kept 5 minutes: the events come and go)"""
     logger.logInfo('called function')
     rails = []
     for collection in getWebsiteCollections():
         try:
-            rails += getCachedCollection(collection.get('collectionId', collection.get('id'))).get('rails') or []
+            rails += getCachedCollection(collection.get('collectionId', collection.get('id')), ttl=config.cacheTTLs['live']).get('rails') or []
         except Exception as e:
             logger.logError('Can\'t read collection %s : %s' % (collection.get('collectionId'), str(e)))
     live = [i for i in formatSearchResults({'rails': rails}) if i.get('type') in LIVE_ASSETS]

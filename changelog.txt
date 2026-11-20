@@ -1,6 +1,7 @@
 3.10.0
     Skip Intro / Skip Recap: iWant gives the markers of the intro, the recap and the outro of some episodes; the service shows a button on the video (or skips by itself) according to the settings Skip the intro and Skip the recap (Playback)
     Up Next offers the next episode when the outro (credits) starts, when iWant marks it
+    Cache by kind: Live TV 5 minutes, rails of a collection 1 hour, menu of the website 6 hours, Top Picks 30 minutes (config.cacheTTLs); the rails are kept by country; the search is never kept
 
 3.9.0
     New main menu entry Live TV (setting): the live channels, then the live events, of the website for your country
