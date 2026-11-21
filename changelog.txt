@@ -1,3 +1,6 @@
+3.11.0
+    My Shows Last Episodes: the last episode of a show is the one of its latest season (all the seasons are read; libraries/upnext.py lastEpisode), not the highest number of the first
+
 3.10.0
     Skip Intro / Skip Recap: iWant gives the markers of the intro, the recap and the outro of some episodes; the service shows a button on the video (or skips by itself) according to the settings Skip the intro and Skip the recap (Playback)
     Up Next offers the next episode when the outro (credits) starts, when iWant marks it

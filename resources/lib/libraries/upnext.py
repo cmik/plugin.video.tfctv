@@ -53,6 +53,11 @@ def seasonAndEpisode(episode):
     return 1, _number(episode.get('episodenumber'))
 
 
+def lastEpisode(episodes):
+    """The last episode of a show (None without episodes), in the order of sortKey: the one of the latest season"""
+    return max(episodes, key=sortKey) if episodes else None
+
+
 def nextEpisode(current, siblings):
     """The episode that follows `current` among the episodes of its show (None for the last one)"""
     key = sortKey(current)

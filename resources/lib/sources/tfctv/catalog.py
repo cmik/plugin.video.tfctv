@@ -63,6 +63,25 @@ def getMyList():
     data = getMyListShows()
     return sorted(data, key=lambda item: item['title'] if 'title' in item else item['name'], reverse=False)
 
+def lastEpisodeOf(show):
+    """The last episode of a show of My List: the one of its latest season (the numbers restart at each season, so
+    the order is the one of `upnext.lastEpisode`), not the highest number of the first season"""
+    from resources.lib.libraries import upnext
+    if show.get('ltype') == 'movie':
+        episodes = getEpisodesPerPage(show.get('id'), 1, 1)[0]  # a movie has the one episode
+        return episodes[0] if episodes else None
+    full = getShowWithEpisodes(show.get('id'), 'all')
+    last = upnext.lastEpisode(full.get('episodes') or []) if full else None
+    if not last:
+        return None
+    found = episodeDB.get(last.get('id'))
+    episode = found[0] if len(found) == 1 else last
+    if len(found) != 1:
+        episodeDB.set(last)
+        episodeDB.applyUserData([episode])
+    episode['showObj'] = full
+    return episode
+
 def getMylistShowLastEpisodes():
     """Get last episodes from my list shows"""
     logger.logInfo('called function')
@@ -70,9 +89,9 @@ def getMylistShowLastEpisodes():
     shows = getMyListShows()
     if len(shows) > 0:
         for show in shows:
-            (episodes, n) = getEpisodesPerPage(show.get('id'), 1, 1)
-            if episodes:
-                data.append(episodes.pop())
+            episode = lastEpisodeOf(show)
+            if episode:
+                data.append(episode)
 
     return sorted(data, key=lambda item: item['title'] if 'title' in item else item['name'], reverse=False)
 
