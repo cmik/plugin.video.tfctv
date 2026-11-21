@@ -17,8 +17,8 @@ jobs:
     name: Python and release files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11' # the Python used by Kodi 21
       - name: Compile all the Python files
@@ -32,8 +32,8 @@ jobs:
     name: Python 3.14 (Kodi 22)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.14' # the Python of Kodi 22
       - name: Compile all the Python files
@@ -48,10 +48,10 @@ jobs:
       # any problem reported by kodi-addon-checker fails the check
       MAX_ERRORS: 0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: plugin.video.tfctv # the checker expects the folder to be named like the add-on id
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - run: pip install kodi-addon-checker==0.0.36
@@ -71,9 +71,9 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
