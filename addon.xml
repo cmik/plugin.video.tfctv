@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tfctv" name="iWantTFC" version="3.11.0~dev2" provider-name="cmik">
+<addon id="plugin.video.tfctv" name="iWantTFC" version="3.11.0~dev3" provider-name="cmik">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.six"/>
@@ -25,6 +25,7 @@
         <forum>https://forum.kodi.tv/showthread.php?tid=317008</forum>
         <source>https://github.com/cmik/cmik.xbmc</source>
         <news>v3.11.0
+          [new] With Skip automatically, an episode starts right after its intro and its recap (not when you can resume it: Kodi asks where to resume)
           [fix] Skip Intro / Skip Recap and Up Next follow a change of the settings at once (they needed a restart of Kodi)
           [fix] My List > My Shows Last Episodes: the last episode of a show with several seasons is the one of the latest season
 

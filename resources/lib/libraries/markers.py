@@ -47,6 +47,26 @@ def decode(raw):
         return []
 
 
+# where the intro may start for the playback to begin after it (a cold open is kept up to there), and the gap allowed between two markers
+START_WINDOW = 15.0
+START_GAP = 2.0
+
+
+def startAfter(found, modes):
+    """Where the playback should begin so that it starts after the intro and the recap: (seconds, kind of the last marker
+    skipped) or None. Only the markers set to skip automatically count, in a chain from the start (the first one starts
+    within START_WINDOW seconds, the next ones right after the one before)."""
+    position, kind = 0.0, None
+    for m in found:
+        if m['kind'] not in SKIPPABLE:
+            continue
+        reach = START_WINDOW if kind is None else START_GAP
+        if modes.get(m['kind']) != AUTO or m['start'] > position + reach or m['end'] <= position:
+            break
+        position, kind = m['end'], m['kind']
+    return (position, kind) if kind else None
+
+
 def outroStart(found, total):
     """Seconds before the end where the outro starts (when Up Next should offer the next episode), or None"""
     for m in found:
