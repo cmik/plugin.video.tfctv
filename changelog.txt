@@ -1,4 +1,5 @@
 3.11.0
+    The service reads the settings of Skip the intro / Skip the recap and Up Next from the add-on at each playback (control.setting keeps its first answer, so a change was only seen after a restart of Kodi)
     My Shows Last Episodes: the last episode of a show is the one of its latest season (all the seasons are read; libraries/upnext.py lastEpisode), not the highest number of the first
 
 3.10.0
