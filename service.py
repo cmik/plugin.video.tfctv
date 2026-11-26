@@ -168,12 +168,14 @@ class PlaybackMonitor(xbmc.Player):
         return trakt.progressOf(self.tracker.position, self.tracker.total)
 
     def _markers(self):
-        """The intro, recap and outro iWant gave for what plays (property of the item); prepares the skip"""
+        """The intro, recap and outro iWant gave for what plays (property of the item); prepares the skip.
+        The settings are read from the add-on, not from control.setting: that one keeps what it read first, and the
+        service runs as long as Kodi does, so a change in the settings would not be seen before a restart of Kodi."""
         self._skip = None
         try:
             from resources.lib.libraries import markers
             found = markers.decode(self.getPlayingItem().getProperty(markers.PROPERTY))
-            modes = dict((kind, markers.modeOf(control.setting(key))) for kind, key in markers.SETTINGS.items())
+            modes = dict((kind, markers.modeOf(control.getAddonSetting(key))) for kind, key in markers.SETTINGS.items())
             controller = markers.SkipController(found, modes)
             if controller.markers:
                 self._skip = controller
@@ -225,7 +227,7 @@ class PlaybackMonitor(xbmc.Player):
 
     def _upNext(self, episodeId, found=()):
         """Tell the Up Next add-on which episode follows the one that starts (see libraries/upnext.py)"""
-        if control.setting('upNext') == 'false' or not xbmc.getCondVisibility('System.AddonIsEnabled(service.upnext)'):
+        if control.getAddonSetting('upNext') == 'false' or not xbmc.getCondVisibility('System.AddonIsEnabled(service.upnext)'):
             return
         try:
             from resources.lib.libraries import upnext
