@@ -179,11 +179,31 @@ class PlaybackMonitor(xbmc.Player):
             controller = markers.SkipController(found, modes)
             if controller.markers:
                 self._skip = controller
+                self._startAfter(controller, found, modes)
                 self._log('markers: %s' % ', '.join('%s %d-%d s' % (m['kind'], m['start'], m['end']) for m in found))
             return found
         except Exception as e:
             self._log('markers failed: %s' % e, xbmc.LOGERROR)
             return []
+
+    def _startAfter(self, controller, found, modes):
+        """With Skip automatically, a playback that starts at the beginning goes straight after the intro and the recap
+        (one seek and one notification). Not for an episode that can be resumed: Kodi asked where to resume, and its
+        Play from beginning is the viewer's choice. (StartOffset on the resolved item is not honoured with this stream.)"""
+        from resources.lib.libraries import markers
+        start = markers.startAfter(found, modes)
+        if not start or self.getTime() > 2:
+            return
+        from resources.lib.models import userdata
+        episodeId = self.tracker.episodeId
+        if episodeId in userdata.UserData(control.userDataFile).getProgress([episodeId]):
+            return
+        for m in controller.markers:
+            if m['end'] <= start[0]:
+                controller.skipped(m)  # nothing left to skip before where the playback goes
+        self._log('start after the %s: %d s' % (start[1], start[0]))
+        self.seekTime(start[0])
+        xbmcgui.Dialog().notification(control.addonInfo('name'), control.lang(30280 if start[1] == 'intro' else 30281), xbmcgui.NOTIFICATION_INFO, 2000, False)
 
     def _skipStep(self, position):
         """Offers or does the skip the position calls for (called every second while an episode with markers plays)"""

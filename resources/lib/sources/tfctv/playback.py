@@ -25,20 +25,6 @@ try:
 except Exception:
     inputstreamhelper = None
 
-def startAtEnd(item, episodeId, found):
-    """With Skip automatically, the playback starts after the intro and the recap (StartOffset). Not for an episode that
-    can be resumed: Kodi asks where to resume, and its Play from beginning must not be overridden."""
-    try:
-        modes = dict((kind, skipmarkers.modeOf(control.setting(key))) for kind, key in skipmarkers.SETTINGS.items())
-        start = skipmarkers.startAfter(found, modes)
-        if start and episodeId not in showDB.getUserData().getProgress([episodeId]):
-            item.setProperty('StartOffset', str(int(start[0])))
-            control.showNotification(control.lang(30281 if start[1] == skipmarkers.RECAP else 30280))
-            logger.logInfo('start after the %s: %d s' % (start[1], start[0]))
-    except Exception as e:
-        logger.logError('start after the intro failed: %s' % e)
-
-
 def playEpisode(episodeId, name, type, thumbnail):
     """Play an episode"""
     logger.logInfo('called function')
@@ -156,7 +142,6 @@ def playEpisode(episodeId, name, type, thumbnail):
                 # the intro, recap and outro iWant knows: the service offers to skip them (libraries/markers.py)
                 if episodeDetails['data'].get('markers'):
                     item.setProperty(skipmarkers.PROPERTY, skipmarkers.encode(episodeDetails['data']['markers']))
-                    startAtEnd(item, episodeId, episodeDetails['data']['markers'])
             try:
                 return control.resolve(thisPlugin, True, item)
             except Exception:
