@@ -107,5 +107,40 @@ class ControllerTest(unittest.TestCase):
         self.assertIsNone(c.tick(78.9))  # a second before the end of the intro
 
 
+class StartAfterTest(unittest.TestCase):
+    found = markers.parse(SIGABO)
+
+    def modes(self, intro, recap):
+        return {'intro': intro, 'recap': recap}
+
+    def test_after_the_intro_and_the_recap(self):
+        start, kind = markers.startAfter(self.found, self.modes(markers.AUTO, markers.AUTO))
+        self.assertEqual((120.42, 'recap'), (start, kind))
+
+    def test_only_the_intro_automatic(self):
+        start, kind = markers.startAfter(self.found, self.modes(markers.AUTO, markers.ASK))
+        self.assertEqual((79.846, 'intro'), (start, kind))
+
+    def test_a_recap_alone_does_not_start_the_chain(self):
+        self.assertIsNone(markers.startAfter(self.found, self.modes(markers.ASK, markers.AUTO)))
+        self.assertIsNone(markers.startAfter(self.found, self.modes(markers.OFF, markers.AUTO)))
+
+    def test_nothing_automatic(self):
+        self.assertIsNone(markers.startAfter(self.found, self.modes(markers.ASK, markers.ASK)))
+        self.assertIsNone(markers.startAfter([], self.modes(markers.AUTO, markers.AUTO)))
+
+    def test_an_intro_after_a_long_cold_open_is_left_for_the_player(self):
+        late = markers.parse([{'id': 'intro', 'startTs': 60000, 'endTs': 90000}])
+        self.assertIsNone(markers.startAfter(late, self.modes(markers.AUTO, markers.AUTO)))
+
+    def test_a_gap_before_the_recap_stops_the_chain(self):
+        found = markers.parse([{'id': 'intro', 'startTs': 5000, 'endTs': 60000}, {'id': 'recap', 'startTs': 70000, 'endTs': 100000}])
+        self.assertEqual((60.0, 'intro'), markers.startAfter(found, self.modes(markers.AUTO, markers.AUTO)))
+
+    def test_the_outro_is_never_skipped(self):
+        found = markers.parse([{'id': 'outro', 'startTs': 1000, 'endTs': 5000}])
+        self.assertIsNone(markers.startAfter(found, self.modes(markers.AUTO, markers.AUTO)))
+
+
 if __name__ == '__main__':
     unittest.main()

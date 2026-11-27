@@ -1,4 +1,5 @@
 3.11.0
+    Skip automatically starts the playback after the intro and the recap (the service seeks once at the start, libraries/markers.py startAfter: the markers set to automatic, in a chain from the start, the first one starting within 15 s); an episode with a resume point is left to Kodi
     The service reads the settings of Skip the intro / Skip the recap and Up Next from the add-on at each playback (control.setting keeps its first answer, so a change was only seen after a restart of Kodi)
     My Shows Last Episodes: the last episode of a show is the one of its latest season (all the seasons are read; libraries/upnext.py lastEpisode), not the highest number of the first
 
